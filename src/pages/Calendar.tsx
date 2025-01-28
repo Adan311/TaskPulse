@@ -1,14 +1,80 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+interface Event {
+  id: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+  participants: { name: string; avatar: string }[];
+  color: string;
+}
+
+const events: Event[] = [
+  {
+    id: "1",
+    title: "Weekly Project Review",
+    startTime: "09:00",
+    endTime: "12:00",
+    participants: [
+      { name: "John", avatar: "/placeholder.svg" },
+      { name: "Sarah", avatar: "/placeholder.svg" }
+    ],
+    color: "bg-pink-100 dark:bg-pink-900/20"
+  },
+  {
+    id: "2",
+    title: "Collaboration Session",
+    startTime: "10:30",
+    endTime: "13:30",
+    participants: [
+      { name: "Mike", avatar: "/placeholder.svg" },
+      { name: "Lisa", avatar: "/placeholder.svg" }
+    ],
+    color: "bg-purple-100 dark:bg-purple-900/20"
+  }
+];
+
+const TimelineEvent = ({ event }: { event: Event }) => (
+  <div 
+    className={cn(
+      "rounded-lg p-3 mb-2",
+      event.color
+    )}
+    style={{
+      marginLeft: `${(parseInt(event.startTime.split(':')[0]) - 9) * 100}px`,
+      width: `${(parseInt(event.endTime.split(':')[0]) - parseInt(event.startTime.split(':')[0])) * 100}px`
+    }}
+  >
+    <div className="flex justify-between items-start">
+      <div>
+        <h4 className="font-medium text-sm">{event.title}</h4>
+        <p className="text-xs text-muted-foreground">
+          {event.startTime} - {event.endTime}
+        </p>
+      </div>
+      <div className="flex -space-x-2">
+        {event.participants.map((participant, i) => (
+          <Avatar key={i} className="h-6 w-6 border-2 border-background">
+            <AvatarImage src={participant.avatar} alt={participant.name} />
+            <AvatarFallback>{participant.name[0]}</AvatarFallback>
+          </Avatar>
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
 export default function CalendarPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [view, setView] = useState<"month" | "week" | "day">("month");
+  const [view, setView] = useState<"month" | "week" | "day">("day");
 
   return (
     <AppLayout>
@@ -63,45 +129,69 @@ export default function CalendarPage() {
 
         <div className="flex gap-6">
           <div className="hidden lg:block w-64 space-y-6">
-            <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
-              <div className="flex flex-col space-y-1.5 p-4">
-                <h3 className="font-semibold leading-none tracking-tight">
-                  Mini Calendar
-                </h3>
-              </div>
-              <div className="p-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">Mini Calendar</CardTitle>
+              </CardHeader>
+              <CardContent>
                 <Calendar
                   mode="single"
                   selected={date}
                   onSelect={setDate}
-                  className={cn("rounded-md border shadow-sm")}
+                  className={cn("rounded-md border")}
                 />
-              </div>
-            </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">Statistics</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <div className="text-2xl font-bold">256</div>
+                  <div className="text-xs text-muted-foreground">Tasks completed</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">128</div>
+                  <div className="text-xs text-muted-foreground">To-do tasks</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">18</div>
+                  <div className="text-xs text-muted-foreground">Ongoing tasks</div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          <div className="flex-1 rounded-lg border bg-card text-card-foreground shadow-sm">
-            <div className="p-6">
-              <div className="text-center">
-                <h2 className="text-lg font-semibold">
-                  {date ? format(date, "MMMM yyyy") : "Select a date"}
-                </h2>
-              </div>
-              {/* Calendar grid will be implemented here */}
-              <div className="h-[600px] mt-4 rounded-md border">
-                <div className="grid grid-cols-7 gap-px bg-muted">
-                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                    <div
-                      key={day}
-                      className="bg-background p-2 text-center text-sm font-medium"
-                    >
-                      {day}
+          <div className="flex-1">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>
+                  {date ? format(date, "EEEE, MMMM d, yyyy") : "Select a date"}
+                </CardTitle>
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Event
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="relative min-h-[600px]">
+                  <div className="absolute inset-0">
+                    <div className="grid grid-cols-[repeat(8,1fr)] gap-4">
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <div key={i} className="border-r border-border h-full" />
+                      ))}
                     </div>
-                  ))}
+                    <div className="absolute top-0 left-0 w-full">
+                      {events.map((event) => (
+                        <TimelineEvent key={event.id} event={event} />
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                {/* Calendar days will be implemented here */}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
