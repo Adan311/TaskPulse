@@ -3,6 +3,7 @@ import {
   ListTodo,
   BookmarkCheck,
   ListCheck,
+  Timer,
 } from "lucide-react";
 import {
   Sidebar,
@@ -25,6 +26,11 @@ const items = [
     title: "Calendar",
     url: "/calendar",
     icon: Calendar,
+  },
+  {
+    title: "Timer",
+    url: "/timer",
+    icon: Timer,
   },
   {
     title: "Projects",
