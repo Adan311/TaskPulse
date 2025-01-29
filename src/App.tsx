@@ -16,17 +16,19 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="dark" storageKey="app-theme">
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/auth/signin" element={<SignIn />} />
-            <Route path="/auth/signup" element={<SignUp />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <div className="min-h-screen bg-background">
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/auth/signin" element={<SignIn />} />
+              <Route path="/auth/signup" element={<SignUp />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </div>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
