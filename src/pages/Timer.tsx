@@ -6,9 +6,10 @@ import { useToast } from "@/components/ui/use-toast";
 
 export default function Timer() {
   const [mode, setMode] = useState<string>("timer");
-  const [duration, setDuration] = useState<number>(1500); // 25 minutes default
+  const [duration, setDuration] = useState<number>(300); // 5 minutes default
   const [timeLeft, setTimeLeft] = useState<number>(duration);
   const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [stopwatchTime, setStopwatchTime] = useState<number>(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -16,22 +17,26 @@ export default function Timer() {
 
     if (isRunning) {
       interval = setInterval(() => {
-        setTimeLeft((prevTime) => {
-          if (prevTime <= 1) {
-            setIsRunning(false);
-            toast({
-              title: "Timer Complete!",
-              description: "Your time is up!",
-            });
-            return 0;
-          }
-          return prevTime - 1;
-        });
+        if (mode === "timer") {
+          setTimeLeft((prevTime) => {
+            if (prevTime <= 1) {
+              setIsRunning(false);
+              toast({
+                title: "Timer Complete!",
+                description: "Your time is up!",
+              });
+              return 0;
+            }
+            return prevTime - 1;
+          });
+        } else {
+          setStopwatchTime((prev) => prev + 1);
+        }
       }, 1000);
     }
 
     return () => clearInterval(interval);
-  }, [isRunning, toast]);
+  }, [isRunning, mode, toast]);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -45,7 +50,21 @@ export default function Timer() {
   const handlePause = () => setIsRunning(false);
   const handleReset = () => {
     setIsRunning(false);
-    setTimeLeft(duration);
+    if (mode === "timer") {
+      setTimeLeft(duration);
+    } else {
+      setStopwatchTime(0);
+    }
+  };
+
+  const handleModeChange = (newMode: string) => {
+    setMode(newMode);
+    setIsRunning(false);
+    if (newMode === "timer") {
+      setTimeLeft(duration);
+    } else {
+      setStopwatchTime(0);
+    }
   };
 
   const handleDurationChange = (newDuration: number) => {
@@ -66,7 +85,7 @@ export default function Timer() {
           </div>
 
           <TimerDisplay
-            time={formatTime(timeLeft)}
+            time={formatTime(mode === "timer" ? timeLeft : stopwatchTime)}
             isRunning={isRunning}
             mode={mode.toUpperCase()}
             onStart={handleStart}
@@ -76,7 +95,7 @@ export default function Timer() {
 
           <TimerControls
             mode={mode}
-            onModeChange={setMode}
+            onModeChange={handleModeChange}
             duration={duration}
             onDurationChange={handleDurationChange}
           />

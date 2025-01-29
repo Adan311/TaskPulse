@@ -1,12 +1,20 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface Event {
   id: string;
@@ -74,7 +82,7 @@ const TimelineEvent = ({ event }: { event: Event }) => (
 
 export default function CalendarPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [view, setView] = useState<"month" | "week" | "day">("day");
+  const [view, setView] = useState<"month" | "week" | "day" | "list">("day");
 
   return (
     <AppLayout>
@@ -122,6 +130,13 @@ export default function CalendarPage() {
                 onClick={() => setView("day")}
               >
                 Day
+              </Button>
+              <Button
+                variant={view === "list" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setView("list")}
+              >
+                List
               </Button>
             </div>
           </div>
@@ -176,20 +191,55 @@ export default function CalendarPage() {
                 </Button>
               </CardHeader>
               <CardContent>
-                <div className="relative min-h-[600px]">
-                  <div className="absolute inset-0">
-                    <div className="grid grid-cols-[repeat(8,1fr)] gap-4">
-                      {Array.from({ length: 8 }).map((_, i) => (
-                        <div key={i} className="border-r border-border h-full" />
-                      ))}
-                    </div>
-                    <div className="absolute top-0 left-0 w-full">
+                {view === "list" ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Time</TableHead>
+                        <TableHead>Event</TableHead>
+                        <TableHead>Participants</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {events.map((event) => (
-                        <TimelineEvent key={event.id} event={event} />
+                        <TableRow key={event.id}>
+                          <TableCell>
+                            <div className="flex items-center">
+                              <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                              {event.startTime} - {event.endTime}
+                            </div>
+                          </TableCell>
+                          <TableCell>{event.title}</TableCell>
+                          <TableCell>
+                            <div className="flex -space-x-2">
+                              {event.participants.map((participant, i) => (
+                                <Avatar key={i} className="h-6 w-6 border-2 border-background">
+                                  <AvatarImage src={participant.avatar} alt={participant.name} />
+                                  <AvatarFallback>{participant.name[0]}</AvatarFallback>
+                                </Avatar>
+                              ))}
+                            </div>
+                          </TableCell>
+                        </TableRow>
                       ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="relative min-h-[600px]">
+                    <div className="absolute inset-0">
+                      <div className="grid grid-cols-[repeat(8,1fr)] gap-4">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                          <div key={i} className="border-r border-border h-full" />
+                        ))}
+                      </div>
+                      <div className="absolute top-0 left-0 w-full">
+                        {events.map((event) => (
+                          <TimelineEvent key={event.id} event={event} />
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>
