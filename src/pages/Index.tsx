@@ -2,9 +2,33 @@ import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Calendar, ListTodo, FileText, Star } from "lucide-react";
+import { useEffect } from "react";
+import { initDirectus } from "@/lib/directus";
+import { useToast } from "@/components/ui/use-toast";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const initializeDirectus = async () => {
+      const isInitialized = await initDirectus();
+      if (isInitialized) {
+        toast({
+          title: "Connected to Directus",
+          description: "Successfully connected to local Directus instance",
+        });
+      } else {
+        toast({
+          title: "Connection Failed",
+          description: "Could not connect to Directus. Please check if your local instance is running.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    initializeDirectus();
+  }, [toast]);
 
   return (
     <AppLayout>
