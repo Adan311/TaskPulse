@@ -7,7 +7,7 @@ const directus = createDirectus('http://localhost:8055')
 export async function login(email: string, password: string) {
   try {
     await directus.login(email, password);
-    const user = await readMe(directus);
+    const user = await directus.request(readMe());
     return { success: true, user };
   } catch (error) {
     console.error('Login error:', error);
@@ -17,14 +17,15 @@ export async function login(email: string, password: string) {
 
 export async function register(email: string, password: string, name: string) {
   try {
-    const response = await directus.request(
-      rest.createUser({
-        email,
-        password,
-        first_name: name.split(' ')[0],
-        last_name: name.split(' ').slice(1).join(' '),
-      })
-    );
+    // Using the correct method to create a user in Directus
+    const response = await directus.request(rest.create('users', {
+      email,
+      password,
+      first_name: name.split(' ')[0],
+      last_name: name.split(' ').slice(1).join(' '),
+      role: '3f0a1465-c424-4a9d-a694-21c06b5656a2' // Make sure to replace this with your actual Public role ID from Directus
+    }));
+    
     return { success: true, user: response };
   } catch (error) {
     console.error('Registration error:', error);
