@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, Mail, Lock, User } from "lucide-react";
+import { register } from "@/lib/auth";
 
 export default function SignUp() {
   const [email, setEmail] = useState("");
@@ -19,7 +20,7 @@ export default function SignUp() {
     setIsLoading(true);
     
     try {
-      // TODO: Implement actual signup logic once Supabase is connected
+      await register(email, password, name);
       toast({
         title: "Account created!",
         description: "You have successfully created an account.",

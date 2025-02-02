@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, Mail, Lock } from "lucide-react";
+import { login } from "@/lib/auth";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -18,12 +19,12 @@ export default function SignIn() {
     setIsLoading(true);
     
     try {
-      // TODO: Implement actual authentication logic once Supabase is connected
+      await login(email, password);
       toast({
         title: "Success!",
         description: "You have successfully signed in.",
       });
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
       toast({
         variant: "destructive",

@@ -5,6 +5,7 @@ import { Calendar, ListTodo, FileText, Star } from "lucide-react";
 import { useEffect } from "react";
 import { initDirectus } from "@/lib/directus";
 import { useToast } from "@/components/ui/use-toast";
+import { logout } from "@/lib/auth";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -30,12 +31,32 @@ const Index = () => {
     initializeDirectus();
   }, [toast]);
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+      navigate("/auth/signin");
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+      });
+    }
+  };
+
   return (
     <AppLayout>
       <div className="p-6 max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold tracking-tight mb-4">Welcome to Motion</h1>
           <p className="text-xl text-muted-foreground">Your AI-powered productivity dashboard</p>
+          <Button onClick={handleLogout} variant="outline" className="mt-4">
+            Log Out
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
