@@ -6,38 +6,26 @@ import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarHeader } from "@/components/Calendar/CalendarHeader";
 import { CalendarSidebar } from "@/components/Calendar/CalendarSidebar";
-import { EventList } from "@/components/Calendar/EventList";
-import { TimelineView } from "@/components/Calendar/TimelineView";
-import { Event } from "@/types/calendar";
-
-const events: Event[] = [
-  {
-    id: "1",
-    title: "Weekly Project Review",
-    startTime: "09:00",
-    endTime: "12:00",
-    participants: [
-      { name: "John", avatar: "/placeholder.svg" },
-      { name: "Sarah", avatar: "/placeholder.svg" }
-    ],
-    color: "bg-pink-100 dark:bg-pink-900/20"
-  },
-  {
-    id: "2",
-    title: "Collaboration Session",
-    startTime: "10:30",
-    endTime: "13:30",
-    participants: [
-      { name: "Mike", avatar: "/placeholder.svg" },
-      { name: "Lisa", avatar: "/placeholder.svg" }
-    ],
-    color: "bg-purple-100 dark:bg-purple-900/20"
-  }
-];
+import { MonthView } from "@/components/Calendar/MonthView";
+import { WeekView } from "@/components/Calendar/WeekView";
+import { ListView } from "@/components/Calendar/ListView";
 
 export default function Calendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [view, setView] = useState<"month" | "week" | "day" | "list">("day");
+  const [view, setView] = useState<"month" | "week" | "day" | "list">("month");
+
+  const renderView = () => {
+    switch (view) {
+      case "month":
+        return <MonthView />;
+      case "week":
+        return <WeekView />;
+      case "list":
+        return <ListView />;
+      default:
+        return <MonthView />;
+    }
+  };
 
   return (
     <AppLayout>
@@ -64,11 +52,7 @@ export default function Calendar() {
                 </Button>
               </CardHeader>
               <CardContent>
-                {view === "list" ? (
-                  <EventList events={events} />
-                ) : (
-                  <TimelineView events={events} />
-                )}
+                {renderView()}
               </CardContent>
             </Card>
           </div>

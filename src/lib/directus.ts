@@ -1,46 +1,25 @@
-import { createDirectus, rest, readItems } from '@directus/sdk';
+import { createDirectus, rest, authentication } from '@directus/sdk';
 
-// Schema type for your collections
-interface Schema {
-  tasks: {
-    id: number;
-    title: string;
-    description: string;
-    due_date: string;
-    status: string;
-  };
-  // Add other collection types as needed
-}
+const directus = createDirectus('http://localhost:8055').with(authentication()).with(rest());
 
-// Create Directus client instance with the correct SDK syntax
-export const directus = createDirectus<Schema>('http://localhost:8055').with(rest());
-
-// Helper function to initialize the client
-export async function initDirectus() {
+export const initDirectus = async () => {
   try {
-    // Test the connection by attempting to read items
-    await readItems(directus, 'tasks', {
-      limit: 1
-    });
-    console.log('Directus client initialized');
-    return true;
+    const response = await directus.request(rest.get('server/info'));
+    return !!response;
   } catch (error) {
-    console.error('Failed to initialize Directus client:', error);
+    console.error('Directus initialization error:', error);
     return false;
   }
-}
+};
 
-// Example function to fetch items from a collection
-export async function fetchItems<T extends keyof Schema>(
-  collection: T
-): Promise<Schema[T][]> {
+export const fetchItems = async <T extends string>(collection: T) => {
   try {
-    const response = await readItems(directus, collection, {
-      limit: -1,
-    });
-    return response || [];
+    const items = await directus.request(rest.readItems(collection));
+    return items;
   } catch (error) {
-    console.error(`Failed to fetch ${String(collection)}:`, error);
+    console.error(`Error fetching ${collection}:`, error);
     return [];
   }
-}
+};
+
+export default directus;

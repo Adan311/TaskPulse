@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { TimerDisplay } from "@/components/Timer/TimerDisplay";
 import { TimerControls } from "@/components/Timer/TimerControls";
+import { TimerHistory } from "@/components/Timer/TimerHistory";
 import { useToast } from "@/components/ui/use-toast";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function Timer() {
   const [mode, setMode] = useState<string>("timer");
-  const [duration, setDuration] = useState<number>(300); // 5 minutes default
+  const [duration, setDuration] = useState<number>(300);
   const [timeLeft, setTimeLeft] = useState<number>(duration);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [stopwatchTime, setStopwatchTime] = useState<number>(0);
@@ -75,30 +77,39 @@ export default function Timer() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
-        <div className="w-full max-w-md space-y-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight mb-4">Timer</h1>
-            <p className="text-muted-foreground">
-              Stay focused and track your time
-            </p>
-          </div>
+      <div className="flex flex-col lg:flex-row gap-6 p-6">
+        <div className="flex-1">
+          <Card>
+            <CardContent className="p-6">
+              <div className="space-y-8">
+                <div className="text-center">
+                  <h1 className="text-4xl font-bold tracking-tight mb-4">Timer</h1>
+                  <p className="text-muted-foreground">
+                    Stay focused and track your time
+                  </p>
+                </div>
 
-          <TimerDisplay
-            time={formatTime(mode === "timer" ? timeLeft : stopwatchTime)}
-            isRunning={isRunning}
-            mode={mode.toUpperCase()}
-            onStart={handleStart}
-            onPause={handlePause}
-            onReset={handleReset}
-          />
+                <TimerDisplay
+                  time={formatTime(mode === "timer" ? timeLeft : stopwatchTime)}
+                  isRunning={isRunning}
+                  mode={mode.toUpperCase()}
+                  onStart={handleStart}
+                  onPause={handlePause}
+                  onReset={handleReset}
+                />
 
-          <TimerControls
-            mode={mode}
-            onModeChange={handleModeChange}
-            duration={duration}
-            onDurationChange={handleDurationChange}
-          />
+                <TimerControls
+                  mode={mode}
+                  onModeChange={handleModeChange}
+                  duration={duration}
+                  onDurationChange={handleDurationChange}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="w-full lg:w-80">
+          <TimerHistory />
         </div>
       </div>
     </AppLayout>
