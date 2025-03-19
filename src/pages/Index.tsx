@@ -1,35 +1,14 @@
+
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Calendar, ListTodo, FileText, Star } from "lucide-react";
-import { useEffect } from "react";
-import { initDirectus } from "@/lib/directus";
 import { useToast } from "@/components/ui/use-toast";
 import { logout } from "@/lib/auth";
 
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  useEffect(() => {
-    const initializeDirectus = async () => {
-      const isInitialized = await initDirectus();
-      if (isInitialized) {
-        toast({
-          title: "Connected to Directus",
-          description: "Successfully connected to local Directus instance",
-        });
-      } else {
-        toast({
-          title: "Connection Failed",
-          description: "Could not connect to Directus. Please check if your local instance is running.",
-          variant: "destructive",
-        });
-      }
-    };
-
-    initializeDirectus();
-  }, [toast]);
 
   const handleLogout = async () => {
     try {
@@ -52,7 +31,7 @@ const Index = () => {
     <AppLayout>
       <div className="p-6 max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold tracking-tight mb-4">Welcome to Motion</h1>
+          <h1 className="text-4xl font-bold tracking-tight mb-4">Welcome to TaskPulse</h1>
           <p className="text-xl text-muted-foreground">Your AI-powered productivity dashboard</p>
           <Button onClick={handleLogout} variant="outline" className="mt-4">
             Log Out
