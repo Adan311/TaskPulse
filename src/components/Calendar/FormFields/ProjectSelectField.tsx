@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UseFormReturn } from "react-hook-form";
 import { FormValues, Project } from "../EventFormSchema";
@@ -64,7 +64,7 @@ export function ProjectSelectField({ form }: ProjectSelectFieldProps) {
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              <SelectItem value="">No Project</SelectItem>
+              <SelectItem value="none">No Project</SelectItem>
               {projects.map((project) => (
                 <SelectItem key={project.id} value={project.id}>
                   <div className="flex items-center">

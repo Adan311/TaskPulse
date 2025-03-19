@@ -3,7 +3,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { format } from "date-fns";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,7 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
         startTime: event.start_time.split("T")[1].substring(0, 5),
         endTime: event.end_time.split("T")[1].substring(0, 5),
         color: event.color || "#3b82f6",
-        project: event.project || undefined,
+        project: event.project || "none",
       }
     : {
         title: "",
@@ -42,7 +42,7 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
         startTime: "09:00",
         endTime: "10:00",
         color: "#3b82f6",
-        project: undefined,
+        project: "none",
       };
 
   const form = useForm<FormValues>({
@@ -63,7 +63,7 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
         start_time: formattedStartTime,
         end_time: formattedEndTime,
         color: values.color,
-        project: values.project || null,
+        project: values.project === "none" ? null : values.project,
       };
 
       if (event) {
