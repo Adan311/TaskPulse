@@ -1,11 +1,15 @@
-import { createDirectus, rest, authentication } from '@directus/sdk';
-import { toast } from '@/components/ui/use-toast';
 
-const directus = createDirectus('http://localhost:8055').with(authentication()).with(rest());
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from '@/components/ui/use-toast';
 
 export const login = async (email: string, password: string) => {
   try {
-    await directus.login(email, password);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    if (error) throw error;
     return true;
   } catch (error) {
     console.error('Login error:', error);
@@ -15,12 +19,17 @@ export const login = async (email: string, password: string) => {
 
 export const register = async (email: string, password: string, name: string) => {
   try {
-    await directus.request(rest.createItem('users', {
+    const { error } = await supabase.auth.signUp({
       email,
       password,
-      first_name: name,
-      role: '1' // Public role ID - make sure this matches your Directus setup
-    }));
+      options: {
+        data: {
+          first_name: name,
+        }
+      }
+    });
+    
+    if (error) throw error;
     return true;
   } catch (error) {
     console.error('Registration error:', error);
@@ -30,7 +39,8 @@ export const register = async (email: string, password: string, name: string) =>
 
 export const logout = async () => {
   try {
-    await directus.logout();
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
     return true;
   } catch (error) {
     console.error('Logout error:', error);
