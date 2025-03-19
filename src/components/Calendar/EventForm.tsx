@@ -1,59 +1,19 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { format } from "date-fns";
-import { CalendarIcon, Clock } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
 import { Event, createEvent, updateEvent } from "@/services/eventService";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
-
-// Define a Project interface for typing
-interface Project {
-  id: string;
-  name: string;
-  color?: string;
-}
-
-const formSchema = z.object({
-  title: z.string().min(1, { message: "Title is required" }),
-  description: z.string().optional(),
-  date: z.date({
-    required_error: "Date is required",
-  }),
-  startTime: z.string().min(1, { message: "Start time is required" }),
-  endTime: z.string().min(1, { message: "End time is required" }),
-  color: z.string().default("#3b82f6"),
-  project: z.string().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { formSchema, FormValues } from "./EventFormSchema";
+import { DatePickerField } from "./FormFields/DatePickerField";
+import { TimePickerField } from "./FormFields/TimePickerField";
+import { ColorPickerField } from "./FormFields/ColorPickerField";
+import { ProjectSelectField } from "./FormFields/ProjectSelectField";
 
 interface EventFormProps {
   onSuccess: () => void;
@@ -64,38 +24,6 @@ interface EventFormProps {
 export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
-
-  // Fetch projects from Supabase
-  useEffect(() => {
-    const fetchProjects = async () => {
-      setIsLoadingProjects(true);
-      try {
-        const { data, error } = await supabase
-          .from("projects")
-          .select("id, name, color")
-          .order("name");
-
-        if (error) {
-          throw error;
-        }
-
-        setProjects(data || []);
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load projects.",
-        });
-      } finally {
-        setIsLoadingProjects(false);
-      }
-    };
-
-    fetchProjects();
-  }, [toast]);
 
   const defaultValues: Partial<FormValues> = event
     ? {
@@ -200,141 +128,17 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="date"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Date</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <DatePickerField form={form} />
 
           <div className="flex space-x-2">
-            <FormField
-              control={form.control}
-              name="startTime"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>Start Time</FormLabel>
-                  <FormControl>
-                    <div className="flex items-center">
-                      <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
-                      <Input type="time" {...field} />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="endTime"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel>End Time</FormLabel>
-                  <FormControl>
-                    <div className="flex items-center">
-                      <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
-                      <Input type="time" {...field} />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <TimePickerField form={form} name="startTime" label="Start Time" />
+            <TimePickerField form={form} name="endTime" label="End Time" />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="color"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Color</FormLabel>
-                <FormControl>
-                  <div className="flex items-center space-x-2">
-                    <div 
-                      className="w-6 h-6 rounded-full border border-gray-300" 
-                      style={{ backgroundColor: field.value }}
-                    />
-                    <Input type="color" {...field} className="w-16 h-8" />
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="project"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Project (Optional)</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  value={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a project" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="">No Project</SelectItem>
-                    {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        <div className="flex items-center">
-                          {project.color && (
-                            <div
-                              className="w-3 h-3 rounded-full mr-2"
-                              style={{ backgroundColor: project.color }}
-                            />
-                          )}
-                          {project.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <ColorPickerField form={form} />
+          <ProjectSelectField form={form} />
         </div>
 
         <div className="flex justify-end space-x-2 pt-4">
