@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -9,10 +10,27 @@ import { CalendarSidebar } from "@/components/Calendar/CalendarSidebar";
 import { MonthView } from "@/components/Calendar/MonthView";
 import { WeekView } from "@/components/Calendar/WeekView";
 import { ListView } from "@/components/Calendar/ListView";
+import { EventDialog } from "@/components/Calendar/EventDialog";
+import { getEvents } from "@/services/eventService";
 
 export default function Calendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [view, setView] = useState<"month" | "week" | "day" | "list">("month");
+  const [eventDialogOpen, setEventDialogOpen] = useState(false);
+  const [events, setEvents] = useState([]);
+  
+  const fetchEvents = async () => {
+    try {
+      const data = await getEvents();
+      setEvents(data);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
   const renderView = () => {
     switch (view) {
@@ -46,7 +64,7 @@ export default function Calendar() {
                 <CardTitle>
                   {date ? format(date, "EEEE, MMMM d, yyyy") : "Select a date"}
                 </CardTitle>
-                <Button size="sm">
+                <Button size="sm" onClick={() => setEventDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Event
                 </Button>
@@ -58,6 +76,12 @@ export default function Calendar() {
           </div>
         </div>
       </div>
+
+      <EventDialog 
+        open={eventDialogOpen}
+        onOpenChange={setEventDialogOpen}
+        onSuccess={fetchEvents}
+      />
     </AppLayout>
   );
 }

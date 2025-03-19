@@ -1,6 +1,7 @@
+
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
-import { format } from "date-fns";
+import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
 
 interface CalendarHeaderProps {
   date: Date | undefined;
@@ -10,6 +11,42 @@ interface CalendarHeaderProps {
 }
 
 export function CalendarHeader({ date, view, setDate, setView }: CalendarHeaderProps) {
+  const navigatePrevious = () => {
+    if (!date) return;
+    
+    switch (view) {
+      case "month":
+        setDate(subMonths(date, 1));
+        break;
+      case "week":
+        setDate(subWeeks(date, 1));
+        break;
+      case "day":
+        setDate(subDays(date, 1));
+        break;
+      default:
+        setDate(subDays(date, 1));
+    }
+  };
+
+  const navigateNext = () => {
+    if (!date) return;
+    
+    switch (view) {
+      case "month":
+        setDate(addMonths(date, 1));
+        break;
+      case "week":
+        setDate(addWeeks(date, 1));
+        break;
+      case "day":
+        setDate(addDays(date, 1));
+        break;
+      default:
+        setDate(addDays(date, 1));
+    }
+  };
+
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-4">
@@ -26,10 +63,20 @@ export function CalendarHeader({ date, view, setDate, setView }: CalendarHeaderP
           Today
         </Button>
         <div className="flex items-center space-x-1">
-          <Button variant="outline" size="icon" className="h-8 w-8">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="h-8 w-8"
+            onClick={navigatePrevious}
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="h-8 w-8"
+            onClick={navigateNext}
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -47,13 +94,6 @@ export function CalendarHeader({ date, view, setDate, setView }: CalendarHeaderP
             onClick={() => setView("week")}
           >
             Week
-          </Button>
-          <Button
-            variant={view === "day" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setView("day")}
-          >
-            Day
           </Button>
           <Button
             variant={view === "list" ? "default" : "outline"}
