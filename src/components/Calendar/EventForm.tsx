@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -25,6 +25,21 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Event, createEvent, updateEvent } from "@/services/eventService";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+
+// Define a Project interface for typing
+interface Project {
+  id: string;
+  name: string;
+  color?: string;
+}
 
 const formSchema = z.object({
   title: z.string().min(1, { message: "Title is required" }),
@@ -35,6 +50,7 @@ const formSchema = z.object({
   startTime: z.string().min(1, { message: "Start time is required" }),
   endTime: z.string().min(1, { message: "End time is required" }),
   color: z.string().default("#3b82f6"),
+  project: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -48,6 +64,38 @@ interface EventFormProps {
 export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+
+  // Fetch projects from Supabase
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setIsLoadingProjects(true);
+      try {
+        const { data, error } = await supabase
+          .from("projects")
+          .select("id, name, color")
+          .order("name");
+
+        if (error) {
+          throw error;
+        }
+
+        setProjects(data || []);
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load projects.",
+        });
+      } finally {
+        setIsLoadingProjects(false);
+      }
+    };
+
+    fetchProjects();
+  }, [toast]);
 
   const defaultValues: Partial<FormValues> = event
     ? {
@@ -57,6 +105,7 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
         startTime: event.start_time.split("T")[1].substring(0, 5),
         endTime: event.end_time.split("T")[1].substring(0, 5),
         color: event.color || "#3b82f6",
+        project: event.project || undefined,
       }
     : {
         title: "",
@@ -65,6 +114,7 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
         startTime: "09:00",
         endTime: "10:00",
         color: "#3b82f6",
+        project: undefined,
       };
 
   const form = useForm<FormValues>({
@@ -85,6 +135,7 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
         start_time: formattedStartTime,
         end_time: formattedEndTime,
         color: values.color,
+        project: values.project || null,
       };
 
       if (event) {
@@ -226,25 +277,65 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
           </div>
         </div>
 
-        <FormField
-          control={form.control}
-          name="color"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Color</FormLabel>
-              <FormControl>
-                <div className="flex items-center space-x-2">
-                  <div 
-                    className="w-6 h-6 rounded-full border border-gray-300" 
-                    style={{ backgroundColor: field.value }}
-                  />
-                  <Input type="color" {...field} className="w-16 h-8" />
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="color"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Color</FormLabel>
+                <FormControl>
+                  <div className="flex items-center space-x-2">
+                    <div 
+                      className="w-6 h-6 rounded-full border border-gray-300" 
+                      style={{ backgroundColor: field.value }}
+                    />
+                    <Input type="color" {...field} className="w-16 h-8" />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="project"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Project (Optional)</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  value={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a project" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="">No Project</SelectItem>
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        <div className="flex items-center">
+                          {project.color && (
+                            <div
+                              className="w-3 h-3 rounded-full mr-2"
+                              style={{ backgroundColor: project.color }}
+                            />
+                          )}
+                          {project.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className="flex justify-end space-x-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
