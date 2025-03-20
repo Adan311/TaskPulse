@@ -11,6 +11,7 @@ import { MonthView } from "@/components/Calendar/MonthView";
 import { WeekView } from "@/components/Calendar/WeekView";
 import { ListView } from "@/components/Calendar/ListView";
 import { EventDialog } from "@/components/Calendar/EventDialog";
+import { GoogleCalendarButton } from "@/components/Calendar/GoogleCalendarButton";
 import { getEvents } from "@/services/eventService";
 
 export default function Calendar() {
@@ -64,10 +65,13 @@ export default function Calendar() {
                 <CardTitle>
                   {date ? format(date, "EEEE, MMMM d, yyyy") : "Select a date"}
                 </CardTitle>
-                <Button size="sm" onClick={() => setEventDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Event
-                </Button>
+                <div className="flex space-x-2">
+                  <GoogleCalendarButton />
+                  <Button size="sm" onClick={() => setEventDialogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Event
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {renderView()}

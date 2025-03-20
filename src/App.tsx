@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +12,7 @@ import Tasks from "./pages/Tasks";
 import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
 import NotFound from "./pages/NotFound";
+import { GoogleCalendarCallback } from "./components/Calendar/GoogleCalendarCallback";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +31,7 @@ const App = () => (
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/auth/signin" element={<SignIn />} />
               <Route path="/auth/signup" element={<SignUp />} />
+              <Route path="/api/google-calendar-callback" element={<GoogleCalendarCallback />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
