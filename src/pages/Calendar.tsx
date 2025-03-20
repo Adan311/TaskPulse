@@ -36,13 +36,13 @@ export default function Calendar() {
   const renderView = () => {
     switch (view) {
       case "month":
-        return <MonthView events={events} date={date} onEventClick={() => {}} />;
+        return <MonthView />;
       case "week":
-        return <WeekView events={events} date={date} onEventClick={() => {}} />;
+        return <WeekView />;
       case "list":
-        return <ListView events={events} />;
+        return <ListView />;
       default:
-        return <MonthView events={events} date={date} onEventClick={() => {}} />;
+        return <MonthView />;
     }
   };
 
