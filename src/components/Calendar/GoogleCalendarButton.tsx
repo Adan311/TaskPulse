@@ -49,6 +49,7 @@ export function GoogleCalendarButton() {
     <Button 
       onClick={handleGoogleCalendarConnect} 
       disabled={isLoading}
+      variant="outline"
       className="flex items-center gap-2"
     >
       {isLoading ? (

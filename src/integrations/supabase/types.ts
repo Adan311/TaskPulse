@@ -43,8 +43,10 @@ export type Database = {
           color: string | null
           description: string | null
           end_time: string
+          google_event_id: string | null
           id: string
           project: string | null
+          source: string | null
           start_time: string
           title: string
           user: string | null
@@ -53,8 +55,10 @@ export type Database = {
           color?: string | null
           description?: string | null
           end_time: string
+          google_event_id?: string | null
           id: string
           project?: string | null
+          source?: string | null
           start_time: string
           title: string
           user?: string | null
@@ -63,8 +67,10 @@ export type Database = {
           color?: string | null
           description?: string | null
           end_time?: string
+          google_event_id?: string | null
           id?: string
           project?: string | null
+          source?: string | null
           start_time?: string
           title?: string
           user?: string | null
@@ -133,6 +139,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      google_calendar_tokens: {
+        Row: {
+          access_token: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          refresh_token: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          refresh_token?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          refresh_token?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       notes: {
         Row: {

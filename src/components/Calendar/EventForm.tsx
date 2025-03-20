@@ -24,6 +24,7 @@ interface EventFormProps {
 export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isGoogleEvent = event?.source === "google" && event?.google_event_id;
 
   const defaultValues: Partial<FormValues> = event
     ? {
@@ -96,6 +97,14 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        {isGoogleEvent && (
+          <div className="bg-muted p-3 rounded-md mb-4">
+            <p className="text-sm text-muted-foreground">
+              This event is synchronized from Google Calendar. Changes made here will not affect the original Google Calendar event.
+            </p>
+          </div>
+        )}
+        
         <FormField
           control={form.control}
           name="title"

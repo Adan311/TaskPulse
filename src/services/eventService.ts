@@ -11,6 +11,8 @@ export interface Event {
   color?: string;
   user?: string;
   project?: string;
+  google_event_id?: string;
+  source?: string;
 }
 
 export async function getEvents() {
@@ -46,6 +48,7 @@ export async function createEvent(event: Omit<Event, "id">) {
   const newEvent = {
     ...event,
     id: uuidv4(),
+    source: "app"
   };
 
   const { data, error } = await supabase
@@ -90,4 +93,19 @@ export async function deleteEvent(id: string) {
   }
 
   return true;
+}
+
+export async function getGoogleCalendarEvents() {
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .eq("source", "google")
+    .order("start_time", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching Google Calendar events:", error);
+    throw error;
+  }
+
+  return data || [];
 }
