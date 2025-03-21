@@ -53,6 +53,9 @@ export function GoogleCalendarButton({ onSuccess }: GoogleCalendarButtonProps) {
       // Define the exact redirect URI path that matches what's configured in Google Cloud Console
       const redirectUri = `${origin}/api/google-calendar-callback`;
 
+      console.log("Starting Google Calendar auth with userId:", user.id);
+      console.log("Using redirect URI:", redirectUri);
+
       // Call the edge function to start the authorization process
       const { data, error } = await supabase.functions.invoke("google-calendar-auth", {
         body: { 
@@ -67,22 +70,27 @@ export function GoogleCalendarButton({ onSuccess }: GoogleCalendarButtonProps) {
         throw new Error(`Failed to start Google Calendar authorization: ${error.message}`);
       }
 
+      if (!data || !data.authUrl || !data.state) {
+        throw new Error("Invalid response from the edge function");
+      }
+
+      console.log("Received auth URL:", data.authUrl);
+      console.log("Received state:", data.state);
+
       // Store the state in localStorage for verification when the user returns
       localStorage.setItem("googleCalendarState", data.state);
       localStorage.setItem("googleCalendarUserId", user.id);
 
       // Redirect the user to Google's authorization page
       window.location.href = data.authUrl;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error connecting to Google Calendar:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to connect to Google Calendar. Please try again.",
+        description: `Failed to connect to Google Calendar: ${error.message}`,
       });
-    } finally {
       setIsLoading(false);
-      if (onSuccess) onSuccess();
     }
   };
 

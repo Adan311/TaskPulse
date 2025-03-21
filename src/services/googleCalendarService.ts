@@ -32,7 +32,7 @@ export async function getConnectedCalendars(): Promise<GoogleCalendarTokens[]> {
     throw error;
   }
 
-  return data || [];
+  return data as GoogleCalendarTokens[] || [];
 }
 
 // Check if user has Google Calendar connected

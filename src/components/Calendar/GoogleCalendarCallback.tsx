@@ -10,6 +10,7 @@ import { RefreshCw, CheckCircle2, XCircle } from "lucide-react";
 export function GoogleCalendarCallback() {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("Processing your Google Calendar authorization...");
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -34,6 +35,7 @@ export function GoogleCalendarCallback() {
         if (!savedState || state !== savedState) {
           setStatus("error");
           setMessage("Invalid state parameter. Authorization failed.");
+          setErrorDetails(`Received state: ${state}, Saved state: ${savedState}`);
           return;
         }
 
@@ -52,6 +54,8 @@ export function GoogleCalendarCallback() {
         // Exchange the authorization code for tokens
         const redirectUri = `${window.location.origin}/api/google-calendar-callback`;
         
+        console.log("Calling edge function with:", { code, redirectUri, userId });
+        
         const { data, error: callbackError } = await supabase.functions.invoke("google-calendar-auth", {
           body: {
             action: "callback",
@@ -62,27 +66,35 @@ export function GoogleCalendarCallback() {
         });
 
         if (callbackError) {
+          console.error("Edge function error:", callbackError);
           throw new Error(`Failed to process Google Calendar callback: ${callbackError.message}`);
         }
 
+        if (!data) {
+          throw new Error("No data returned from the edge function");
+        }
+
+        console.log("Edge function response:", data);
+
         // Success!
         setStatus("success");
-        setMessage(`Google Calendar connected successfully! ${data.events_imported} events imported. Your events will now be synced bidirectionally between the app and Google Calendar.`);
+        setMessage(`Google Calendar connected successfully! ${data.events_imported || 0} events imported. Your events will now be synced bidirectionally between the app and Google Calendar.`);
 
         // Show a toast notification
         toast({
           title: "Calendar Connected",
-          description: `Your Google Calendar has been connected and ${data.events_imported} events were imported. Events will now sync both ways.`,
+          description: `Your Google Calendar has been connected and ${data.events_imported || 0} events were imported. Events will now sync both ways.`,
         });
 
         // After 3 seconds, redirect back to the calendar page
         setTimeout(() => {
           navigate("/calendar");
         }, 3000);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error processing Google Calendar callback:", error);
         setStatus("error");
         setMessage(`An error occurred while connecting to Google Calendar: ${error.message}`);
+        setErrorDetails(error.stack || "No stack trace available");
         
         toast({
           variant: "destructive",
@@ -113,6 +125,11 @@ export function GoogleCalendarCallback() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">{message}</p>
+          {errorDetails && (
+            <div className="bg-muted p-3 rounded-md overflow-auto text-xs max-h-40">
+              <pre>{errorDetails}</pre>
+            </div>
+          )}
           {status !== "loading" && (
             <Button 
               className="w-full" 
