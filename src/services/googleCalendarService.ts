@@ -22,7 +22,7 @@ export async function getConnectedCalendars(): Promise<GoogleCalendarTokens[]> {
     return [];
   }
 
-  // Explicitly define the return type and avoid deep type nesting
+  // Use explicit typing to avoid deep type instantiation
   const { data, error } = await supabase
     .from("google_calendar_tokens")
     .select("*")
@@ -33,7 +33,7 @@ export async function getConnectedCalendars(): Promise<GoogleCalendarTokens[]> {
     throw error;
   }
 
-  // Type assertion to resolve deep type instantiation
+  // Use type assertion to avoid deep type instantiation
   return (data || []) as GoogleCalendarTokens[];
 }
 
