@@ -47,6 +47,8 @@ export function GoogleCalendarCallback() {
           return;
         }
 
+        console.log("Found stored user ID:", userId);
+
         // Clear the state and userId from localStorage
         localStorage.removeItem("googleCalendarState");
         localStorage.removeItem("googleCalendarUserId");
