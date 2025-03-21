@@ -19,12 +19,16 @@ export function GoogleCalendarButton({ onSuccess }: GoogleCalendarButtonProps) {
 
       // Get the current origin for the redirect URI
       const origin = window.location.origin;
+      
+      // Define the exact redirect URI path that matches what's configured in Google Cloud Console
+      const redirectUri = `${origin}/api/google-calendar-callback`;
 
       // Call the edge function to start the authorization process
       const { data, error } = await supabase.functions.invoke("google-calendar-auth", {
         body: { 
           action: "init",
-          origin 
+          origin,
+          redirectUri // Pass the exact redirect URI to ensure it matches
         },
       });
 

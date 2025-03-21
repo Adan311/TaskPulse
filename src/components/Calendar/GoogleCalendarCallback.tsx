@@ -25,7 +25,7 @@ export function GoogleCalendarCallback() {
         // Check if there was an error or if code is missing
         if (error || !code) {
           setStatus("error");
-          setMessage("Google Calendar authorization was denied or failed.");
+          setMessage(`Google Calendar authorization was denied or failed: ${error || "No authorization code received"}`);
           return;
         }
 
@@ -41,11 +41,13 @@ export function GoogleCalendarCallback() {
         localStorage.removeItem("googleCalendarState");
 
         // Exchange the authorization code for tokens
+        const redirectUri = `${window.location.origin}/api/google-calendar-callback`;
+        
         const { data, error: callbackError } = await supabase.functions.invoke("google-calendar-auth", {
           body: {
             action: "callback",
             code,
-            redirectUri: `${window.location.origin}/api/google-calendar-callback`,
+            redirectUri,
           },
         });
 
@@ -70,7 +72,7 @@ export function GoogleCalendarCallback() {
       } catch (error) {
         console.error("Error processing Google Calendar callback:", error);
         setStatus("error");
-        setMessage("An error occurred while connecting to Google Calendar.");
+        setMessage(`An error occurred while connecting to Google Calendar: ${error.message}`);
         
         toast({
           variant: "destructive",

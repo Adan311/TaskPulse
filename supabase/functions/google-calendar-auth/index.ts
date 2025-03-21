@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
@@ -249,20 +248,24 @@ serve(async (req) => {
   }
 
   try {
-    const { action, origin, code, redirectUri, calendarId, event, eventId } = await req.json();
+    const { action, origin, redirectUri, code, calendarId, event, eventId } = await req.json();
 
     // Initialize the OAuth flow
     if (action === "init") {
       const state = generateRandomString(16);
       const scope = encodeURIComponent("https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events email");
-      const redirectUri = `${origin}/api/google-calendar-callback`;
+      
+      // Use the provided redirectUri or construct a default one
+      const actualRedirectUri = redirectUri || `${origin}/api/google-calendar-callback`;
+      
+      console.log("Using redirect URI:", actualRedirectUri);
       
       const authUrl = 
         `https://accounts.google.com/o/oauth2/v2/auth?` +
         `response_type=code&` +
         `client_id=${GOOGLE_CLIENT_ID}&` +
         `scope=${scope}&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `redirect_uri=${encodeURIComponent(actualRedirectUri)}&` +
         `state=${state}&` +
         `access_type=offline&` +
         `prompt=consent`;
