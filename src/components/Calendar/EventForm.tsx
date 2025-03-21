@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { format } from "date-fns";
@@ -14,6 +14,8 @@ import { DatePickerField } from "./FormFields/DatePickerField";
 import { TimePickerField } from "./FormFields/TimePickerField";
 import { ColorPickerField } from "./FormFields/ColorPickerField";
 import { ProjectSelectField } from "./FormFields/ProjectSelectField";
+import { hasGoogleCalendarConnected } from "@/services/googleCalendarService";
+import { CalendarClock } from "lucide-react";
 
 interface EventFormProps {
   onSuccess: () => void;
@@ -24,7 +26,22 @@ interface EventFormProps {
 export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasGoogleCalendar, setHasGoogleCalendar] = useState(false);
   const isGoogleEvent = event?.source === "google" && event?.google_event_id;
+  const canSyncToGoogle = hasGoogleCalendar && !isGoogleEvent;
+
+  useEffect(() => {
+    const checkGoogleCalendar = async () => {
+      try {
+        const connected = await hasGoogleCalendarConnected();
+        setHasGoogleCalendar(connected);
+      } catch (error) {
+        console.error("Error checking Google Calendar connection:", error);
+      }
+    };
+
+    checkGoogleCalendar();
+  }, []);
 
   const defaultValues: Partial<FormValues> = event
     ? {
@@ -71,13 +88,17 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
         await updateEvent(event.id, eventData);
         toast({
           title: "Event updated",
-          description: "Your event has been updated successfully.",
+          description: canSyncToGoogle 
+            ? "Your event has been updated and synced to Google Calendar." 
+            : "Your event has been updated successfully.",
         });
       } else {
         await createEvent(eventData);
         toast({
           title: "Event created",
-          description: "Your event has been created successfully.",
+          description: canSyncToGoogle 
+            ? "Your event has been created and synced to Google Calendar." 
+            : "Your event has been created successfully.",
         });
       }
       
@@ -101,6 +122,15 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
           <div className="bg-muted p-3 rounded-md mb-4">
             <p className="text-sm text-muted-foreground">
               This event is synchronized from Google Calendar. Changes made here will not affect the original Google Calendar event.
+            </p>
+          </div>
+        )}
+        
+        {canSyncToGoogle && (
+          <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-md mb-4 flex items-start gap-2">
+            <CalendarClock className="h-5 w-5 text-blue-500 mt-0.5" />
+            <p className="text-sm text-blue-600 dark:text-blue-400">
+              This event will be synced to your Google Calendar automatically.
             </p>
           </div>
         )}

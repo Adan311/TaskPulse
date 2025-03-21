@@ -10,6 +10,12 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "
 // Create a Supabase client with the service role key
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+// CORS headers for cross-origin requests
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
 // Generate a random state for OAuth security
 function generateRandomString(length: number) {
   const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -45,6 +51,130 @@ async function getGoogleCalendarEvents(accessToken: string) {
   }
 }
 
+// Create event in Google Calendar
+async function createGoogleCalendarEvent(accessToken: string, event: any) {
+  try {
+    const googleEvent = {
+      summary: event.title,
+      description: event.description || "",
+      start: {
+        dateTime: event.start_time,
+        timeZone: "UTC",
+      },
+      end: {
+        dateTime: event.end_time,
+        timeZone: "UTC",
+      },
+      colorId: getGoogleColorId(event.color),
+    };
+
+    const response = await fetch(
+      "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(googleEvent),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to create event: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error creating Google Calendar event:", error);
+    throw error;
+  }
+}
+
+// Update event in Google Calendar
+async function updateGoogleCalendarEvent(accessToken: string, googleEventId: string, event: any) {
+  try {
+    const googleEvent = {
+      summary: event.title,
+      description: event.description || "",
+      start: {
+        dateTime: event.start_time,
+        timeZone: "UTC",
+      },
+      end: {
+        dateTime: event.end_time,
+        timeZone: "UTC",
+      },
+      colorId: getGoogleColorId(event.color),
+    };
+
+    const response = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(googleEvent),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to update event: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error updating Google Calendar event:", error);
+    throw error;
+  }
+}
+
+// Delete event from Google Calendar
+async function deleteGoogleCalendarEvent(accessToken: string, googleEventId: string) {
+  try {
+    const response = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok && response.status !== 410) { // 410 Gone means already deleted
+      throw new Error(`Failed to delete event: ${response.statusText}`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error deleting Google Calendar event:", error);
+    throw error;
+  }
+}
+
+// Map app color to Google Calendar colorId
+function getGoogleColorId(color: string): string {
+  // Google Calendar color IDs:
+  // 1: Blue, 2: Green, 3: Purple, 4: Red, 5: Yellow, 6: Orange, 7: Turquoise, 8: Gray, 9: Bold Blue, 10: Bold Green, 11: Bold Red
+  const colorMap: Record<string, string> = {
+    "#3b82f6": "1", // Blue
+    "#22c55e": "2", // Green
+    "#a855f7": "3", // Purple
+    "#ef4444": "4", // Red
+    "#eab308": "5", // Yellow
+    "#f97316": "6", // Orange
+    "#06b6d4": "7", // Cyan/Turquoise
+    "#6b7280": "8", // Gray
+  };
+
+  return colorMap[color] || "1"; // Default to blue
+}
+
 // Import Google Calendar events to Supabase
 async function importGoogleCalendarEvents(accessToken: string, email: string) {
   try {
@@ -68,6 +198,7 @@ async function importGoogleCalendarEvents(accessToken: string, email: string) {
           color: "#3b82f6", // Default blue color
           google_event_id: event.id,
           source: "google",
+          user: null, // Will be linked to user if authentication is implemented
         };
       });
 
@@ -110,14 +241,20 @@ async function importGoogleCalendarEvents(accessToken: string, email: string) {
   }
 }
 
+// Handler for HTTP requests
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   try {
-    const { action, origin, code, redirectUri, calendarId } = await req.json();
+    const { action, origin, code, redirectUri, calendarId, event, eventId } = await req.json();
 
     // Initialize the OAuth flow
     if (action === "init") {
       const state = generateRandomString(16);
-      const scope = encodeURIComponent("https://www.googleapis.com/auth/calendar.readonly email");
+      const scope = encodeURIComponent("https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events email");
       const redirectUri = `${origin}/api/google-calendar-callback`;
       
       const authUrl = 
@@ -131,7 +268,7 @@ serve(async (req) => {
         `prompt=consent`;
       
       return new Response(JSON.stringify({ authUrl, state }), {
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
@@ -214,7 +351,128 @@ serve(async (req) => {
           events_imported: importResult.count,
         }),
         {
-          headers: { "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
+    // Create a new event in Google Calendar
+    if (action === "createEvent") {
+      if (!event) {
+        throw new Error("Event data is required");
+      }
+
+      // Get the latest token for the user
+      const { data: tokenData, error: tokenError } = await supabase
+        .from("google_calendar_tokens")
+        .select("*")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (tokenError || !tokenData) {
+        throw new Error("No valid Google Calendar connection found");
+      }
+
+      // Create the event in Google Calendar
+      const googleEvent = await createGoogleCalendarEvent(tokenData.access_token, event);
+
+      // Update the local event with the Google Calendar ID
+      const { error: updateError } = await supabase
+        .from("events")
+        .update({
+          google_event_id: googleEvent.id,
+          source: "app_synced"
+        })
+        .eq("id", event.id);
+
+      if (updateError) {
+        throw new Error(`Failed to update event with Google Calendar ID: ${updateError.message}`);
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          google_event_id: googleEvent.id,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
+    // Update an event in Google Calendar
+    if (action === "updateEvent") {
+      if (!event || !event.google_event_id) {
+        throw new Error("Event data with Google Calendar ID is required");
+      }
+
+      // Get the latest token for the user
+      const { data: tokenData, error: tokenError } = await supabase
+        .from("google_calendar_tokens")
+        .select("*")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (tokenError || !tokenData) {
+        throw new Error("No valid Google Calendar connection found");
+      }
+
+      // Update the event in Google Calendar
+      await updateGoogleCalendarEvent(tokenData.access_token, event.google_event_id, event);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
+    // Delete an event from Google Calendar
+    if (action === "deleteEvent") {
+      if (!eventId) {
+        throw new Error("Event ID is required");
+      }
+
+      // Get the event details
+      const { data: eventData, error: eventError } = await supabase
+        .from("events")
+        .select("google_event_id")
+        .eq("id", eventId)
+        .single();
+
+      if (eventError || !eventData || !eventData.google_event_id) {
+        throw new Error("Event not found or not linked to Google Calendar");
+      }
+
+      // Get the latest token for the user
+      const { data: tokenData, error: tokenError } = await supabase
+        .from("google_calendar_tokens")
+        .select("*")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (tokenError || !tokenData) {
+        throw new Error("No valid Google Calendar connection found");
+      }
+
+      // Delete the event from Google Calendar
+      await deleteGoogleCalendarEvent(tokenData.access_token, eventData.google_event_id);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
         }
       );
@@ -274,7 +532,7 @@ serve(async (req) => {
           message: "Google Calendar disconnected successfully",
         }),
         {
-          headers: { "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
         }
       );
@@ -285,7 +543,7 @@ serve(async (req) => {
         error: "Invalid action",
       }),
       {
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       }
     );
@@ -296,7 +554,7 @@ serve(async (req) => {
         error: error.message,
       }),
       {
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
       }
     );

@@ -13,12 +13,14 @@ import { ListView } from "@/components/Calendar/ListView";
 import { EventDialog } from "@/components/Calendar/EventDialog";
 import { GoogleCalendarButton } from "@/components/Calendar/GoogleCalendarButton";
 import { getEvents } from "@/services/eventService";
+import { getConnectedCalendars } from "@/services/googleCalendarService";
 
 export default function Calendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [view, setView] = useState<"month" | "week" | "day" | "list">("month");
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
   const [events, setEvents] = useState([]);
+  const [hasGoogleCalendar, setHasGoogleCalendar] = useState(false);
   
   const fetchEvents = async () => {
     try {
@@ -29,8 +31,18 @@ export default function Calendar() {
     }
   };
 
+  const checkGoogleCalendar = async () => {
+    try {
+      const calendars = await getConnectedCalendars();
+      setHasGoogleCalendar(calendars.length > 0);
+    } catch (error) {
+      console.error("Error checking Google Calendar:", error);
+    }
+  };
+
   useEffect(() => {
     fetchEvents();
+    checkGoogleCalendar();
   }, []);
 
   const renderView = () => {
@@ -66,7 +78,7 @@ export default function Calendar() {
                   {date ? format(date, "EEEE, MMMM d, yyyy") : "Select a date"}
                 </CardTitle>
                 <div className="flex space-x-2">
-                  <GoogleCalendarButton />
+                  {!hasGoogleCalendar && <GoogleCalendarButton onSuccess={checkGoogleCalendar} />}
                   <Button size="sm" onClick={() => setEventDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Event

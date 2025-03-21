@@ -55,12 +55,12 @@ export function GoogleCalendarCallback() {
 
         // Success!
         setStatus("success");
-        setMessage(`Google Calendar connected successfully! ${data.events_imported} events imported.`);
+        setMessage(`Google Calendar connected successfully! ${data.events_imported} events imported. Your events will now be synced bidirectionally between the app and Google Calendar.`);
 
         // Show a toast notification
         toast({
           title: "Calendar Connected",
-          description: `Your Google Calendar has been connected and ${data.events_imported} events were imported.`,
+          description: `Your Google Calendar has been connected and ${data.events_imported} events were imported. Events will now sync both ways.`,
         });
 
         // After 3 seconds, redirect back to the calendar page

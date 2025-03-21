@@ -5,7 +5,11 @@ import { Calendar, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-export function GoogleCalendarButton() {
+interface GoogleCalendarButtonProps {
+  onSuccess?: () => void;
+}
+
+export function GoogleCalendarButton({ onSuccess }: GoogleCalendarButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -42,6 +46,7 @@ export function GoogleCalendarButton() {
       });
     } finally {
       setIsLoading(false);
+      if (onSuccess) onSuccess();
     }
   };
 

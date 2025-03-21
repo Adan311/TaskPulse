@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
+import { saveEventToGoogleCalendar, deleteEventFromGoogleCalendar } from "./googleCalendarService";
 
 export interface Event {
   id: string;
@@ -62,6 +63,14 @@ export async function createEvent(event: Omit<Event, "id">) {
     throw error;
   }
 
+  // Sync to Google Calendar if connected
+  try {
+    await saveEventToGoogleCalendar(data);
+  } catch (syncError) {
+    console.error("Error syncing to Google Calendar:", syncError);
+    // Continue even if sync fails
+  }
+
   return data;
 }
 
@@ -78,10 +87,26 @@ export async function updateEvent(id: string, event: Partial<Event>) {
     throw error;
   }
 
+  // Sync to Google Calendar if connected
+  try {
+    await saveEventToGoogleCalendar(data);
+  } catch (syncError) {
+    console.error("Error syncing to Google Calendar:", syncError);
+    // Continue even if sync fails
+  }
+
   return data;
 }
 
 export async function deleteEvent(id: string) {
+  // Delete from Google Calendar first if it's linked
+  try {
+    await deleteEventFromGoogleCalendar(id);
+  } catch (syncError) {
+    console.error("Error deleting from Google Calendar:", syncError);
+    // Continue even if sync fails
+  }
+
   const { error } = await supabase
     .from("events")
     .delete()

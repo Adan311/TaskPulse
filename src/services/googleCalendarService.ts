@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { Event } from "@/services/eventService";
 
 export interface GoogleCalendarTokens {
   id: string;
@@ -25,6 +26,12 @@ export async function getConnectedCalendars(): Promise<GoogleCalendarTokens[]> {
   return data || [];
 }
 
+// Check if user has Google Calendar connected
+export async function hasGoogleCalendarConnected(): Promise<boolean> {
+  const calendars = await getConnectedCalendars();
+  return calendars.length > 0;
+}
+
 // Sync events from Google Calendar
 export async function syncEventsFromGoogleCalendar() {
   try {
@@ -42,6 +49,68 @@ export async function syncEventsFromGoogleCalendar() {
     return data;
   } catch (error) {
     console.error("Error syncing Google Calendar events:", error);
+    throw error;
+  }
+}
+
+// Create or update an event in Google Calendar
+export async function saveEventToGoogleCalendar(event: Event): Promise<void> {
+  try {
+    // Check if we have a Google Calendar connected
+    const isConnected = await hasGoogleCalendarConnected();
+    if (!isConnected) {
+      return; // No Google Calendar connected, skip sync
+    }
+
+    const action = event.google_event_id ? "updateEvent" : "createEvent";
+
+    const { data, error } = await supabase.functions.invoke(
+      "google-calendar-auth",
+      {
+        body: { 
+          action,
+          event
+        },
+      }
+    );
+
+    if (error) {
+      throw new Error(`Failed to save event to Google Calendar: ${error.message}`);
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error saving event to Google Calendar:", error);
+    throw error;
+  }
+}
+
+// Delete an event from Google Calendar
+export async function deleteEventFromGoogleCalendar(eventId: string): Promise<void> {
+  try {
+    // Check if we have a Google Calendar connected
+    const isConnected = await hasGoogleCalendarConnected();
+    if (!isConnected) {
+      return; // No Google Calendar connected, skip sync
+    }
+
+    const { data, error } = await supabase.functions.invoke(
+      "google-calendar-auth",
+      {
+        body: { 
+          action: "deleteEvent",
+          eventId
+        },
+      }
+    );
+
+    if (error) {
+      throw new Error(`Failed to delete event from Google Calendar: ${error.message}`);
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error deleting event from Google Calendar:", error);
     throw error;
   }
 }
