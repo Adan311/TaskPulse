@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -11,10 +11,40 @@ interface GoogleCalendarButtonProps {
 
 export function GoogleCalendarButton({ onSuccess }: GoogleCalendarButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Get the current user when component mounts
+    const getCurrentUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    };
+
+    getCurrentUser();
+
+    // Set up auth state change listener
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, []);
 
   const handleGoogleCalendarConnect = async () => {
     try {
+      // Check if user is logged in
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Required",
+          description: "You need to be logged in to connect your Google Calendar.",
+        });
+        return;
+      }
+
       setIsLoading(true);
 
       // Get the current origin for the redirect URI
@@ -28,7 +58,8 @@ export function GoogleCalendarButton({ onSuccess }: GoogleCalendarButtonProps) {
         body: { 
           action: "init",
           origin,
-          redirectUri // Pass the exact redirect URI to ensure it matches
+          redirectUri, // Pass the exact redirect URI to ensure it matches
+          userId: user.id // Pass the user ID
         },
       });
 
@@ -38,6 +69,7 @@ export function GoogleCalendarButton({ onSuccess }: GoogleCalendarButtonProps) {
 
       // Store the state in localStorage for verification when the user returns
       localStorage.setItem("googleCalendarState", data.state);
+      localStorage.setItem("googleCalendarUserId", user.id);
 
       // Redirect the user to Google's authorization page
       window.location.href = data.authUrl;
@@ -57,7 +89,7 @@ export function GoogleCalendarButton({ onSuccess }: GoogleCalendarButtonProps) {
   return (
     <Button 
       onClick={handleGoogleCalendarConnect} 
-      disabled={isLoading}
+      disabled={isLoading || !user}
       variant="outline"
       className="flex items-center gap-2"
     >

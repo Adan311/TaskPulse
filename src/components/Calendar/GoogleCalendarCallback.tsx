@@ -37,8 +37,17 @@ export function GoogleCalendarCallback() {
           return;
         }
 
-        // Clear the state from localStorage
+        // Get the user ID we saved before the OAuth flow
+        const userId = localStorage.getItem("googleCalendarUserId");
+        if (!userId) {
+          setStatus("error");
+          setMessage("User ID not found. Please try again.");
+          return;
+        }
+
+        // Clear the state and userId from localStorage
         localStorage.removeItem("googleCalendarState");
+        localStorage.removeItem("googleCalendarUserId");
 
         // Exchange the authorization code for tokens
         const redirectUri = `${window.location.origin}/api/google-calendar-callback`;
@@ -48,6 +57,7 @@ export function GoogleCalendarCallback() {
             action: "callback",
             code,
             redirectUri,
+            userId
           },
         });
 

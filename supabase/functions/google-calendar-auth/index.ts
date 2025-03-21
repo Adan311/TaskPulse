@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
@@ -175,7 +176,7 @@ function getGoogleColorId(color: string): string {
 }
 
 // Import Google Calendar events to Supabase
-async function importGoogleCalendarEvents(accessToken: string, email: string) {
+async function importGoogleCalendarEvents(accessToken: string, email: string, userId: string) {
   try {
     // Get events from Google Calendar
     const googleEvents = await getGoogleCalendarEvents(accessToken);
@@ -197,7 +198,7 @@ async function importGoogleCalendarEvents(accessToken: string, email: string) {
           color: "#3b82f6", // Default blue color
           google_event_id: event.id,
           source: "google",
-          user: null, // Will be linked to user if authentication is implemented
+          user: userId, // Link to the authenticated user
         };
       });
 
@@ -210,6 +211,7 @@ async function importGoogleCalendarEvents(accessToken: string, email: string) {
       .from("events")
       .select("google_event_id")
       .eq("source", "google")
+      .eq("user", userId)
       .in(
         "google_event_id",
         eventsToInsert.map((e) => e.google_event_id)
@@ -240,6 +242,37 @@ async function importGoogleCalendarEvents(accessToken: string, email: string) {
   }
 }
 
+// Verify user exists
+async function verifyUser(userId: string) {
+  if (!userId) return false;
+  
+  const { data, error } = await supabase.auth.admin.getUserById(userId);
+  
+  if (error || !data.user) {
+    console.error("Error verifying user:", error);
+    return false;
+  }
+  
+  return true;
+}
+
+// Get the most recent token for a user
+async function getUserToken(userId: string) {
+  const { data, error } = await supabase
+    .from("google_calendar_tokens")
+    .select("*")
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .single();
+  
+  if (error) {
+    throw new Error(`No valid Google Calendar connection found for this user: ${error.message}`);
+  }
+  
+  return data;
+}
+
 // Handler for HTTP requests
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -248,10 +281,18 @@ serve(async (req) => {
   }
 
   try {
-    const { action, origin, redirectUri, code, calendarId, event, eventId } = await req.json();
+    const { action, origin, redirectUri, code, calendarId, event, eventId, userId } = await req.json();
 
     // Initialize the OAuth flow
     if (action === "init") {
+      // Verify user exists if userId is provided
+      if (userId) {
+        const userExists = await verifyUser(userId);
+        if (!userExists) {
+          throw new Error("Invalid user ID");
+        }
+      }
+      
       const state = generateRandomString(16);
       const scope = encodeURIComponent("https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events email");
       
@@ -280,6 +321,16 @@ serve(async (req) => {
     if (action === "callback") {
       if (!code) {
         throw new Error("Authorization code is required");
+      }
+      
+      if (!userId) {
+        throw new Error("User ID is required");
+      }
+      
+      // Verify user exists
+      const userExists = await verifyUser(userId);
+      if (!userExists) {
+        throw new Error("Invalid user ID");
       }
 
       // Exchange code for tokens
@@ -326,7 +377,7 @@ serve(async (req) => {
       const expiresAt = new Date();
       expiresAt.setSeconds(expiresAt.getSeconds() + tokens.expires_in);
 
-      // Store tokens in Supabase
+      // Store tokens in Supabase with the user_id
       const { error: tokenError } = await supabase
         .from("google_calendar_tokens")
         .upsert(
@@ -336,8 +387,9 @@ serve(async (req) => {
             refresh_token: tokens.refresh_token,
             expires_at: expiresAt.toISOString(),
             updated_at: new Date().toISOString(),
+            user_id: userId
           },
-          { onConflict: "email" }
+          { onConflict: "user_id,email" }
         );
 
       if (tokenError) {
@@ -345,7 +397,7 @@ serve(async (req) => {
       }
 
       // Import events from Google Calendar
-      const importResult = await importGoogleCalendarEvents(tokens.access_token, email);
+      const importResult = await importGoogleCalendarEvents(tokens.access_token, email, userId);
 
       return new Response(
         JSON.stringify({
@@ -365,18 +417,13 @@ serve(async (req) => {
       if (!event) {
         throw new Error("Event data is required");
       }
+      
+      if (!userId) {
+        throw new Error("User ID is required");
+      }
 
       // Get the latest token for the user
-      const { data: tokenData, error: tokenError } = await supabase
-        .from("google_calendar_tokens")
-        .select("*")
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (tokenError || !tokenData) {
-        throw new Error("No valid Google Calendar connection found");
-      }
+      const tokenData = await getUserToken(userId);
 
       // Create the event in Google Calendar
       const googleEvent = await createGoogleCalendarEvent(tokenData.access_token, event);
@@ -388,7 +435,8 @@ serve(async (req) => {
           google_event_id: googleEvent.id,
           source: "app_synced"
         })
-        .eq("id", event.id);
+        .eq("id", event.id)
+        .eq("user", userId);
 
       if (updateError) {
         throw new Error(`Failed to update event with Google Calendar ID: ${updateError.message}`);
@@ -411,18 +459,13 @@ serve(async (req) => {
       if (!event || !event.google_event_id) {
         throw new Error("Event data with Google Calendar ID is required");
       }
+      
+      if (!userId) {
+        throw new Error("User ID is required");
+      }
 
       // Get the latest token for the user
-      const { data: tokenData, error: tokenError } = await supabase
-        .from("google_calendar_tokens")
-        .select("*")
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (tokenError || !tokenData) {
-        throw new Error("No valid Google Calendar connection found");
-      }
+      const tokenData = await getUserToken(userId);
 
       // Update the event in Google Calendar
       await updateGoogleCalendarEvent(tokenData.access_token, event.google_event_id, event);
@@ -443,12 +486,17 @@ serve(async (req) => {
       if (!eventId) {
         throw new Error("Event ID is required");
       }
+      
+      if (!userId) {
+        throw new Error("User ID is required");
+      }
 
       // Get the event details
       const { data: eventData, error: eventError } = await supabase
         .from("events")
         .select("google_event_id")
         .eq("id", eventId)
+        .eq("user", userId)
         .single();
 
       if (eventError || !eventData || !eventData.google_event_id) {
@@ -456,16 +504,7 @@ serve(async (req) => {
       }
 
       // Get the latest token for the user
-      const { data: tokenData, error: tokenError } = await supabase
-        .from("google_calendar_tokens")
-        .select("*")
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (tokenError || !tokenData) {
-        throw new Error("No valid Google Calendar connection found");
-      }
+      const tokenData = await getUserToken(userId);
 
       // Delete the event from Google Calendar
       await deleteGoogleCalendarEvent(tokenData.access_token, eventData.google_event_id);
@@ -486,12 +525,17 @@ serve(async (req) => {
       if (!calendarId) {
         throw new Error("Calendar ID is required");
       }
+      
+      if (!userId) {
+        throw new Error("User ID is required");
+      }
 
       // Get the token from the database
       const { data: tokenData, error: tokenError } = await supabase
         .from("google_calendar_tokens")
         .select("access_token")
         .eq("id", calendarId)
+        .eq("user_id", userId)
         .single();
 
       if (tokenError || !tokenData) {
@@ -513,7 +557,8 @@ serve(async (req) => {
       const { error: deleteError } = await supabase
         .from("google_calendar_tokens")
         .delete()
-        .eq("id", calendarId);
+        .eq("id", calendarId)
+        .eq("user_id", userId);
 
       if (deleteError) {
         throw new Error(`Failed to delete token: ${deleteError.message}`);
@@ -523,7 +568,8 @@ serve(async (req) => {
       const { error: deleteEventsError } = await supabase
         .from("events")
         .delete()
-        .eq("source", "google");
+        .eq("source", "google")
+        .eq("user", userId);
 
       if (deleteEventsError) {
         throw new Error(`Failed to delete events: ${deleteEventsError.message}`);

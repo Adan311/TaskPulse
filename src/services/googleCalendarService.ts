@@ -10,13 +10,22 @@ export interface GoogleCalendarTokens {
   expires_at: string;
   created_at: string;
   updated_at: string;
+  user_id: string;
 }
 
-// Fetch the list of connected Google Calendars
+// Fetch the list of connected Google Calendars for the current user
 export async function getConnectedCalendars(): Promise<GoogleCalendarTokens[]> {
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("google_calendar_tokens")
-    .select("*");
+    .select("*")
+    .eq("user_id", user.id);
 
   if (error) {
     console.error("Error fetching connected calendars:", error);
@@ -35,10 +44,20 @@ export async function hasGoogleCalendarConnected(): Promise<boolean> {
 // Sync events from Google Calendar
 export async function syncEventsFromGoogleCalendar() {
   try {
+    // Get the current user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
     const { data, error } = await supabase.functions.invoke(
       "google-calendar-sync",
       {
-        body: { action: "sync" },
+        body: { 
+          action: "sync",
+          userId: user.id
+        },
       }
     );
 
@@ -62,6 +81,13 @@ export async function saveEventToGoogleCalendar(event: Event): Promise<void> {
       return; // No Google Calendar connected, skip sync
     }
 
+    // Get the current user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
     const action = event.google_event_id ? "updateEvent" : "createEvent";
 
     const { data, error } = await supabase.functions.invoke(
@@ -69,7 +95,8 @@ export async function saveEventToGoogleCalendar(event: Event): Promise<void> {
       {
         body: { 
           action,
-          event
+          event,
+          userId: user.id
         },
       }
     );
@@ -94,12 +121,20 @@ export async function deleteEventFromGoogleCalendar(eventId: string): Promise<vo
       return; // No Google Calendar connected, skip sync
     }
 
+    // Get the current user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
     const { data, error } = await supabase.functions.invoke(
       "google-calendar-auth",
       {
         body: { 
           action: "deleteEvent",
-          eventId
+          eventId,
+          userId: user.id
         },
       }
     );
@@ -118,10 +153,21 @@ export async function deleteEventFromGoogleCalendar(eventId: string): Promise<vo
 // Disconnect a Google Calendar
 export async function disconnectGoogleCalendar(calendarId: string) {
   try {
+    // Get the current user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
     const { error } = await supabase.functions.invoke(
       "google-calendar-auth",
       {
-        body: { action: "revoke", calendarId },
+        body: { 
+          action: "revoke", 
+          calendarId,
+          userId: user.id
+        },
       }
     );
 

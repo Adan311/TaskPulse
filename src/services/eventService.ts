@@ -17,9 +17,17 @@ export interface Event {
 }
 
 export async function getEvents() {
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("events")
     .select("*")
+    .eq("user", user.id)
     .order("start_time", { ascending: true });
 
   if (error) {
@@ -31,10 +39,18 @@ export async function getEvents() {
 }
 
 export async function getEventById(id: string) {
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
   const { data, error } = await supabase
     .from("events")
     .select("*")
     .eq("id", id)
+    .eq("user", user.id)
     .single();
 
   if (error) {
@@ -46,10 +62,18 @@ export async function getEventById(id: string) {
 }
 
 export async function createEvent(event: Omit<Event, "id">) {
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
   const newEvent = {
     ...event,
     id: uuidv4(),
-    source: "app"
+    source: "app",
+    user: user.id
   };
 
   const { data, error } = await supabase
@@ -75,10 +99,18 @@ export async function createEvent(event: Omit<Event, "id">) {
 }
 
 export async function updateEvent(id: string, event: Partial<Event>) {
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
   const { data, error } = await supabase
     .from("events")
     .update(event)
     .eq("id", id)
+    .eq("user", user.id)
     .select()
     .single();
 
@@ -99,6 +131,13 @@ export async function updateEvent(id: string, event: Partial<Event>) {
 }
 
 export async function deleteEvent(id: string) {
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
   // Delete from Google Calendar first if it's linked
   try {
     await deleteEventFromGoogleCalendar(id);
@@ -110,7 +149,8 @@ export async function deleteEvent(id: string) {
   const { error } = await supabase
     .from("events")
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .eq("user", user.id);
 
   if (error) {
     console.error("Error deleting event:", error);
@@ -121,10 +161,18 @@ export async function deleteEvent(id: string) {
 }
 
 export async function getGoogleCalendarEvents() {
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("events")
     .select("*")
     .eq("source", "google")
+    .eq("user", user.id)
     .order("start_time", { ascending: true });
 
   if (error) {

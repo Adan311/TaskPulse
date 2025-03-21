@@ -14,6 +14,7 @@ import { EventDialog } from "@/components/Calendar/EventDialog";
 import { GoogleCalendarButton } from "@/components/Calendar/GoogleCalendarButton";
 import { getEvents } from "@/services/eventService";
 import { getConnectedCalendars } from "@/services/googleCalendarService";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Calendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -21,9 +22,31 @@ export default function Calendar() {
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
   const [events, setEvents] = useState([]);
   const [hasGoogleCalendar, setHasGoogleCalendar] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  
+  useEffect(() => {
+    // Get the current user when component mounts
+    const getCurrentUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    };
+
+    getCurrentUser();
+
+    // Set up auth state change listener
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, []);
   
   const fetchEvents = async () => {
     try {
+      if (!user) return;
+      
       const data = await getEvents();
       setEvents(data);
     } catch (error) {
@@ -33,6 +56,11 @@ export default function Calendar() {
 
   const checkGoogleCalendar = async () => {
     try {
+      if (!user) {
+        setHasGoogleCalendar(false);
+        return;
+      }
+      
       const calendars = await getConnectedCalendars();
       setHasGoogleCalendar(calendars.length > 0);
     } catch (error) {
@@ -41,9 +69,11 @@ export default function Calendar() {
   };
 
   useEffect(() => {
-    fetchEvents();
-    checkGoogleCalendar();
-  }, []);
+    if (user) {
+      fetchEvents();
+      checkGoogleCalendar();
+    }
+  }, [user]);
 
   const renderView = () => {
     switch (view) {
@@ -78,15 +108,21 @@ export default function Calendar() {
                   {date ? format(date, "EEEE, MMMM d, yyyy") : "Select a date"}
                 </CardTitle>
                 <div className="flex space-x-2">
-                  {!hasGoogleCalendar && <GoogleCalendarButton onSuccess={checkGoogleCalendar} />}
-                  <Button size="sm" onClick={() => setEventDialogOpen(true)}>
+                  {!hasGoogleCalendar && user && <GoogleCalendarButton onSuccess={checkGoogleCalendar} />}
+                  <Button size="sm" onClick={() => setEventDialogOpen(true)} disabled={!user}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Event
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
-                {renderView()}
+                {!user ? (
+                  <div className="text-center p-6">
+                    <p className="text-muted-foreground">Please sign in to view and manage your calendar.</p>
+                  </div>
+                ) : (
+                  renderView()
+                )}
               </CardContent>
             </Card>
           </div>
