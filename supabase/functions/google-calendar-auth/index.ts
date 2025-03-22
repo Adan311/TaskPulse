@@ -178,8 +178,11 @@ function getGoogleColorId(color: string): string {
 // Import Google Calendar events to Supabase
 async function importGoogleCalendarEvents(accessToken: string, email: string, userId: string) {
   try {
+    console.log(`Importing events for user ${userId} with email ${email}`);
+    
     // Get events from Google Calendar
     const googleEvents = await getGoogleCalendarEvents(accessToken);
+    console.log(`Found ${googleEvents.length} events in Google Calendar`);
     
     // Transform Google Calendar events to our format
     const eventsToInsert = googleEvents
@@ -203,11 +206,12 @@ async function importGoogleCalendarEvents(accessToken: string, email: string, us
       });
 
     if (eventsToInsert.length === 0) {
+      console.log("No events to insert");
       return { count: 0 };
     }
 
     // First, check for existing Google Calendar events to avoid duplicates
-    const { data: existingEvents } = await supabase
+    const { data: existingEvents, error: queryError } = await supabase
       .from("events")
       .select("google_event_id")
       .eq("source", "google")
@@ -216,14 +220,22 @@ async function importGoogleCalendarEvents(accessToken: string, email: string, us
         "google_event_id",
         eventsToInsert.map((e) => e.google_event_id)
       );
+    
+    if (queryError) {
+      console.error("Error querying existing events:", queryError);
+      throw queryError;
+    }
 
     const existingEventIds = new Set(existingEvents?.map((e) => e.google_event_id) || []);
+    console.log(`Found ${existingEventIds.size} existing events`);
     
     // Filter out events that already exist
     const newEvents = eventsToInsert.filter(
       (event) => !existingEventIds.has(event.google_event_id)
     );
 
+    console.log(`Inserting ${newEvents.length} new events`);
+    
     if (newEvents.length === 0) {
       return { count: 0 };
     }
@@ -232,6 +244,7 @@ async function importGoogleCalendarEvents(accessToken: string, email: string, us
     const { error } = await supabase.from("events").insert(newEvents);
 
     if (error) {
+      console.error("Error inserting events:", error);
       throw error;
     }
 
@@ -244,20 +257,31 @@ async function importGoogleCalendarEvents(accessToken: string, email: string, us
 
 // Verify user exists
 async function verifyUser(userId: string) {
-  if (!userId) return false;
-  
-  const { data, error } = await supabase.auth.admin.getUserById(userId);
-  
-  if (error || !data.user) {
-    console.error("Error verifying user:", error);
+  if (!userId) {
+    console.log("No user ID provided");
     return false;
   }
   
-  return true;
+  try {
+    const { data, error } = await supabase.auth.admin.getUserById(userId);
+    
+    if (error || !data.user) {
+      console.error("Error verifying user:", error);
+      return false;
+    }
+    
+    console.log(`User verified: ${data.user.id}`);
+    return true;
+  } catch (error) {
+    console.error("Exception verifying user:", error);
+    return false;
+  }
 }
 
 // Get the most recent token for a user
 async function getUserToken(userId: string) {
+  console.log(`Getting token for user ${userId}`);
+  
   const { data, error } = await supabase
     .from("google_calendar_tokens")
     .select("*")
@@ -267,6 +291,7 @@ async function getUserToken(userId: string) {
     .single();
   
   if (error) {
+    console.error(`Error getting token: ${error.message}`);
     throw new Error(`No valid Google Calendar connection found for this user: ${error.message}`);
   }
   
@@ -275,16 +300,37 @@ async function getUserToken(userId: string) {
 
 // Handler for HTTP requests
 serve(async (req) => {
+  // Log the request method and path
+  console.log(`Request: ${req.method} ${new URL(req.url).pathname}`);
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { action, origin, redirectUri, code, calendarId, event, eventId, userId } = await req.json();
+    let requestData;
+    
+    try {
+      requestData = await req.json();
+      console.log("Request data:", JSON.stringify(requestData));
+    } catch (e) {
+      console.error("Error parsing request body:", e);
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON in request body" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+    
+    const { action, origin, redirectUri, code, calendarId, event, eventId, userId } = requestData;
 
     // Initialize the OAuth flow
     if (action === "init") {
+      console.log("Initializing OAuth flow");
+      
       // Verify user exists if userId is provided
       if (userId) {
         const userExists = await verifyUser(userId);
@@ -319,6 +365,8 @@ serve(async (req) => {
     
     // Handle the OAuth callback
     if (action === "callback") {
+      console.log("Processing OAuth callback");
+      
       if (!code) {
         throw new Error("Authorization code is required");
       }
@@ -333,6 +381,8 @@ serve(async (req) => {
         throw new Error("Invalid user ID");
       }
 
+      console.log("Exchanging code for tokens");
+      
       // Exchange code for tokens
       const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
         method: "POST",
@@ -349,13 +399,23 @@ serve(async (req) => {
       });
 
       if (!tokenResponse.ok) {
-        const errorData = await tokenResponse.json();
-        throw new Error(`Failed to exchange code for tokens: ${JSON.stringify(errorData)}`);
+        const errorText = await tokenResponse.text();
+        console.error("Token exchange error response:", errorText);
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          throw new Error(`Failed to exchange code for tokens: ${JSON.stringify(errorData)}`);
+        } catch (e) {
+          throw new Error(`Failed to exchange code for tokens: ${errorText}`);
+        }
       }
 
       const tokens = await tokenResponse.json();
+      console.log("Got tokens:", tokens.access_token ? "Access token received" : "No access token", 
+                               tokens.refresh_token ? "Refresh token received" : "No refresh token");
       
       // Get user email from Google
+      console.log("Getting user info from Google");
       const userInfoResponse = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
         headers: {
           Authorization: `Bearer ${tokens.access_token}`,
@@ -363,11 +423,15 @@ serve(async (req) => {
       });
 
       if (!userInfoResponse.ok) {
-        throw new Error("Failed to get user information");
+        const errorText = await userInfoResponse.text();
+        console.error("User info error:", errorText);
+        throw new Error(`Failed to get user information: ${errorText}`);
       }
 
       const userInfo = await userInfoResponse.json();
       const email = userInfo.email;
+
+      console.log(`Got user email: ${email}`);
 
       if (!email) {
         throw new Error("Failed to get user email");
@@ -376,6 +440,8 @@ serve(async (req) => {
       // Calculate token expiration
       const expiresAt = new Date();
       expiresAt.setSeconds(expiresAt.getSeconds() + tokens.expires_in);
+      
+      console.log(`Storing tokens for user ${userId} with email ${email}`);
 
       // Store tokens in Supabase with the user_id
       const { error: tokenError } = await supabase
@@ -393,11 +459,14 @@ serve(async (req) => {
         );
 
       if (tokenError) {
+        console.error("Error storing tokens:", tokenError);
         throw new Error(`Failed to store tokens: ${tokenError.message}`);
       }
 
       // Import events from Google Calendar
+      console.log("Importing events from Google Calendar");
       const importResult = await importGoogleCalendarEvents(tokens.access_token, email, userId);
+      console.log(`Imported ${importResult.count} events`);
 
       return new Response(
         JSON.stringify({
@@ -414,6 +483,8 @@ serve(async (req) => {
 
     // Create a new event in Google Calendar
     if (action === "createEvent") {
+      console.log("Creating event in Google Calendar");
+      
       if (!event) {
         throw new Error("Event data is required");
       }
@@ -439,6 +510,7 @@ serve(async (req) => {
         .eq("user", userId);
 
       if (updateError) {
+        console.error("Error updating event:", updateError);
         throw new Error(`Failed to update event with Google Calendar ID: ${updateError.message}`);
       }
 
@@ -456,6 +528,8 @@ serve(async (req) => {
 
     // Update an event in Google Calendar
     if (action === "updateEvent") {
+      console.log("Updating event in Google Calendar");
+      
       if (!event || !event.google_event_id) {
         throw new Error("Event data with Google Calendar ID is required");
       }
@@ -483,6 +557,8 @@ serve(async (req) => {
 
     // Delete an event from Google Calendar
     if (action === "deleteEvent") {
+      console.log("Deleting event from Google Calendar");
+      
       if (!eventId) {
         throw new Error("Event ID is required");
       }
@@ -500,6 +576,7 @@ serve(async (req) => {
         .single();
 
       if (eventError || !eventData || !eventData.google_event_id) {
+        console.error("Error getting event details:", eventError);
         throw new Error("Event not found or not linked to Google Calendar");
       }
 
@@ -522,6 +599,8 @@ serve(async (req) => {
 
     // Revoke access to Google Calendar
     if (action === "revoke") {
+      console.log("Revoking Google Calendar access");
+      
       if (!calendarId) {
         throw new Error("Calendar ID is required");
       }
@@ -539,6 +618,7 @@ serve(async (req) => {
         .single();
 
       if (tokenError || !tokenData) {
+        console.error("Error getting token for revocation:", tokenError);
         throw new Error("Failed to retrieve token");
       }
 
@@ -561,6 +641,7 @@ serve(async (req) => {
         .eq("user_id", userId);
 
       if (deleteError) {
+        console.error("Error deleting token:", deleteError);
         throw new Error(`Failed to delete token: ${deleteError.message}`);
       }
 
@@ -572,6 +653,7 @@ serve(async (req) => {
         .eq("user", userId);
 
       if (deleteEventsError) {
+        console.error("Error deleting events:", deleteEventsError);
         throw new Error(`Failed to delete events: ${deleteEventsError.message}`);
       }
 
@@ -587,6 +669,7 @@ serve(async (req) => {
       );
     }
 
+    console.error(`Invalid action: ${action}`);
     return new Response(
       JSON.stringify({
         error: "Invalid action",
@@ -597,10 +680,12 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Error:", error.message);
+    console.error("Error in edge function:", error.message, error.stack);
+    
     return new Response(
       JSON.stringify({
         error: error.message,
+        stack: error.stack,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

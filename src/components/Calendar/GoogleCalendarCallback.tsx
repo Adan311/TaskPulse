@@ -6,11 +6,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, CheckCircle2, XCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export function GoogleCalendarCallback() {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("Processing your Google Calendar authorization...");
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -22,6 +24,12 @@ export function GoogleCalendarCallback() {
         const code = urlParams.get("code");
         const state = urlParams.get("state");
         const error = urlParams.get("error");
+
+        console.log("Callback params:", { 
+          code: code ? "present" : "missing", 
+          state: state || "missing", 
+          error: error || "none" 
+        });
 
         // Check if there was an error or if code is missing
         if (error || !code) {
@@ -56,7 +64,11 @@ export function GoogleCalendarCallback() {
         // Exchange the authorization code for tokens
         const redirectUri = `${window.location.origin}/api/google-calendar-callback`;
         
-        console.log("Calling edge function with:", { code, redirectUri, userId });
+        console.log("Calling edge function with:", { 
+          code: "present", 
+          redirectUri,
+          userId 
+        });
         
         const { data, error: callbackError } = await supabase.functions.invoke("google-calendar-auth", {
           body: {
@@ -96,7 +108,21 @@ export function GoogleCalendarCallback() {
         console.error("Error processing Google Calendar callback:", error);
         setStatus("error");
         setMessage(`An error occurred while connecting to Google Calendar: ${error.message}`);
-        setErrorDetails(error.stack || "No stack trace available");
+        
+        // Store more detailed error information for debugging
+        if (error.stack) {
+          setErrorDetails(error.stack);
+        }
+        
+        // If the error has response data, show it for debugging
+        if (error.response) {
+          try {
+            const responseData = await error.response.text();
+            setDebugInfo(responseData);
+          } catch (e) {
+            setDebugInfo("Could not parse error response");
+          }
+        }
         
         toast({
           variant: "destructive",
@@ -127,11 +153,29 @@ export function GoogleCalendarCallback() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">{message}</p>
+          
           {errorDetails && (
-            <div className="bg-muted p-3 rounded-md overflow-auto text-xs max-h-40">
-              <pre>{errorDetails}</pre>
-            </div>
+            <Alert variant="destructive">
+              <AlertTitle>Error Details</AlertTitle>
+              <AlertDescription>
+                <div className="bg-muted p-3 rounded-md overflow-auto text-xs max-h-40">
+                  <pre>{errorDetails}</pre>
+                </div>
+              </AlertDescription>
+            </Alert>
           )}
+          
+          {debugInfo && (
+            <Alert>
+              <AlertTitle>Debug Information</AlertTitle>
+              <AlertDescription>
+                <div className="bg-muted p-3 rounded-md overflow-auto text-xs max-h-40">
+                  <pre>{debugInfo}</pre>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+          
           {status !== "loading" && (
             <Button 
               className="w-full" 
