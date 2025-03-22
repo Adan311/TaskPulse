@@ -28,9 +28,19 @@ export const fetchTasks = async (): Promise<Task[]> => {
 };
 
 export const createTask = async (task: Omit<Task, "id" | "user">): Promise<Task> => {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  
+  if (userError) {
+    console.error("Error getting user:", userError);
+    throw userError;
+  }
+  
+  const user = userData?.user;
+  
   const newTask = {
     id: uuidv4(),
     ...task,
+    user: user?.id,
   };
 
   const { data, error } = await supabase.from("tasks").insert([newTask]).select();

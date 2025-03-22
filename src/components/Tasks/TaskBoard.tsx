@@ -23,6 +23,7 @@ export function TaskBoard() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
   const { toast } = useToast();
 
   const columns = [
@@ -32,6 +33,13 @@ export function TaskBoard() {
   ];
 
   useEffect(() => {
+    // Check for authenticated user
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    };
+    
+    checkUser();
     loadTasks();
 
     // Subscribe to realtime updates
@@ -182,6 +190,19 @@ export function TaskBoard() {
       handleCreateTask(taskData);
     }
   };
+
+  // If no user is logged in, show login message
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center p-6 h-64">
+        <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
+        <p className="text-muted-foreground mb-4">Please sign in to view and manage your tasks.</p>
+        <Button asChild>
+          <a href="/auth/SignIn">Sign In</a>
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4">
