@@ -37,11 +37,17 @@ export const createTask = async (task: Omit<Task, "id" | "user">): Promise<Task>
   
   const user = userData?.user;
   
+  // Log the user ID for debugging
+  console.log("Creating task with user ID:", user?.id);
+  
   const newTask = {
     id: uuidv4(),
     ...task,
     user: user?.id,
   };
+
+  // Log the complete task object being inserted
+  console.log("Task being inserted:", newTask);
 
   const { data, error } = await supabase.from("tasks").insert([newTask]).select();
 
