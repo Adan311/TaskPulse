@@ -40,16 +40,20 @@ export const createTask = async (task: Omit<Task, "id" | "user">): Promise<Task>
   // Log the user ID for debugging
   console.log("Creating task with user ID:", user?.id);
   
+  // Make sure the user ID is properly formatted for the UUID type in PostgreSQL
   const newTask = {
     id: uuidv4(),
     ...task,
-    user: user?.id,
+    user: user?.id || null,
   };
 
   // Log the complete task object being inserted
   console.log("Task being inserted:", newTask);
 
-  const { data, error } = await supabase.from("tasks").insert([newTask]).select();
+  const { data, error } = await supabase
+    .from("tasks")
+    .insert([newTask])
+    .select();
 
   if (error) {
     console.error("Error creating task:", error);
