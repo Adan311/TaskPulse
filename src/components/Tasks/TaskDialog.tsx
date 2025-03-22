@@ -42,7 +42,7 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
   const [description, setDescription] = useState(task?.description || "");
   const [status, setStatus] = useState<Task["status"]>(task?.status || "todo");
   const [priority, setPriority] = useState(task?.priority || "medium");
-  const [projectId, setProjectId] = useState(task?.project || "");
+  const [projectId, setProjectId] = useState(task?.project || "none");
   const [projects, setProjects] = useState<Project[]>([]);
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
       setDescription(task?.description || "");
       setStatus(task?.status || "todo");
       setPriority(task?.priority || "medium");
-      setProjectId(task?.project || "");
+      setProjectId(task?.project || "none");
       fetchProjects();
     }
   }, [open, task]);
@@ -91,7 +91,7 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
       description,
       status,
       priority,
-      project: projectId || null,
+      project: projectId === "none" ? null : projectId,
     };
 
     onSave(taskData);
@@ -172,7 +172,7 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
                   <SelectValue placeholder="Select project" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {projects.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.name}
