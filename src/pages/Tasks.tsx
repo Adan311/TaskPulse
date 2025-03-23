@@ -4,16 +4,33 @@ import { TaskBoard } from "@/components/Tasks/TaskBoard";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { AppLayout } from "@/components/AppLayout";
+import { useToast } from "@/hooks/use-toast";
 
 const Tasks = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
-      setLoading(false);
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Session error:", error);
+          toast({
+            title: "Authentication error",
+            description: "Failed to get user session",
+            variant: "destructive",
+          });
+        }
+        
+        setUser(data.session?.user || null);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error checking user:", error);
+        setLoading(false);
+      }
     };
     
     checkUser();
@@ -21,6 +38,7 @@ const Tasks = () => {
     // Set up auth state listener
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.id);
         setUser(session?.user || null);
       }
     );
@@ -28,7 +46,7 @@ const Tasks = () => {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [toast]);
 
   if (loading) {
     return (

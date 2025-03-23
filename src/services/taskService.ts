@@ -14,9 +14,31 @@ export interface Task {
 }
 
 export const fetchTasks = async (): Promise<Task[]> => {
+  // Get the current user session
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  
+  if (sessionError) {
+    console.error("Error getting session:", sessionError);
+    throw sessionError;
+  }
+  
+  // Extract the user ID from the session data
+  const userId = sessionData?.session?.user?.id;
+  
+  // Debug logging for troubleshooting
+  console.log("Session data when fetching tasks:", sessionData);
+  console.log("Fetching tasks for user ID:", userId);
+  
+  if (!userId) {
+    console.error("No authenticated user found when fetching tasks");
+    return []; // Return empty array if not authenticated instead of throwing
+  }
+
+  // Query tasks for the current user only
   const { data, error } = await supabase
     .from("tasks")
     .select("*")
+    .eq("user", userId)
     .order("title");
 
   if (error) {
