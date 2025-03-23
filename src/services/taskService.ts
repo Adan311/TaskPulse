@@ -28,26 +28,34 @@ export const fetchTasks = async (): Promise<Task[]> => {
 };
 
 export const createTask = async (task: Omit<Task, "id" | "user">): Promise<Task> => {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+  // Get current user session
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
   
-  if (userError) {
-    console.error("Error getting user:", userError);
-    throw userError;
+  if (sessionError) {
+    console.error("Error getting session:", sessionError);
+    throw sessionError;
   }
   
-  const user = userData?.user;
+  // Extract the user ID from the session data
+  const userId = sessionData?.session?.user?.id;
   
-  // Log the user ID for debugging
-  console.log("Creating task with user ID:", user?.id);
+  // Debug logging for troubleshooting
+  console.log("Session data:", sessionData);
+  console.log("Creating task with user ID:", userId);
   
-  // Make sure the user ID is properly formatted for the UUID type in PostgreSQL
+  if (!userId) {
+    console.error("No authenticated user found");
+    throw new Error("User must be authenticated to create tasks");
+  }
+  
+  // Create the new task with a UUID and the proper user ID
   const newTask = {
     id: uuidv4(),
     ...task,
-    user: user?.id || null,
+    user: userId,
   };
 
-  // Log the complete task object being inserted
+  // Log the task to be inserted
   console.log("Task being inserted:", newTask);
 
   const { data, error } = await supabase
