@@ -58,9 +58,18 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
 
   const fetchProjects = async () => {
     try {
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        console.log("No authenticated user found when fetching projects");
+        return;
+      }
+      
       const { data, error } = await supabase
         .from("projects")
-        .select("id, name");
+        .select("id, name")
+        .eq("user", user.id);
       
       if (error) throw error;
       setProjects(data || []);

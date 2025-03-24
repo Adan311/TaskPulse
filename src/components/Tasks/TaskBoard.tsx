@@ -35,8 +35,8 @@ export function TaskBoard() {
   useEffect(() => {
     // Check for authenticated user
     const checkUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
     };
     
     checkUser();

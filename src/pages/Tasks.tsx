@@ -14,18 +14,18 @@ const Tasks = () => {
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.getUser();
         
         if (error) {
-          console.error("Session error:", error);
+          console.error("User error:", error);
           toast({
             title: "Authentication error",
-            description: "Failed to get user session",
+            description: "Failed to get user information",
             variant: "destructive",
           });
         }
         
-        setUser(data.session?.user || null);
+        setUser(data.user);
         setLoading(false);
       } catch (error) {
         console.error("Error checking user:", error);

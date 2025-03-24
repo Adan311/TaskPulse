@@ -14,31 +14,19 @@ export interface Task {
 }
 
 export const fetchTasks = async (): Promise<Task[]> => {
-  // Get the current user session
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser();
   
-  if (sessionError) {
-    console.error("Error getting session:", sessionError);
-    throw sessionError;
-  }
-  
-  // Extract the user ID from the session data
-  const userId = sessionData?.session?.user?.id;
-  
-  // Debug logging for troubleshooting
-  console.log("Session data when fetching tasks:", sessionData);
-  console.log("Fetching tasks for user ID:", userId);
-  
-  if (!userId) {
-    console.error("No authenticated user found when fetching tasks");
-    return []; // Return empty array if not authenticated instead of throwing
+  if (!user) {
+    console.log("No authenticated user found when fetching tasks");
+    return []; // Return empty array if not authenticated
   }
 
   // Query tasks for the current user only
   const { data, error } = await supabase
     .from("tasks")
     .select("*")
-    .eq("user", userId)
+    .eq("user", user.id)
     .order("title");
 
   if (error) {
@@ -50,22 +38,10 @@ export const fetchTasks = async (): Promise<Task[]> => {
 };
 
 export const createTask = async (task: Omit<Task, "id" | "user">): Promise<Task> => {
-  // Get current user session
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser();
   
-  if (sessionError) {
-    console.error("Error getting session:", sessionError);
-    throw sessionError;
-  }
-  
-  // Extract the user ID from the session data
-  const userId = sessionData?.session?.user?.id;
-  
-  // Debug logging for troubleshooting
-  console.log("Session data:", sessionData);
-  console.log("Creating task with user ID:", userId);
-  
-  if (!userId) {
+  if (!user) {
     console.error("No authenticated user found");
     throw new Error("User must be authenticated to create tasks");
   }
@@ -74,7 +50,7 @@ export const createTask = async (task: Omit<Task, "id" | "user">): Promise<Task>
   const newTask = {
     id: uuidv4(),
     ...task,
-    user: userId,
+    user: user.id,
   };
 
   // Log the task to be inserted
@@ -94,10 +70,19 @@ export const createTask = async (task: Omit<Task, "id" | "user">): Promise<Task>
 };
 
 export const updateTask = async (task: Partial<Task> & { id: string }): Promise<void> => {
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    console.error("No authenticated user found");
+    throw new Error("User must be authenticated to update tasks");
+  }
+
   const { error } = await supabase
     .from("tasks")
     .update(task)
-    .eq("id", task.id);
+    .eq("id", task.id)
+    .eq("user", user.id);
 
   if (error) {
     console.error("Error updating task:", error);
@@ -106,10 +91,19 @@ export const updateTask = async (task: Partial<Task> & { id: string }): Promise<
 };
 
 export const deleteTask = async (taskId: string): Promise<void> => {
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    console.error("No authenticated user found");
+    throw new Error("User must be authenticated to delete tasks");
+  }
+
   const { error } = await supabase
     .from("tasks")
     .delete()
-    .eq("id", taskId);
+    .eq("id", taskId)
+    .eq("user", user.id);
 
   if (error) {
     console.error("Error deleting task:", error);
