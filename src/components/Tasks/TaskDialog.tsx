@@ -44,6 +44,7 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
   const [priority, setPriority] = useState(task?.priority || "medium");
   const [projectId, setProjectId] = useState(task?.project || "none");
   const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -58,11 +59,13 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
 
   const fetchProjects = async () => {
     try {
+      setLoading(true);
       // Get the current user
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
         console.log("No authenticated user found when fetching projects");
+        setProjects([]);
         return;
       }
       
@@ -80,6 +83,8 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
         description: "Failed to load projects",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -177,8 +182,8 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
                 Project
               </Label>
               <Select value={projectId} onValueChange={(value) => setProjectId(value)}>
-                <SelectTrigger className="col-span-4">
-                  <SelectValue placeholder="Select project" />
+                <SelectTrigger className="col-span-4" disabled={loading}>
+                  <SelectValue placeholder={loading ? "Loading projects..." : "Select project"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">None</SelectItem>

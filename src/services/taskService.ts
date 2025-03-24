@@ -56,6 +56,12 @@ export const createTask = async (task: Omit<Task, "id" | "user">): Promise<Task>
   // Log the task to be inserted
   console.log("Task being inserted:", newTask);
 
+  // Ensure the user ID is correctly set as a UUID before inserting
+  if (!newTask.user || typeof newTask.user !== 'string' || newTask.user === 'authenticated') {
+    console.error("Invalid user ID:", newTask.user);
+    throw new Error("Invalid user ID for task creation");
+  }
+
   const { data, error } = await supabase
     .from("tasks")
     .insert([newTask])

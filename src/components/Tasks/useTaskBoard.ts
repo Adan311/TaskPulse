@@ -73,6 +73,12 @@ export function useTaskBoard() {
 
   const handleCreateTask = async (taskData: Omit<Task, 'id' | 'user'>) => {
     try {
+      // Verify user authentication before attempting to create task
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("You must be logged in to create tasks");
+      }
+      
       await createTask(taskData);
       toast({
         title: 'Success',
@@ -82,7 +88,7 @@ export function useTaskBoard() {
       console.error('Error creating task:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create task',
+        description: error instanceof Error ? error.message : 'Failed to create task',
         variant: 'destructive',
       });
     }
@@ -104,7 +110,7 @@ export function useTaskBoard() {
       console.error('Error updating task:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update task',
+        description: error instanceof Error ? error.message : 'Failed to update task',
         variant: 'destructive',
       });
     }
@@ -121,7 +127,7 @@ export function useTaskBoard() {
       console.error('Error deleting task:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete task',
+        description: error instanceof Error ? error.message : 'Failed to delete task',
         variant: 'destructive',
       });
     }
