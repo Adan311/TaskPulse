@@ -3,7 +3,8 @@ import { supabase } from '../client/supabase';
 import { v4 as uuidv4 } from "uuid";
 import { Task } from "@/backend/types/supabaseSchema";
 
-export { Task };
+// Re-export the Task interface using export type for TypeScript isolatedModules
+export type { Task };
 
 export const fetchTasks = async (): Promise<Task[]> => {
   // Get the current user

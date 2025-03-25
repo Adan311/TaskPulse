@@ -1,6 +1,6 @@
 
 import { Draggable } from 'react-beautiful-dnd';
-import { Task } from '@/backend/api/services/task.service';
+import { Task } from '@/backend/types/supabaseSchema';
 import { TaskCard } from './TaskCard';
 
 interface TaskListProps {
