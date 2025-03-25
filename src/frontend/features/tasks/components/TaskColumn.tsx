@@ -1,9 +1,9 @@
 
 import { Droppable } from 'react-beautiful-dnd';
+import { Task } from '@/backend/api/services/task.service';
 import { ScrollArea } from '@/frontend/components/ui/scroll-area';
-import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/frontend/components/ui/card';
 import { TaskList } from './TaskList';
-import { Task } from '@/backend/types/supabaseSchema';
 
 interface TaskColumnProps {
   id: string;
@@ -14,30 +14,38 @@ interface TaskColumnProps {
 }
 
 export function TaskColumn({ id, title, tasks, onEdit, onDelete }: TaskColumnProps) {
+  // Filter tasks for this column
+  const filteredTasks = tasks.filter(task => task.status === id);
+  
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
+    <Card className="h-full">
+      <CardHeader className="p-4 pb-2">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="font-medium text-sm">{title}</h3>
+          <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-xs font-medium">
+            {filteredTasks.length}
+          </span>
+        </div>
       </CardHeader>
-      <CardContent>
-        <Droppable droppableId={id}>
-          {(provided) => (
-            <ScrollArea className="h-[calc(100vh-300px)]">
+      <CardContent className="p-2">
+        <ScrollArea className="h-[calc(100vh-300px)] pr-4">
+          <Droppable droppableId={id}>
+            {(provided) => (
               <div
                 {...provided.droppableProps}
                 ref={provided.innerRef}
-                className="space-y-4"
+                className="min-h-[200px]"
               >
-                <TaskList 
-                  tasks={tasks.filter((task) => task.status === id)} 
+                <TaskList
+                  tasks={filteredTasks}
                   onEdit={onEdit}
                   onDelete={onDelete}
                 />
                 {provided.placeholder}
               </div>
-            </ScrollArea>
-          )}
-        </Droppable>
+            )}
+          </Droppable>
+        </ScrollArea>
       </CardContent>
     </Card>
   );
