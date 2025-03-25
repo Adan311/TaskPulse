@@ -21,14 +21,15 @@ export interface Database {
   };
 }
 
+// Unified Task interface to be used throughout the application
 export interface Task {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   status: "todo" | "in-progress" | "done";
   project?: string | null;
   due_date?: string | null;
-  priority?: string | null;
+  priority?: "low" | "medium" | "high" | string | null;
   user?: string | null;
 }
 

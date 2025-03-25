@@ -1,7 +1,7 @@
 
 import { DragDropContext, DropResult } from 'react-beautiful-dnd';
 import { TaskColumn } from './TaskColumn';
-import { Task } from '@/backend/types/supabaseSchema';
+import { Task } from '@/backend/api/services/task.service';
 
 interface TaskColumnsContainerProps {
   tasks: Task[];

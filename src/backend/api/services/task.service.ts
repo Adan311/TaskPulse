@@ -1,17 +1,9 @@
 
 import { supabase } from '../client/supabase';
 import { v4 as uuidv4 } from "uuid";
+import { Task } from "@/backend/types/supabaseSchema";
 
-// Export the Task type so it can be imported by other files
-export interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  status: "todo" | "in-progress" | "done";
-  priority?: "low" | "medium" | "high";
-  project?: string;
-  user: string;
-}
+export { Task };
 
 export const fetchTasks = async (): Promise<Task[]> => {
   // Get the current user

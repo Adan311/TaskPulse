@@ -4,6 +4,7 @@ import { TaskBoardHeader } from './TaskBoardHeader';
 import { TaskColumnsContainer } from './TaskColumnsContainer';
 import { TaskBoardLoader } from './TaskBoardLoader';
 import { useTaskBoard } from '../hooks/useTaskBoard';
+import { Task } from '@/backend/api/services/task.service';
 
 export function TaskBoard() {
   const {
@@ -51,10 +52,10 @@ export function TaskBoard() {
       )}
 
       <TaskDialog
-        task={selectedTask}
+        task={selectedTask as any}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        onSave={handleSaveTask}
+        onSave={handleSaveTask as any}
       />
     </div>
   );
