@@ -8,6 +8,7 @@ export interface Task {
   status: 'todo' | 'in-progress' | 'done';
   priority: 'low' | 'medium' | 'high';
   due_date?: string;
+  project?: string | null;
   user_id: string;
   created_at: string;
   updated_at: string;

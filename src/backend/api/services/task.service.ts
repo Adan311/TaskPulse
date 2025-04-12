@@ -25,6 +25,7 @@ export async function fetchTasks(): Promise<Task[]> {
     status: (task.status || 'todo') as Task['status'],
     priority: (task.priority || 'medium') as Task['priority'],
     due_date: task.due_date,
+    project: task.project,
     user_id: task.user || '',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
@@ -67,6 +68,7 @@ export async function createTask(taskData: Omit<Task, 'id' | 'user_id' | 'create
     status: (data.status || 'todo') as Task['status'],
     priority: (data.priority || 'medium') as Task['priority'],
     due_date: data.due_date,
+    project: data.project,
     user_id: data.user || userData.user.id,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
@@ -107,6 +109,7 @@ export async function updateTask(taskData: Partial<Task> & { id: string }): Prom
     status: (data.status || 'todo') as Task['status'],
     priority: (data.priority || 'medium') as Task['priority'],
     due_date: data.due_date,
+    project: data.project,
     user_id: data.user || '',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
@@ -146,6 +149,7 @@ export async function updateTaskStatus(taskId: string, status: Task['status']): 
     status: (data.status || 'todo') as Task['status'],
     priority: (data.priority || 'medium') as Task['priority'],
     due_date: data.due_date,
+    project: data.project,
     user_id: data.user || '',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
