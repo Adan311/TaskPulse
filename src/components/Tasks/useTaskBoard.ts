@@ -9,8 +9,8 @@ import {
   updateTask, 
   deleteTask, 
   updateTaskStatus 
-} from '@/services/taskService';
-import { supabase } from '@/integrations/supabase/client';
+} from '@/backend/api/services/task.service';
+import { supabase } from '@/backend/api/client/supabase';
 
 export function useTaskBoard() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -71,7 +71,7 @@ export function useTaskBoard() {
     }
   };
 
-  const handleCreateTask = async (taskData: Omit<Task, 'id' | 'user'>) => {
+  const handleCreateTask = async (taskData: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     try {
       // Verify user authentication before attempting to create task
       const { data: { user } } = await supabase.auth.getUser();
@@ -80,6 +80,7 @@ export function useTaskBoard() {
       }
       
       await createTask(taskData);
+      loadTasks(); // Reload tasks after creating
       toast({
         title: 'Success',
         description: 'Task created successfully',
@@ -94,7 +95,7 @@ export function useTaskBoard() {
     }
   };
 
-  const handleUpdateTask = async (taskData: Omit<Task, 'id' | 'user'>) => {
+  const handleUpdateTask = async (taskData: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     if (!selectedTask) return;
     
     try {
@@ -102,6 +103,7 @@ export function useTaskBoard() {
         id: selectedTask.id,
         ...taskData,
       });
+      loadTasks(); // Reload tasks after updating
       toast({
         title: 'Success',
         description: 'Task updated successfully',
@@ -119,6 +121,7 @@ export function useTaskBoard() {
   const handleDeleteTask = async (taskId: string) => {
     try {
       await deleteTask(taskId);
+      loadTasks(); // Reload tasks after deleting
       toast({
         title: 'Success',
         description: 'Task deleted successfully',
@@ -169,6 +172,7 @@ export function useTaskBoard() {
           description: 'Failed to update task status',
           variant: 'destructive',
         });
+        loadTasks(); // Reload tasks if error occurs to reset UI
       }
     }
   };
@@ -183,12 +187,13 @@ export function useTaskBoard() {
     setDialogOpen(true);
   };
 
-  const handleSaveTask = (taskData: Omit<Task, 'id' | 'user'>) => {
+  const handleSaveTask = (taskData: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     if (selectedTask) {
       handleUpdateTask(taskData);
     } else {
       handleCreateTask(taskData);
     }
+    setDialogOpen(false);
   };
 
   return {

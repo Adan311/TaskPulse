@@ -8,7 +8,7 @@ export interface CalendarEvent {
   description?: string;
   start_time: string;
   end_time: string;
-  all_day: boolean;
+  all_day?: boolean;
   location?: string;
   color?: string;
   project_id?: string;
@@ -26,14 +26,25 @@ export const fetchEvents = async (): Promise<CalendarEvent[]> => {
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .eq("user_id", user.id);
+    .eq("user", user.id);
 
   if (error) {
     console.error("Error fetching events:", error);
     throw error;
   }
 
-  return data as CalendarEvent[];
+  // Transform the data to match CalendarEvent interface
+  return (data || []).map(event => ({
+    id: event.id,
+    title: event.title,
+    description: event.description,
+    start_time: event.start_time,
+    end_time: event.end_time,
+    all_day: false, // Default value since it's not in the database
+    color: event.color,
+    project_id: event.project,
+    user_id: event.user || user.id,
+  }));
 };
 
 export const createEvent = async (event: Omit<CalendarEvent, "id" | "user_id">): Promise<CalendarEvent> => {
@@ -46,7 +57,7 @@ export const createEvent = async (event: Omit<CalendarEvent, "id" | "user_id">):
   const newEvent = {
     id: uuidv4(),
     ...event,
-    user_id: user.id,
+    user: user.id, // Map to the database field 'user'
   };
 
   const { data, error } = await supabase
@@ -59,5 +70,16 @@ export const createEvent = async (event: Omit<CalendarEvent, "id" | "user_id">):
     throw error;
   }
 
-  return data![0] as CalendarEvent;
+  // Transform the data to match CalendarEvent interface
+  return {
+    id: data![0].id,
+    title: data![0].title,
+    description: data![0].description,
+    start_time: data![0].start_time,
+    end_time: data![0].end_time,
+    all_day: false, // Default value since it's not in the database
+    color: data![0].color,
+    project_id: data![0].project,
+    user_id: data![0].user || user.id,
+  };
 };

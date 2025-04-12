@@ -4,6 +4,7 @@ import { TaskBoardHeader } from './TaskBoardHeader';
 import { TaskColumnsContainer } from './TaskColumnsContainer';
 import { TaskBoardLoader } from './TaskBoardLoader';
 import { useTaskBoard } from './useTaskBoard';
+import { Task } from '@/backend/types/supabaseSchema';
 
 export function TaskBoard() {
   const {
