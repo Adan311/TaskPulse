@@ -21,9 +21,9 @@ export async function fetchTasks(): Promise<Task[]> {
   return (data || []).map(task => ({
     id: task.id,
     title: task.title,
-    description: task.description,
-    status: task.status as Task['status'],
-    priority: task.priority as Task['priority'],
+    description: task.description || '',
+    status: (task.status || 'todo') as Task['status'],
+    priority: (task.priority || 'medium') as Task['priority'],
     due_date: task.due_date,
     user_id: task.user || '',
     created_at: new Date().toISOString(),
@@ -38,7 +38,12 @@ export async function createTask(taskData: Omit<Task, 'id' | 'user_id' | 'create
     throw new Error('User not authenticated');
   }
 
+  // Generate a new id for the task
+  const id = uuidv4();
+  
+  // Create task object with required properties for the database
   const taskToInsert = {
+    id,
     ...taskData,
     user: userData.user.id,
   };
@@ -58,9 +63,9 @@ export async function createTask(taskData: Omit<Task, 'id' | 'user_id' | 'create
   return {
     id: data.id,
     title: data.title,
-    description: data.description,
-    status: data.status as Task['status'],
-    priority: data.priority as Task['priority'],
+    description: data.description || '',
+    status: (data.status || 'todo') as Task['status'],
+    priority: (data.priority || 'medium') as Task['priority'],
     due_date: data.due_date,
     user_id: data.user || userData.user.id,
     created_at: new Date().toISOString(),
@@ -71,6 +76,8 @@ export async function createTask(taskData: Omit<Task, 'id' | 'user_id' | 'create
 export async function updateTask(taskData: Partial<Task> & { id: string }): Promise<Task> {
   // Map user_id to user for the database
   const taskToUpdate = { ...taskData };
+  
+  // Handle the user_id to user mapping
   if (taskToUpdate.user_id) {
     taskToUpdate.user = taskToUpdate.user_id;
     delete taskToUpdate.user_id;
@@ -96,9 +103,9 @@ export async function updateTask(taskData: Partial<Task> & { id: string }): Prom
   return {
     id: data.id,
     title: data.title,
-    description: data.description,
-    status: data.status as Task['status'],
-    priority: data.priority as Task['priority'],
+    description: data.description || '',
+    status: (data.status || 'todo') as Task['status'],
+    priority: (data.priority || 'medium') as Task['priority'],
     due_date: data.due_date,
     user_id: data.user || '',
     created_at: new Date().toISOString(),
@@ -135,9 +142,9 @@ export async function updateTaskStatus(taskId: string, status: Task['status']): 
   return {
     id: data.id,
     title: data.title,
-    description: data.description,
-    status: data.status as Task['status'],
-    priority: data.priority as Task['priority'],
+    description: data.description || '',
+    status: (data.status || 'todo') as Task['status'],
+    priority: (data.priority || 'medium') as Task['priority'],
     due_date: data.due_date,
     user_id: data.user || '',
     created_at: new Date().toISOString(),

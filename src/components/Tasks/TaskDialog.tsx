@@ -19,9 +19,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Task } from "@/services/taskService";
+import { Task } from "@/backend/types/supabaseSchema";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/backend/api/client/supabase";
 import { useState, useEffect } from "react";
 
 interface Project {
@@ -33,7 +33,7 @@ interface TaskDialogProps {
   task?: Task;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (task: Omit<Task, "id" | "user">) => void;
+  onSave: (task: Omit<Task, "id" | "user_id" | "created_at" | "updated_at">) => void;
 }
 
 export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps) {
@@ -41,7 +41,7 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
   const [title, setTitle] = useState(task?.title || "");
   const [description, setDescription] = useState(task?.description || "");
   const [status, setStatus] = useState<Task["status"]>(task?.status || "todo");
-  const [priority, setPriority] = useState(task?.priority || "medium");
+  const [priority, setPriority] = useState<Task["priority"]>(task?.priority || "medium");
   const [projectId, setProjectId] = useState(task?.project || "none");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
@@ -100,12 +100,13 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
       return;
     }
 
-    const taskData: Omit<Task, "id" | "user"> = {
+    const taskData: Omit<Task, "id" | "user_id" | "created_at" | "updated_at"> = {
       title,
       description,
       status,
       priority,
       project: projectId === "none" ? null : projectId,
+      due_date: undefined
     };
 
     onSave(taskData);
@@ -166,7 +167,7 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
               <Label htmlFor="priority" className="col-span-4">
                 Priority
               </Label>
-              <Select value={priority} onValueChange={(value) => setPriority(value)}>
+              <Select value={priority} onValueChange={(value: Task["priority"]) => setPriority(value)}>
                 <SelectTrigger className="col-span-4">
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>

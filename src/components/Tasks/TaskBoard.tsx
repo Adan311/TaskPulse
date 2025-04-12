@@ -52,10 +52,10 @@ export function TaskBoard() {
       )}
 
       <TaskDialog
-        task={selectedTask}
+        task={selectedTask as any}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        onSave={handleSaveTask}
+        onSave={handleSaveTask as any}
       />
     </div>
   );
