@@ -1,115 +1,88 @@
 
 import { supabase } from '../client/supabase';
-import { v4 as uuidv4 } from "uuid";
-import { Task } from "@/backend/types/supabaseSchema";
+import type { Task } from '../../types/supabaseSchema';
 
-// Re-export the Task interface using export type for TypeScript isolatedModules
+// Re-export the Task type
 export type { Task };
 
-export const fetchTasks = async (): Promise<Task[]> => {
-  // Get the current user
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    console.log("No authenticated user found when fetching tasks");
-    return []; // Return empty array if not authenticated
-  }
-
-  // Query tasks for the current user only
+export async function fetchTasks(): Promise<Task[]> {
   const { data, error } = await supabase
-    .from("tasks")
-    .select("*")
-    .eq("user", user.id)
-    .order("title");
+    .from('tasks')
+    .select('*')
+    .order('updated_at', { ascending: false });
 
   if (error) {
-    console.error("Error fetching tasks:", error);
-    throw error;
+    console.error('Error fetching tasks:', error);
+    throw new Error(`Failed to fetch tasks: ${error.message}`);
   }
 
-  return data as Task[];
-};
+  return data || [];
+}
 
-export const createTask = async (task: Omit<Task, "id" | "user">): Promise<Task> => {
-  // Get the current user
-  const { data: { user } } = await supabase.auth.getUser();
+export async function createTask(taskData: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>): Promise<Task> {
+  const { data: userData } = await supabase.auth.getUser();
   
-  if (!user) {
-    console.error("No authenticated user found");
-    throw new Error("User must be authenticated to create tasks");
-  }
-  
-  // Create the new task with a UUID and the proper user ID
-  const newTask = {
-    id: uuidv4(),
-    ...task,
-    user: user.id,
-  };
-
-  // Log the task to be inserted
-  console.log("Task being inserted:", newTask);
-
-  // Ensure the user ID is correctly set as a UUID before inserting
-  if (!newTask.user || typeof newTask.user !== 'string' || newTask.user === 'authenticated') {
-    console.error("Invalid user ID:", newTask.user);
-    throw new Error("Invalid user ID for task creation");
+  if (!userData.user) {
+    throw new Error('User not authenticated');
   }
 
   const { data, error } = await supabase
-    .from("tasks")
-    .insert([newTask])
-    .select();
+    .from('tasks')
+    .insert({
+      ...taskData,
+      user_id: userData.user.id,
+    })
+    .select()
+    .single();
 
   if (error) {
-    console.error("Error creating task:", error);
-    throw error;
+    console.error('Error creating task:', error);
+    throw new Error(`Failed to create task: ${error.message}`);
   }
 
-  return data![0] as Task;
-};
+  return data;
+}
 
-export const updateTask = async (task: Partial<Task> & { id: string }): Promise<void> => {
-  // Get the current user
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    console.error("No authenticated user found");
-    throw new Error("User must be authenticated to update tasks");
-  }
-
-  const { error } = await supabase
-    .from("tasks")
-    .update(task)
-    .eq("id", task.id)
-    .eq("user", user.id);
+export async function updateTask(taskData: Partial<Task> & { id: string }): Promise<Task> {
+  const { data, error } = await supabase
+    .from('tasks')
+    .update(taskData)
+    .eq('id', taskData.id)
+    .select()
+    .single();
 
   if (error) {
-    console.error("Error updating task:", error);
-    throw error;
-  }
-};
-
-export const deleteTask = async (taskId: string): Promise<void> => {
-  // Get the current user
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    console.error("No authenticated user found");
-    throw new Error("User must be authenticated to delete tasks");
+    console.error('Error updating task:', error);
+    throw new Error(`Failed to update task: ${error.message}`);
   }
 
+  return data;
+}
+
+export async function deleteTask(taskId: string): Promise<void> {
   const { error } = await supabase
-    .from("tasks")
+    .from('tasks')
     .delete()
-    .eq("id", taskId)
-    .eq("user", user.id);
+    .eq('id', taskId);
 
   if (error) {
-    console.error("Error deleting task:", error);
-    throw error;
+    console.error('Error deleting task:', error);
+    throw new Error(`Failed to delete task: ${error.message}`);
   }
-};
+}
 
-export const updateTaskStatus = async (taskId: string, status: Task["status"]): Promise<void> => {
-  await updateTask({ id: taskId, status });
-};
+export async function updateTaskStatus(taskId: string, status: Task['status']): Promise<Task> {
+  const { data, error } = await supabase
+    .from('tasks')
+    .update({ status })
+    .eq('id', taskId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating task status:', error);
+    throw new Error(`Failed to update task status: ${error.message}`);
+  }
+
+  return data;
+}

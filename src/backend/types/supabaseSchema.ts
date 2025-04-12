@@ -1,44 +1,22 @@
 
-export interface Database {
-  public: {
-    Tables: {
-      tasks: {
-        Row: Task;
-        Insert: Omit<Task, 'id'>;
-        Update: Partial<Task>;
-      };
-      projects: {
-        Row: Project;
-        Insert: Omit<Project, 'id'>;
-        Update: Partial<Project>;
-      };
-      events: {
-        Row: Event;
-        Insert: Omit<Event, 'id'>;
-        Update: Partial<Event>;
-      };
-    };
-  };
-}
+// Define database schema types
 
-// Unified Task interface to be used throughout the application
 export interface Task {
   id: string;
   title: string;
   description?: string;
-  status: "todo" | "in-progress" | "done";
-  project?: string | null;
-  due_date?: string | null;
-  priority?: "low" | "medium" | "high" | string | null;
-  user?: string | null;
+  status: 'todo' | 'in-progress' | 'done';
+  priority: 'low' | 'medium' | 'high';
+  due_date?: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Project {
   id: string;
   name: string;
-  description: string;
-  user: string;
-  created_at?: string;
+  color?: string;
 }
 
 export interface Event {
@@ -47,9 +25,11 @@ export interface Event {
   description?: string;
   start_time: string;
   end_time: string;
-  all_day: boolean;
-  location?: string;
   color?: string;
-  project_id?: string;
+  project?: string;
   user_id: string;
+  google_event_id?: string;
+  source?: 'app' | 'google';
+  created_at: string;
+  updated_at: string;
 }
