@@ -1,4 +1,3 @@
-
 import { supabase } from '../client/supabase';
 import type { Task } from '../../types/supabaseSchema';
 import { v4 as uuidv4 } from 'uuid';
@@ -77,7 +76,7 @@ export async function createTask(taskData: Omit<Task, 'id' | 'user_id' | 'create
 
 export async function updateTask(taskData: Partial<Task> & { id: string }): Promise<Task> {
   // Map user_id to user for the database
-  const taskToUpdate = { ...taskData };
+  const taskToUpdate: any = { ...taskData };
   
   // Handle the user_id to user mapping
   if (taskToUpdate.user_id) {
