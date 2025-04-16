@@ -1,9 +1,11 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { saveEventToGoogleCalendar, deleteEventFromGoogleCalendar } from "./googleCalendarService";
 import { Event as FrontendEvent } from "@/frontend/types/calendar";
 import { Event as DbEvent } from "@/backend/types/supabaseSchema";
-import { Database } from "@/integrations/supabase/types";
+import { Database } from '@/integrations/supabase/types';
+import { DatabaseEventInsert } from '@/backend/types/supabaseSchema';
 
 // Convert database event to frontend event format
 function formatEventForFrontend(dbEvent: any): FrontendEvent {
@@ -45,11 +47,11 @@ export async function getEvents(): Promise<FrontendEvent[]> {
     return [];
   }
 
-  // Use the column name approach instead of equality filter for better type safety
+  // Use filter method instead of eq for better type safety
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .eq("user", user.id);
+    .filter('user', 'eq', user.id);
 
   if (error) {
     console.error("Error fetching events:", error);
@@ -67,12 +69,12 @@ export async function getEventById(id: string): Promise<FrontendEvent> {
     throw new Error("User not authenticated");
   }
 
-  // Use column names directly for better type safety
+  // Use filter method for better type safety
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .eq("id", id)
-    .eq("user", user.id)
+    .filter('id', 'eq', id)
+    .filter('user', 'eq', user.id)
     .limit(1);
 
   if (error) {
@@ -98,7 +100,7 @@ export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<Fro
   const newEventId = uuidv4();
   
   // Create a properly typed database event for insertion
-  const newEvent: Database['public']['Tables']['events']['Insert'] = {
+  const newEvent: DatabaseEventInsert = {
     id: newEventId,
     title: event.title,
     description: event.description ?? null,
@@ -113,7 +115,7 @@ export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<Fro
 
   const { data, error } = await supabase
     .from("events")
-    .insert(newEvent)
+    .insert([newEvent])
     .select();
 
   if (error) {
@@ -151,7 +153,7 @@ export async function updateEvent(id: string, event: Partial<FrontendEvent>): Pr
   // Format the event for the database update
   const dbEvent = formatEventForDatabase(event);
   
-  // Add updated_at field
+  // Add updated_at field if not present in database schema
   const updateData = {
     ...dbEvent,
     updated_at: new Date().toISOString()
@@ -160,8 +162,8 @@ export async function updateEvent(id: string, event: Partial<FrontendEvent>): Pr
   const { data, error } = await supabase
     .from("events")
     .update(updateData)
-    .eq("id", id)
-    .eq("user", user.id)
+    .filter('id', 'eq', id)
+    .filter('user', 'eq', user.id)
     .select();
 
   if (error) {
@@ -207,8 +209,8 @@ export async function deleteEvent(id: string): Promise<boolean> {
   const { error } = await supabase
     .from("events")
     .delete()
-    .eq("id", id)
-    .eq("user", user.id);
+    .filter('id', 'eq', id)
+    .filter('user', 'eq', user.id);
 
   if (error) {
     console.error("Error deleting event:", error);
@@ -229,9 +231,9 @@ export async function getGoogleCalendarEvents(): Promise<FrontendEvent[]> {
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .eq("source", "google")
-    .eq("user", user.id)
-    .order("start_time", { ascending: true });
+    .filter('source', 'eq', "google")
+    .filter('user', 'eq', user.id)
+    .order('start_time', { ascending: true });
 
   if (error) {
     console.error("Error fetching Google Calendar events:", error);

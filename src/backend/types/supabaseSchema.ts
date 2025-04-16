@@ -39,3 +39,4 @@ export interface Event {
 
 // Helper type to extract event type from Database
 export type DatabaseEvent = Database['public']['Tables']['events']['Row'];
+export type DatabaseEventInsert = Database['public']['Tables']['events']['Insert'];

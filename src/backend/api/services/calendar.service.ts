@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from "uuid";
 import { Database } from '@/integrations/supabase/types';
+import { DatabaseEventInsert } from '@/backend/types/supabaseSchema';
 
 export interface CalendarEvent {
   id: string;
@@ -24,11 +25,11 @@ export const fetchEvents = async (): Promise<CalendarEvent[]> => {
     return [];
   }
 
-  // Use column name instead of equality filter for improved type safety
+  // Use string filters instead of equality operators for proper typing
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .eq("user", user.id);
+    .filter('user', 'eq', user.id);
 
   if (error) {
     console.error("Error fetching events:", error);
@@ -56,21 +57,23 @@ export const createEvent = async (event: Omit<CalendarEvent, "id" | "user_id">):
     throw new Error("User must be authenticated to create events");
   }
   
-  // Create a new event object with the correct field names to match the database
-  const newEvent = {
+  // Create a properly typed database event for insertion
+  const newEvent: DatabaseEventInsert = {
     id: uuidv4(),
     title: event.title,
-    description: event.description,
+    description: event.description ?? null,
     start_time: event.start_time,
     end_time: event.end_time,
-    color: event.color,
-    project: event.project_id, // Map project_id to project for the database
-    user: user.id, // Map to the database field 'user'
-  } as Database['public']['Tables']['events']['Insert'];
+    color: event.color ?? null,
+    project: event.project_id ?? null,
+    user: user.id,
+    google_event_id: null,
+    source: 'app'
+  };
 
   const { data, error } = await supabase
     .from("events")
-    .insert(newEvent)
+    .insert([newEvent])
     .select();
 
   if (error) {
@@ -87,12 +90,12 @@ export const createEvent = async (event: Omit<CalendarEvent, "id" | "user_id">):
   return {
     id: createdEvent?.id ?? '',
     title: createdEvent?.title ?? '',
-    description: createdEvent?.description,
+    description: createdEvent?.description ?? undefined,
     start_time: createdEvent?.start_time ?? '',
     end_time: createdEvent?.end_time ?? '',
     all_day: false, // Default value since it's not in the database
-    color: createdEvent?.color,
-    project_id: createdEvent?.project,
+    color: createdEvent?.color ?? undefined,
+    project_id: createdEvent?.project ?? undefined,
     user_id: createdEvent?.user ?? user.id,
   };
 };

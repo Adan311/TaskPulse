@@ -82,6 +82,7 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
         endTime: formattedEndTime,
         color: values.color,
         project: values.project === "none" ? undefined : values.project,
+        participants: [] // Add empty participants array to match the type
       };
 
       if (event) {
