@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { DropResult } from 'react-beautiful-dnd';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/frontend/hooks/use-toast';
 import { 
   Task, 
   fetchTasks, 

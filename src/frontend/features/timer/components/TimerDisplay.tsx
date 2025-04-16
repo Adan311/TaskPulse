@@ -1,6 +1,7 @@
+
 import React from "react";
 import { Eye, Play, Pause, RotateCcw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/frontend/components/ui/button";
 
 interface TimerDisplayProps {
   time: string;

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { saveEventToGoogleCalendar, deleteEventFromGoogleCalendar } from "./googleCalendarService";
@@ -15,9 +14,9 @@ function formatEventForFrontend(dbEvent: any): FrontendEvent {
     endTime: dbEvent.end_time,
     color: dbEvent.color,
     project: dbEvent.project,
-    user: dbEvent.user,
     googleEventId: dbEvent.google_event_id,
-    source: dbEvent.source
+    source: dbEvent.source,
+    participants: [] // Initialize with empty array
   };
 }
 
@@ -94,7 +93,9 @@ export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<Fro
     ...formatEventForDatabase(event),
     id: uuidv4(),
     source: event.source || "app",
-    user: user.id
+    user: user.id,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
 
   const { data, error } = await supabase
@@ -116,9 +117,8 @@ export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<Fro
       start_time: data.start_time,
       end_time: data.end_time,
       google_event_id: data.google_event_id,
-      user_id: data.user,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      created_at: data.created_at,
+      updated_at: data.updated_at
     };
     await saveEventToGoogleCalendar(formattedData);
   } catch (syncError) {
@@ -137,7 +137,10 @@ export async function updateEvent(id: string, event: Partial<FrontendEvent>): Pr
     throw new Error("User not authenticated");
   }
 
-  const dbEvent = formatEventForDatabase(event);
+  const dbEvent = {
+    ...formatEventForDatabase(event),
+    updated_at: new Date().toISOString()
+  };
 
   const { data, error } = await supabase
     .from("events")
@@ -160,9 +163,8 @@ export async function updateEvent(id: string, event: Partial<FrontendEvent>): Pr
       start_time: data.start_time,
       end_time: data.end_time,
       google_event_id: data.google_event_id,
-      user_id: data.user,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      created_at: data.created_at,
+      updated_at: data.updated_at
     };
     await saveEventToGoogleCalendar(formattedData);
   } catch (syncError) {

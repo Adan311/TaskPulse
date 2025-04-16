@@ -1,13 +1,16 @@
-
-import { cn } from "@/lib/utils";
-import { Event } from "@/types/calendar";
+import React from 'react';
+import { cn } from "@/frontend/lib/utils";
+import { Event } from "@/frontend/types/calendar";
+import { format, addHours } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface TimelineViewProps {
   events: Event[];
+  date?: Date;
+  onEditEvent: (event: Event) => void;
 }
 
-export function TimelineView({ events }: TimelineViewProps) {
+export function TimelineView({ events, date, onEditEvent }: TimelineViewProps) {
   return (
     <div className="relative min-h-[600px]">
       <div className="absolute inset-0">
@@ -18,7 +21,7 @@ export function TimelineView({ events }: TimelineViewProps) {
         </div>
         <div className="absolute top-0 left-0 w-full">
           {events.map((event) => (
-            <TimelineEvent key={event.id} event={event} />
+            <TimelineEvent key={event.id} event={event} onEditEvent={onEditEvent} />
           ))}
         </div>
       </div>
@@ -26,7 +29,7 @@ export function TimelineView({ events }: TimelineViewProps) {
   );
 }
 
-function TimelineEvent({ event }: { event: Event }) {
+function TimelineEvent({ event, onEditEvent }: { event: Event, onEditEvent: (event: Event) => void }) {
   return (
     <div 
       className={cn(

@@ -1,19 +1,6 @@
 
 import { supabase } from "../client/supabase";
-
-// Export Task type
-export interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  status: 'todo' | 'in-progress' | 'done';
-  priority: 'low' | 'medium' | 'high';
-  due_date?: string;
-  project?: string | null;
-  user_id: string;
-  created_at: string;
-  updated_at: string;
-}
+import { Task } from "@/backend/types/supabaseSchema";
 
 // Fetch all tasks for the current user
 export const fetchTasks = async (): Promise<Task[]> => {
@@ -27,7 +14,7 @@ export const fetchTasks = async (): Promise<Task[]> => {
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user', user.id)
       .order('created_at', { ascending: false });
     
     if (error) throw error;
@@ -40,7 +27,7 @@ export const fetchTasks = async (): Promise<Task[]> => {
 };
 
 // Create a new task
-export const createTask = async (taskData: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+export const createTask = async (taskData: Omit<Task, 'id' | 'user' | 'created_at' | 'updated_at'>) => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -57,7 +44,7 @@ export const createTask = async (taskData: Omit<Task, 'id' | 'user_id' | 'create
         priority: taskData.priority,
         project: taskData.project,
         due_date: taskData.due_date,
-        user_id: user.id,
+        user: user.id,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
@@ -93,7 +80,7 @@ export const updateTask = async (taskData: Partial<Task> & { id: string }) => {
         updated_at: new Date().toISOString()
       })
       .eq('id', taskData.id)
-      .eq('user_id', user.id)
+      .eq('user', user.id)
       .select();
     
     if (error) throw error;
@@ -118,7 +105,7 @@ export const deleteTask = async (taskId: string) => {
       .from('tasks')
       .delete()
       .eq('id', taskId)
-      .eq('user_id', user.id);
+      .eq('user', user.id);
     
     if (error) throw error;
     
@@ -145,7 +132,7 @@ export const updateTaskStatus = async (taskId: string, status: Task['status']) =
         updated_at: new Date().toISOString() 
       })
       .eq('id', taskId)
-      .eq('user_id', user.id);
+      .eq('user', user.id);
     
     if (error) throw error;
     
@@ -155,3 +142,6 @@ export const updateTaskStatus = async (taskId: string, status: Task['status']) =
     throw error;
   }
 };
+
+// Export Task type
+export type { Task };

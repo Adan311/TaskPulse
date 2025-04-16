@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/frontend/components/ui/badge";
+import { Card, CardContent } from "@/frontend/components/ui/card";
 import { Clock, Calendar, User } from "lucide-react";
 
 interface TimerSession {

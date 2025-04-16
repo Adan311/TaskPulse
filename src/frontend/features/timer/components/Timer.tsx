@@ -1,11 +1,11 @@
 
 import { useState, useEffect } from "react";
-import { AppLayout } from "@/components/AppLayout";
-import { TimerControls } from "@/components/Timer/TimerControls";
-import { TimerDisplay } from "@/components/Timer/TimerDisplay";
-import { Separator } from "@/components/ui/separator";
-import TimerHistory from "@/components/Timer/TimerHistory";
-import { useToast } from "@/components/ui/use-toast";
+import { AppLayout } from "@/frontend/components/layout/AppLayout";
+import { TimerControls } from "@/frontend/features/timer/components/TimerControls";
+import { TimerDisplay } from "@/frontend/features/timer/components/TimerDisplay";
+import { Separator } from "@/frontend/components/ui/separator";
+import TimerHistory from "@/frontend/features/timer/components/TimerHistory";
+import { useToast } from "@/frontend/hooks/use-toast";
 
 const Timer = () => {
   // Timer state

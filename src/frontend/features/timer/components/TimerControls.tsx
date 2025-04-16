@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Select,
@@ -5,8 +6,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+} from "@/frontend/components/ui/select";
+import { Button } from "@/frontend/components/ui/button";
 import { Timer, Clock, AlarmClock } from "lucide-react";
 
 interface TimerControlsProps {

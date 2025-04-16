@@ -1,9 +1,9 @@
-
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Calendar, RefreshCw } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { Button } from "@/frontend/components/ui/button";
+import { Calendar, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/frontend/hooks/use-toast";
+import { initiateGoogleCalendarAuth } from "@/backend/api/services/googleCalendarService";
 
 interface GoogleCalendarButtonProps {
   onSuccess?: () => void;
@@ -11,102 +11,47 @@ interface GoogleCalendarButtonProps {
 
 export function GoogleCalendarButton({ onSuccess }: GoogleCalendarButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Get the current user when component mounts
-    const getCurrentUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
-    };
-
-    getCurrentUser();
-
-    // Set up auth state change listener
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user || null);
-    });
-
-    return () => {
-      authListener?.subscription?.unsubscribe();
-    };
-  }, []);
-
-  const handleGoogleCalendarConnect = async () => {
+  const handleConnectGoogleCalendar = async () => {
+    setIsLoading(true);
     try {
-      // Check if user is logged in
-      if (!user) {
+      const authUrl = await initiateGoogleCalendarAuth();
+      if (authUrl) {
+        window.location.href = authUrl;
+        // navigate(authUrl); // Use window.location.href instead of navigate
+      } else {
         toast({
+          title: "Error",
+          description: "Could not initiate Google Calendar authentication.",
           variant: "destructive",
-          title: "Authentication Required",
-          description: "You need to be logged in to connect your Google Calendar.",
         });
-        return;
       }
-
-      setIsLoading(true);
-
-      // Get the current origin for the redirect URI
-      const origin = window.location.origin;
-      
-      // Define the exact redirect URI path that matches what's configured in Google Cloud Console
-      const redirectUri = `${origin}/api/google-calendar-callback`;
-
-      console.log("Starting Google Calendar auth with userId:", user.id);
-      console.log("Using redirect URI:", redirectUri);
-
-      // Call the edge function to start the authorization process
-      const { data, error } = await supabase.functions.invoke("google-calendar-auth", {
-        body: { 
-          action: "init",
-          origin,
-          redirectUri, // Pass the exact redirect URI to ensure it matches
-          userId: user.id // Pass the user ID
-        },
-      });
-
-      if (error) {
-        throw new Error(`Failed to start Google Calendar authorization: ${error.message}`);
-      }
-
-      if (!data || !data.authUrl || !data.state) {
-        throw new Error("Invalid response from the edge function");
-      }
-
-      console.log("Received auth URL:", data.authUrl);
-      console.log("Received state:", data.state);
-
-      // Store the state in localStorage for verification when the user returns
-      localStorage.setItem("googleCalendarState", data.state);
-      localStorage.setItem("googleCalendarUserId", user.id);
-
-      // Redirect the user to Google's authorization page
-      window.location.href = data.authUrl;
-    } catch (error: any) {
-      console.error("Error connecting to Google Calendar:", error);
+    } catch (error) {
+      console.error("Error initiating Google Calendar auth:", error);
       toast({
-        variant: "destructive",
         title: "Error",
-        description: `Failed to connect to Google Calendar: ${error.message}`,
+        description: "Failed to connect to Google Calendar.",
+        variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
+      if (onSuccess) {
+        onSuccess();
+      }
     }
   };
 
   return (
-    <Button 
-      onClick={handleGoogleCalendarConnect} 
-      disabled={isLoading || !user}
+    <Button
       variant="outline"
-      className="flex items-center gap-2"
+      disabled={isLoading}
+      onClick={handleConnectGoogleCalendar}
     >
-      {isLoading ? (
-        <RefreshCw className="h-4 w-4 animate-spin" />
-      ) : (
-        <Calendar className="h-4 w-4" />
-      )}
-      {isLoading ? "Connecting..." : "Add Your Google Calendar"}
+      <Calendar className="mr-2 h-4 w-4" />
+      {isLoading ? "Connecting..." : "Connect Google Calendar"}
+      <ExternalLink className="ml-1 h-3 w-3 opacity-50" />
     </Button>
   );
 }
