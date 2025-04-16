@@ -1,227 +1,150 @@
-import { supabase } from "@/integrations/supabase/client";
-import { Event as DbEvent } from "@/backend/types/supabaseSchema";
+import { supabase } from '@/integrations/supabase/client';
+import { DatabaseEvent } from '@/backend/types/supabaseSchema';
 
-export interface GoogleCalendarTokens {
-  id: string;
-  email: string;
-  access_token: string;
-  refresh_token?: string;
-  expires_at: string;
-  created_at: string;
-  updated_at: string;
-  user_id: string;
+/**
+ * Checks if the user has connected their Google Calendar
+ */
+export async function hasGoogleCalendarConnected(): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return false;
+  }
+
+  // Use eq operator for proper typing
+  const { data, error } = await supabase
+    .from('google_calendar_tokens')
+    .select('id')
+    .eq('user_id', user.id)
+    .limit(1);
+
+  if (error) {
+    console.error('Error checking Google Calendar connection:', error);
+    return false;
+  }
+
+  return data && data.length > 0;
 }
 
-// Fetch the list of connected Google Calendars for the current user
-export async function getConnectedCalendars(): Promise<GoogleCalendarTokens[]> {
-  // Get the current user
+/**
+ * Gets the list of connected Google Calendars
+ */
+export async function getConnectedCalendars(): Promise<any[]> {
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
     return [];
   }
 
-  // Use explicit typing to avoid deep type instantiation
+  // Use eq operator for proper typing
   const { data, error } = await supabase
-    .from("google_calendar_tokens")
-    .select("*")
-    .eq("user_id", user.id);
+    .from('google_calendar_tokens')
+    .select('*')
+    .eq('user_id', user.id);
 
   if (error) {
-    console.error("Error fetching connected calendars:", error);
-    throw error;
+    console.error('Error fetching connected calendars:', error);
+    return [];
   }
 
-  // Use type assertion to avoid deep type instantiation
-  return (data || []) as GoogleCalendarTokens[];
+  return data || [];
 }
 
-// Check if user has Google Calendar connected
-export async function hasGoogleCalendarConnected(): Promise<boolean> {
-  const calendars = await getConnectedCalendars();
-  return calendars.length > 0;
-}
-
-// Sync events from Google Calendar
-export async function syncEventsFromGoogleCalendar() {
-  try {
-    // Get the current user
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error("User not authenticated");
-    }
-
-    const { data, error } = await supabase.functions.invoke(
-      "google-calendar-sync",
-      {
-        body: { 
-          action: "sync",
-          userId: user.id
-        },
-      }
-    );
-
-    if (error) {
-      throw new Error(`Failed to sync events: ${error.message}`);
-    }
-
-    return data;
-  } catch (error) {
-    console.error("Error syncing Google Calendar events:", error);
-    throw error;
+/**
+ * Saves an event to Google Calendar
+ */
+export async function saveEventToGoogleCalendar(event: DatabaseEvent): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return false;
   }
-}
 
-// Create or update an event in Google Calendar
-export async function saveEventToGoogleCalendar(event: DbEvent): Promise<void> {
-  try {
-    // Check if we have a Google Calendar connected
-    const isConnected = await hasGoogleCalendarConnected();
-    if (!isConnected) {
-      return; // No Google Calendar connected, skip sync
-    }
-
-    // Get the current user
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error("User not authenticated");
-    }
-
-    const action = event.google_event_id ? "updateEvent" : "createEvent";
-
-    const { data, error } = await supabase.functions.invoke(
-      "google-calendar-auth",
-      {
-        body: { 
-          action,
-          event,
-          userId: user.id
-        },
-      }
-    );
-
-    if (error) {
-      throw new Error(`Failed to save event to Google Calendar: ${error.message}`);
-    }
-
-    return data;
-  } catch (error) {
-    console.error("Error saving event to Google Calendar:", error);
-    throw error;
+  // Check if user has connected Google Calendar
+  const isConnected = await hasGoogleCalendarConnected();
+  if (!isConnected) {
+    // No connection found, silently return
+    return false;
   }
-}
-
-// Delete an event from Google Calendar
-export async function deleteEventFromGoogleCalendar(eventId: string): Promise<void> {
-  try {
-    // Check if we have a Google Calendar connected
-    const isConnected = await hasGoogleCalendarConnected();
-    if (!isConnected) {
-      return; // No Google Calendar connected, skip sync
-    }
-
-    // Get the current user
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error("User not authenticated");
-    }
-
-    const { data, error } = await supabase.functions.invoke(
-      "google-calendar-auth",
-      {
-        body: { 
-          action: "deleteEvent",
-          eventId,
-          userId: user.id
-        },
-      }
-    );
-
-    if (error) {
-      throw new Error(`Failed to delete event from Google Calendar: ${error.message}`);
-    }
-
-    return data;
-  } catch (error) {
-    console.error("Error deleting event from Google Calendar:", error);
-    throw error;
+  
+  // Check if this is a Google-sourced event, if so, don't sync back
+  if (event.source === 'google') {
+    return false;
   }
-}
 
-// Disconnect a Google Calendar
-export async function disconnectGoogleCalendar(calendarId: string) {
   try {
-    // Get the current user
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error("User not authenticated");
-    }
-
-    const { error } = await supabase.functions.invoke(
-      "google-calendar-auth",
-      {
-        body: { 
-          action: "revoke", 
-          calendarId,
-          userId: user.id
-        },
-      }
-    );
+    // Call the edge function to save the event to Google Calendar
+    const { data, error } = await supabase.functions.invoke('google-calendar-sync', {
+      body: { action: 'saveEvent', event: event },
+    });
 
     if (error) {
-      throw new Error(`Failed to disconnect calendar: ${error.message}`);
+      console.error('Error saving event to Google Calendar:', error);
+      return false;
     }
 
     return true;
   } catch (error) {
-    console.error("Error disconnecting Google Calendar:", error);
-    throw error;
+    console.error('Exception saving event to Google Calendar:', error);
+    return false;
   }
 }
 
-// Initiate Google Calendar Auth
-export async function initiateGoogleCalendarAuth(): Promise<string | null> {
+/**
+ * Deletes an event from Google Calendar
+ */
+export async function deleteEventFromGoogleCalendar(eventId: string): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return false;
+  }
+
+  // Check if user has connected Google Calendar
+  const isConnected = await hasGoogleCalendarConnected();
+  if (!isConnected) {
+    // No connection found, silently return
+    return false;
+  }
+
   try {
-    // Get the current user
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error("User not authenticated");
+    // First, get the event to check if it's a Google-sourced event
+    const { data, error } = await supabase
+      .from('events')
+      .select('source, google_event_id')
+      .eq('id', eventId)
+      .limit(1);
+
+    if (error || !data || data.length === 0) {
+      console.error('Error fetching event for deletion:', error);
+      return false;
     }
 
-    // Generate a random state parameter
-    const state = Math.random().toString(36).substring(2);
+    const event = data[0];
     
-    // Save state in localStorage to verify it later
-    localStorage.setItem("googleCalendarState", state);
-    localStorage.setItem("googleCalendarUserId", user.id);
-
-    // Redirect URI should be your callback endpoint
-    const redirectUri = `${window.location.origin}/api/google-calendar-callback`;
-    
-    const { data, error } = await supabase.functions.invoke(
-      "google-calendar-auth",
-      {
-        body: { 
-          action: "initiate",
-          redirectUri,
-          userId: user.id,
-          state
-        },
-      }
-    );
-
-    if (error) {
-      throw new Error(`Failed to initiate Google Calendar auth: ${error.message}`);
+    // Don't delete Google-sourced events from Google Calendar through this flow
+    if (event.source === 'google') {
+      return false;
     }
 
-    return data?.authUrl || null;
+    // Only proceed if the event has a Google event ID
+    if (!event.google_event_id) {
+      return false;
+    }
+
+    // Call the edge function to delete the event from Google Calendar
+    const { error: functionError } = await supabase.functions.invoke('google-calendar-sync', {
+      body: { action: 'deleteEvent', googleEventId: event.google_event_id },
+    });
+
+    if (functionError) {
+      console.error('Error deleting event from Google Calendar:', functionError);
+      return false;
+    }
+
+    return true;
   } catch (error) {
-    console.error("Error initiating Google Calendar auth:", error);
-    throw error;
+    console.error('Exception deleting event from Google Calendar:', error);
+    return false;
   }
 }

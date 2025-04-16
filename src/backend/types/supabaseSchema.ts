@@ -40,3 +40,9 @@ export interface Event {
 // Helper type to extract event type from Database
 export type DatabaseEvent = Database['public']['Tables']['events']['Row'];
 export type DatabaseEventInsert = Database['public']['Tables']['events']['Insert'];
+export type DatabaseEventUpdate = Database['public']['Tables']['events']['Update'];
+
+// Helper function to check if an object is a database event
+export function isDatabaseEvent(obj: any): obj is DatabaseEvent {
+  return obj && typeof obj === 'object' && 'id' in obj;
+}

@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from "uuid";
 import { Database } from '@/integrations/supabase/types';
-import { DatabaseEventInsert } from '@/backend/types/supabaseSchema';
+import { DatabaseEvent, DatabaseEventInsert, isDatabaseEvent } from '@/backend/types/supabaseSchema';
 
 export interface CalendarEvent {
   id: string;
@@ -25,29 +25,32 @@ export const fetchEvents = async (): Promise<CalendarEvent[]> => {
     return [];
   }
 
-  // Use string filters instead of equality operators for proper typing
+  // Use "eq" operator with proper typing
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .filter('user', 'eq', user.id);
+    .eq('user', user.id);
 
   if (error) {
     console.error("Error fetching events:", error);
     throw error;
   }
 
-  // Transform the data to match CalendarEvent interface with null checks
-  return (data || []).map(event => ({
-    id: event?.id ?? '',
-    title: event?.title ?? '',
-    description: event?.description,
-    start_time: event?.start_time ?? '',
-    end_time: event?.end_time ?? '',
-    all_day: false, // Default value since it's not in the database
-    color: event?.color,
-    project_id: event?.project,
-    user_id: event?.user ?? (user?.id || ''),
-  }));
+  // Transform the data to match CalendarEvent interface with null checks and proper typing
+  return (data || []).map(event => {
+    // Check each property safely
+    return {
+      id: event?.id ?? '',
+      title: event?.title ?? '',
+      description: event?.description ?? undefined,
+      start_time: event?.start_time ?? '',
+      end_time: event?.end_time ?? '',
+      all_day: false, // Default value since it's not in the database
+      color: event?.color ?? undefined,
+      project_id: event?.project ?? undefined,
+      user_id: event?.user ?? (user?.id || ''),
+    };
+  });
 };
 
 export const createEvent = async (event: Omit<CalendarEvent, "id" | "user_id">): Promise<CalendarEvent> => {
@@ -73,7 +76,7 @@ export const createEvent = async (event: Omit<CalendarEvent, "id" | "user_id">):
 
   const { data, error } = await supabase
     .from("events")
-    .insert([newEvent])
+    .insert(newEvent)
     .select();
 
   if (error) {

@@ -3,29 +3,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { saveEventToGoogleCalendar, deleteEventFromGoogleCalendar } from "./googleCalendarService";
 import { Event as FrontendEvent } from "@/frontend/types/calendar";
-import { Event as DbEvent } from "@/backend/types/supabaseSchema";
+import { DatabaseEvent, DatabaseEventInsert, DatabaseEventUpdate } from "@/backend/types/supabaseSchema";
 import { Database } from '@/integrations/supabase/types';
-import { DatabaseEventInsert } from '@/backend/types/supabaseSchema';
 
 // Convert database event to frontend event format
-function formatEventForFrontend(dbEvent: any): FrontendEvent {
+function formatEventForFrontend(dbEvent: DatabaseEvent): FrontendEvent {
   return {
     id: dbEvent.id,
     title: dbEvent.title,
-    description: dbEvent.description,
+    description: dbEvent.description || undefined,
     startTime: dbEvent.start_time,
     endTime: dbEvent.end_time,
-    color: dbEvent.color,
-    project: dbEvent.project,
-    googleEventId: dbEvent.google_event_id,
-    source: dbEvent.source,
+    color: dbEvent.color || undefined,
+    project: dbEvent.project || undefined,
+    googleEventId: dbEvent.google_event_id || undefined,
+    source: dbEvent.source as 'app' | 'google' | undefined,
     participants: [] // Initialize with empty array
   };
 }
 
 // Convert frontend event to database format
-function formatEventForDatabase(event: Partial<FrontendEvent>): Partial<DbEvent> {
-  const dbEvent: any = {};
+function formatEventForDatabase(event: Partial<FrontendEvent>): DatabaseEventUpdate {
+  const dbEvent: DatabaseEventUpdate = {};
   
   if (event.title !== undefined) dbEvent.title = event.title;
   if (event.description !== undefined) dbEvent.description = event.description;
@@ -47,11 +46,11 @@ export async function getEvents(): Promise<FrontendEvent[]> {
     return [];
   }
 
-  // Use filter method instead of eq for better type safety
+  // Use eq method with proper types
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .filter('user', 'eq', user.id);
+    .eq('user', user.id);
 
   if (error) {
     console.error("Error fetching events:", error);
@@ -69,12 +68,12 @@ export async function getEventById(id: string): Promise<FrontendEvent> {
     throw new Error("User not authenticated");
   }
 
-  // Use filter method for better type safety
+  // Use eq method for proper typing
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .filter('id', 'eq', id)
-    .filter('user', 'eq', user.id)
+    .eq('id', id)
+    .eq('user', user.id)
     .limit(1);
 
   if (error) {
@@ -86,7 +85,7 @@ export async function getEventById(id: string): Promise<FrontendEvent> {
     throw new Error(`Event with id ${id} not found`);
   }
 
-  return formatEventForFrontend(data[0]);
+  return formatEventForFrontend(data[0] as DatabaseEvent);
 }
 
 export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<FrontendEvent> {
@@ -115,7 +114,7 @@ export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<Fro
 
   const { data, error } = await supabase
     .from("events")
-    .insert([newEvent])
+    .insert(newEvent)
     .select();
 
   if (error) {
@@ -132,14 +131,14 @@ export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<Fro
     // Convert to DbEvent format for Google Calendar sync
     const formattedData = data[0];
     if (formattedData) {
-      await saveEventToGoogleCalendar(formattedData as any);
+      await saveEventToGoogleCalendar(formattedData as DatabaseEvent);
     }
   } catch (syncError) {
     console.error("Error syncing to Google Calendar:", syncError);
     // Continue even if sync fails
   }
 
-  return formatEventForFrontend(data[0]);
+  return formatEventForFrontend(data[0] as DatabaseEvent);
 }
 
 export async function updateEvent(id: string, event: Partial<FrontendEvent>): Promise<FrontendEvent> {
@@ -153,8 +152,8 @@ export async function updateEvent(id: string, event: Partial<FrontendEvent>): Pr
   // Format the event for the database update
   const dbEvent = formatEventForDatabase(event);
   
-  // Add updated_at field if not present in database schema
-  const updateData = {
+  // Add updated_at field
+  const updateData: DatabaseEventUpdate = {
     ...dbEvent,
     updated_at: new Date().toISOString()
   };
@@ -162,8 +161,8 @@ export async function updateEvent(id: string, event: Partial<FrontendEvent>): Pr
   const { data, error } = await supabase
     .from("events")
     .update(updateData)
-    .filter('id', 'eq', id)
-    .filter('user', 'eq', user.id)
+    .eq('id', id)
+    .eq('user', user.id)
     .select();
 
   if (error) {
@@ -180,14 +179,14 @@ export async function updateEvent(id: string, event: Partial<FrontendEvent>): Pr
     // Convert to DbEvent format for Google Calendar sync
     const formattedData = data[0];
     if (formattedData) {
-      await saveEventToGoogleCalendar(formattedData as any);
+      await saveEventToGoogleCalendar(formattedData as DatabaseEvent);
     }
   } catch (syncError) {
     console.error("Error syncing to Google Calendar:", syncError);
     // Continue even if sync fails
   }
 
-  return formatEventForFrontend(data[0]);
+  return formatEventForFrontend(data[0] as DatabaseEvent);
 }
 
 export async function deleteEvent(id: string): Promise<boolean> {
@@ -209,8 +208,8 @@ export async function deleteEvent(id: string): Promise<boolean> {
   const { error } = await supabase
     .from("events")
     .delete()
-    .filter('id', 'eq', id)
-    .filter('user', 'eq', user.id);
+    .eq('id', id)
+    .eq('user', user.id);
 
   if (error) {
     console.error("Error deleting event:", error);
@@ -231,8 +230,8 @@ export async function getGoogleCalendarEvents(): Promise<FrontendEvent[]> {
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .filter('source', 'eq', "google")
-    .filter('user', 'eq', user.id)
+    .eq('source', "google")
+    .eq('user', user.id)
     .order('start_time', { ascending: true });
 
   if (error) {
