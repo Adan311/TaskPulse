@@ -1,10 +1,10 @@
 
 import { useState, useEffect } from "react";
-import { AppLayout } from "@/components/AppLayout";
-import { Button } from "@/components/ui/button";
+import { AppLayout } from "@/frontend/components/layout/AppLayout";
+import { Button } from "@/frontend/components/ui/button";
 import { Plus } from "lucide-react";
 import { format } from "date-fns";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card";
 import { CalendarHeader } from "@/frontend/features/calendar/components/CalendarHeader";
 import { CalendarSidebar } from "@/frontend/features/calendar/components/CalendarSidebar";
 import { MonthView } from "@/frontend/features/calendar/components/MonthView";
@@ -12,17 +12,20 @@ import { WeekView } from "@/frontend/features/calendar/components/WeekView";
 import { ListView } from "@/frontend/features/calendar/components/ListView";
 import { EventDialog } from "@/frontend/features/calendar/components/EventDialog";
 import { GoogleCalendarButton } from "@/frontend/features/calendar/components/GoogleCalendarButton";
-import { getEvents } from "@/services/eventService";
-import { getConnectedCalendars } from "@/services/googleCalendarService";
+import { getEvents } from "@/backend/api/services/eventService";
+import { getConnectedCalendars } from "@/backend/api/services/googleCalendarService";
 import { supabase } from "@/integrations/supabase/client";
+import { Event } from "@/frontend/types/calendar";
 
 export default function Calendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [view, setView] = useState<"month" | "week" | "day" | "list">("month");
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(undefined);
   const [hasGoogleCalendar, setHasGoogleCalendar] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
     // Get the current user when component mounts
@@ -47,10 +50,13 @@ export default function Calendar() {
     try {
       if (!user) return;
       
+      setLoading(true);
       const data = await getEvents();
       setEvents(data);
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching events:", error);
+      setLoading(false);
     }
   };
 
@@ -75,16 +81,21 @@ export default function Calendar() {
     }
   }, [user]);
 
+  const handleEditEvent = (event: Event) => {
+    setSelectedEvent(event);
+    setEventDialogOpen(true);
+  };
+
   const renderView = () => {
     switch (view) {
       case "month":
-        return <MonthView />;
+        return <MonthView events={events} date={date} onEditEvent={handleEditEvent} onEventsChange={fetchEvents} />;
       case "week":
-        return <WeekView />;
+        return <WeekView events={events} date={date} onEditEvent={handleEditEvent} onEventsChange={fetchEvents} />;
       case "list":
-        return <ListView />;
+        return <ListView events={events} onEditEvent={handleEditEvent} onEventsChange={fetchEvents} />;
       default:
-        return <MonthView />;
+        return <MonthView events={events} date={date} onEditEvent={handleEditEvent} onEventsChange={fetchEvents} />;
     }
   };
 
@@ -133,6 +144,7 @@ export default function Calendar() {
         open={eventDialogOpen}
         onOpenChange={setEventDialogOpen}
         onSuccess={fetchEvents}
+        event={selectedEvent}
       />
     </AppLayout>
   );

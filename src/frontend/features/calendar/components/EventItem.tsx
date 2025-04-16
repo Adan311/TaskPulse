@@ -1,19 +1,19 @@
 
 import { format, parseISO } from "date-fns";
 import { MoreHorizontal, Trash, Edit, Clock } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
+import { useToast } from "@/frontend/hooks/use-toast";
+import { Button } from "@/frontend/components/ui/button";
 import {
   Card,
   CardContent,
-} from "@/components/ui/card";
+} from "@/frontend/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Event, deleteEvent } from "@/services/eventService";
+} from "@/frontend/components/ui/dropdown-menu";
+import { Event, deleteEvent } from "@/backend/api/services/eventService";
 
 interface EventItemProps {
   event: Event;
@@ -74,7 +74,7 @@ export function EventItem({ event, onEdit, onDelete }: EventItemProps) {
           <div className="flex items-center">
             <Clock className="mr-2 h-4 w-4" />
             <span>
-              {format(parseISO(event.start_time), "h:mm a")} - {format(parseISO(event.end_time), "h:mm a")}
+              {format(parseISO(event.startTime), "h:mm a")} - {format(parseISO(event.endTime), "h:mm a")}
             </span>
           </div>
           {event.description && <p className="mt-1">{event.description}</p>}

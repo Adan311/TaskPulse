@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Event } from "@/backend/types/supabaseSchema";
+import { Event as DbEvent } from "@/backend/types/supabaseSchema";
 
 export interface GoogleCalendarTokens {
   id: string;
@@ -75,7 +75,7 @@ export async function syncEventsFromGoogleCalendar() {
 }
 
 // Create or update an event in Google Calendar
-export async function saveEventToGoogleCalendar(event: Event): Promise<void> {
+export async function saveEventToGoogleCalendar(event: DbEvent): Promise<void> {
   try {
     // Check if we have a Google Calendar connected
     const isConnected = await hasGoogleCalendarConnected();

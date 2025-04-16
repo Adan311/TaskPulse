@@ -2,10 +2,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { saveEventToGoogleCalendar, deleteEventFromGoogleCalendar } from "./googleCalendarService";
-import { Event } from "@/frontend/types/calendar";
+import { Event as FrontendEvent } from "@/frontend/types/calendar";
+import { Event as DbEvent } from "@/backend/types/supabaseSchema";
 
 // Convert database event to frontend event format
-function formatEventForFrontend(dbEvent: any): Event {
+function formatEventForFrontend(dbEvent: any): FrontendEvent {
   return {
     id: dbEvent.id,
     title: dbEvent.title,
@@ -21,7 +22,7 @@ function formatEventForFrontend(dbEvent: any): Event {
 }
 
 // Convert frontend event to database format
-function formatEventForDatabase(event: Partial<Event>): any {
+function formatEventForDatabase(event: Partial<FrontendEvent>): Partial<DbEvent> {
   const dbEvent: any = {};
   
   if (event.title !== undefined) dbEvent.title = event.title;
@@ -36,7 +37,7 @@ function formatEventForDatabase(event: Partial<Event>): any {
   return dbEvent;
 }
 
-export async function getEvents(): Promise<Event[]> {
+export async function getEvents(): Promise<FrontendEvent[]> {
   // Get the current user
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -58,7 +59,7 @@ export async function getEvents(): Promise<Event[]> {
   return data.map(formatEventForFrontend);
 }
 
-export async function getEventById(id: string): Promise<Event> {
+export async function getEventById(id: string): Promise<FrontendEvent> {
   // Get the current user
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -81,7 +82,7 @@ export async function getEventById(id: string): Promise<Event> {
   return formatEventForFrontend(data);
 }
 
-export async function createEvent(event: Omit<Event, "id">): Promise<Event> {
+export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<FrontendEvent> {
   // Get the current user
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -109,7 +110,17 @@ export async function createEvent(event: Omit<Event, "id">): Promise<Event> {
 
   // Sync to Google Calendar if connected
   try {
-    await saveEventToGoogleCalendar(formatEventForFrontend(data));
+    // Convert to DbEvent format for Google Calendar sync
+    const formattedData = {
+      ...data,
+      start_time: data.start_time,
+      end_time: data.end_time,
+      google_event_id: data.google_event_id,
+      user_id: data.user,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    await saveEventToGoogleCalendar(formattedData);
   } catch (syncError) {
     console.error("Error syncing to Google Calendar:", syncError);
     // Continue even if sync fails
@@ -118,7 +129,7 @@ export async function createEvent(event: Omit<Event, "id">): Promise<Event> {
   return formatEventForFrontend(data);
 }
 
-export async function updateEvent(id: string, event: Partial<Event>): Promise<Event> {
+export async function updateEvent(id: string, event: Partial<FrontendEvent>): Promise<FrontendEvent> {
   // Get the current user
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -143,7 +154,17 @@ export async function updateEvent(id: string, event: Partial<Event>): Promise<Ev
 
   // Sync to Google Calendar if connected
   try {
-    await saveEventToGoogleCalendar(formatEventForFrontend(data));
+    // Convert to DbEvent format for Google Calendar sync
+    const formattedData = {
+      ...data,
+      start_time: data.start_time,
+      end_time: data.end_time,
+      google_event_id: data.google_event_id,
+      user_id: data.user,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    await saveEventToGoogleCalendar(formattedData);
   } catch (syncError) {
     console.error("Error syncing to Google Calendar:", syncError);
     // Continue even if sync fails
@@ -182,7 +203,7 @@ export async function deleteEvent(id: string): Promise<boolean> {
   return true;
 }
 
-export async function getGoogleCalendarEvents(): Promise<Event[]> {
+export async function getGoogleCalendarEvents(): Promise<FrontendEvent[]> {
   // Get the current user
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -204,3 +225,6 @@ export async function getGoogleCalendarEvents(): Promise<Event[]> {
 
   return data.map(formatEventForFrontend);
 }
+
+// Re-export the frontend Event type
+export type { FrontendEvent as Event };
