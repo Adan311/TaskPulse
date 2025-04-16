@@ -87,15 +87,22 @@ export default function Calendar() {
   };
 
   const renderView = () => {
+    const props = {
+      events,
+      date,
+      onEditEvent: handleEditEvent,
+      onEventsChange: fetchEvents
+    };
+
     switch (view) {
       case "month":
-        return <MonthView events={events} date={date} onEditEvent={handleEditEvent} onEventsChange={fetchEvents} />;
+        return <MonthView {...props} />;
       case "week":
-        return <WeekView events={events} date={date} onEditEvent={handleEditEvent} onEventsChange={fetchEvents} />;
+        return <WeekView {...props} />;
       case "list":
         return <ListView events={events} onEditEvent={handleEditEvent} onEventsChange={fetchEvents} />;
       default:
-        return <MonthView events={events} date={date} onEditEvent={handleEditEvent} onEventsChange={fetchEvents} />;
+        return <MonthView {...props} />;
     }
   };
 

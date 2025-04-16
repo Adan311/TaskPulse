@@ -1,6 +1,6 @@
 
 import { Clock } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/frontend/components/ui/avatar";
 import {
   Table,
   TableBody,
@@ -8,8 +8,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Event } from "@/types/calendar";
+} from "@/frontend/components/ui/table";
+import { Event } from "@/frontend/types/calendar";
 
 interface EventListProps {
   events: Event[];
@@ -37,7 +37,7 @@ export function EventList({ events }: EventListProps) {
             <TableCell>{event.title}</TableCell>
             <TableCell>
               <div className="flex -space-x-2">
-                {event.participants.map((participant, i) => (
+                {event.participants?.map((participant, i) => (
                   <Avatar key={i} className="h-6 w-6 border-2 border-background">
                     <AvatarImage src={participant.avatar} alt={participant.name} />
                     <AvatarFallback>{participant.name[0]}</AvatarFallback>

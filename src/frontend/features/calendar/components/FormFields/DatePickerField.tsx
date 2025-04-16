@@ -1,11 +1,11 @@
 
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/frontend/components/ui/form";
+import { Button } from "@/frontend/components/ui/button";
+import { Calendar } from "@/frontend/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/frontend/components/ui/popover";
+import { cn } from "@/frontend/utils/utils";
 import { UseFormReturn } from "react-hook-form";
 import { FormValues } from "../../EventFormSchema";
 

@@ -1,6 +1,6 @@
 
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/frontend/components/ui/form";
+import { Input } from "@/frontend/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { FormValues } from "../../EventFormSchema";
 

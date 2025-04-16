@@ -1,6 +1,8 @@
 
-// Re-export the sidebar components from the main components
-export { 
+// Create a barrel file that re-exports components from a proper location
+// since these components aren't actually in @/components/ui/sidebar
+
+import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -25,4 +27,32 @@ export {
   SidebarSeparator,
   SidebarTrigger,
   useSidebar,
-} from "@/components/ui/sidebar";
+} from "@/frontend/components/ui/sidebar/sidebar";
+
+// Re-export all components
+export {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupAction,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInput,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSkeleton,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarSeparator,
+  SidebarTrigger,
+  useSidebar,
+};

@@ -1,4 +1,5 @@
 
+// Define calendar-related types
 export interface Event {
   id: string;
   title: string;
@@ -7,16 +8,40 @@ export interface Event {
   endTime: string;
   color?: string;
   project?: string;
-  user?: string;
   googleEventId?: string;
   source?: 'app' | 'google';
+  participants: Participant[];
 }
 
 export interface Participant {
+  id: string;
   name: string;
-  avatar: string;
+  email: string;
+  avatar?: string;
 }
 
-export interface EventWithParticipants extends Event {
-  participants: Participant[];
+export interface MonthViewProps {
+  events: Event[];
+  date: Date | undefined;
+  onEditEvent: (event: Event) => void;
+  onEventsChange: () => void;
+}
+
+export interface WeekViewProps {
+  events: Event[];
+  date: Date | undefined;
+  onEditEvent: (event: Event) => void;
+  onEventsChange: () => void;
+}
+
+export interface ListViewProps {
+  events: Event[];
+  onEditEvent: (event: Event) => void;
+  onEventsChange: () => void;
+}
+
+export interface EventFormProps {
+  onSuccess: () => void;
+  onCancel: () => void;
+  event?: Event;
 }

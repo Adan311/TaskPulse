@@ -1,10 +1,9 @@
-
 import { TaskDialog } from './TaskDialog';
 import { TaskBoardHeader } from './TaskBoardHeader';
 import { TaskColumnsContainer } from './TaskColumnsContainer';
 import { TaskBoardLoader } from './TaskBoardLoader';
-import { useTaskBoard } from './useTaskBoard';
-import { Task } from '@/backend/types/supabaseSchema';
+import { useTaskBoard } from '../hooks/useTaskBoard';
+import { Task } from '@/backend/api/services/task.service';
 
 export function TaskBoard() {
   const {

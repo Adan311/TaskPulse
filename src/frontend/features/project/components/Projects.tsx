@@ -1,14 +1,13 @@
-
 import { useState } from "react";
-import { AppLayout } from "@/components/AppLayout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { AppLayout } from "@/frontend/components/layout/AppLayout";
+import { Button } from "@/frontend/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/frontend/components/ui/card";
 import { Plus, FolderPlus, Trash2, Edit, ExternalLink } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/frontend/components/ui/dialog";
+import { Input } from "@/frontend/components/ui/input";
+import { Label } from "@/frontend/components/ui/label";
+import { Textarea } from "@/frontend/components/ui/textarea";
+import { Badge } from "@/frontend/components/ui/badge";
 
 interface Project {
   id: string;

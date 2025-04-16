@@ -1,97 +1,157 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from "uuid";
-import { Task } from "@/backend/types/supabaseSchema";
+import { supabase } from "../client/supabase";
 
-export async function getTasks(): Promise<Task[]> {
-  try {
-    const { data, error } = await supabase
-      .from("tasks")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-    
-    // Cast the data to ensure type compatibility
-    return (data || []) as Task[];
-  } catch (error) {
-    console.error("Error fetching tasks:", error);
-    throw error;
-  }
+// Export Task type
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: 'todo' | 'in-progress' | 'done';
+  priority: 'low' | 'medium' | 'high';
+  due_date?: string;
+  project?: string | null;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export async function createTask(taskData: Omit<Task, "id" | "created_at" | "updated_at">): Promise<Task> {
+// Fetch all tasks for the current user
+export const fetchTasks = async (): Promise<Task[]> => {
   try {
-    // Get current user
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      throw new Error("User must be authenticated to create tasks");
+      return [];
     }
-
-    const task = {
-      id: uuidv4(), // Generate a new UUID for the task
-      ...taskData,
-      user_id: user.id, // Set the user_id to the current user's ID
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-
+    
     const { data, error } = await supabase
-      .from("tasks")
-      .insert(task)
-      .select()
-      .single();
-
+      .from('tasks')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    
     if (error) throw error;
     
-    return data as Task;
+    return data as Task[];
   } catch (error) {
-    console.error("Error creating task:", error);
+    console.error('Error fetching tasks:', error);
     throw error;
   }
-}
+};
 
-export async function updateTask(id: string, taskData: Partial<Task>): Promise<Task> {
+// Create a new task
+export const createTask = async (taskData: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
   try {
-    // Make sure we're not overriding the user_id
-    const { user_id, ...updates } = taskData;
+    const { data: { user } } = await supabase.auth.getUser();
     
-    const updatesWithTimestamp = {
-      ...updates,
-      updated_at: new Date().toISOString()
-    };
-
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    
     const { data, error } = await supabase
-      .from("tasks")
-      .update(updatesWithTimestamp)
-      .eq("id", id)
-      .select()
-      .single();
-
+      .from('tasks')
+      .insert({
+        title: taskData.title,
+        description: taskData.description,
+        status: taskData.status,
+        priority: taskData.priority,
+        project: taskData.project,
+        due_date: taskData.due_date,
+        user_id: user.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select();
+    
     if (error) throw error;
     
-    return data as Task;
+    return data[0] as Task;
   } catch (error) {
-    console.error("Error updating task:", error);
+    console.error('Error creating task:', error);
     throw error;
   }
-}
+};
 
-export async function deleteTask(id: string): Promise<void> {
+// Update an existing task
+export const updateTask = async (taskData: Partial<Task> & { id: string }) => {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    
+    const { data, error } = await supabase
+      .from('tasks')
+      .update({
+        title: taskData.title,
+        description: taskData.description,
+        status: taskData.status,
+        priority: taskData.priority,
+        project: taskData.project,
+        due_date: taskData.due_date,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', taskData.id)
+      .eq('user_id', user.id)
+      .select();
+    
+    if (error) throw error;
+    
+    return data[0] as Task;
+  } catch (error) {
+    console.error('Error updating task:', error);
+    throw error;
+  }
+};
+
+// Delete a task
+export const deleteTask = async (taskId: string) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    
     const { error } = await supabase
-      .from("tasks")
+      .from('tasks')
       .delete()
-      .eq("id", id);
-
+      .eq('id', taskId)
+      .eq('user_id', user.id);
+    
     if (error) throw error;
+    
+    return true;
   } catch (error) {
-    console.error("Error deleting task:", error);
+    console.error('Error deleting task:', error);
     throw error;
   }
-}
+};
 
-export async function updateTaskStatus(id: string, status: Task["status"]): Promise<void> {
-  await updateTask(id, { status });
-}
+// Update task status
+export const updateTaskStatus = async (taskId: string, status: Task['status']) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    
+    const { error } = await supabase
+      .from('tasks')
+      .update({ 
+        status, 
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', taskId)
+      .eq('user_id', user.id);
+    
+    if (error) throw error;
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating task status:', error);
+    throw error;
+  }
+};

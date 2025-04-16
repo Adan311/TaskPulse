@@ -1,7 +1,7 @@
 
 import { Droppable } from 'react-beautiful-dnd';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/frontend/components/ui/scroll-area';
+import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/ui/card';
 import { TaskList } from './TaskList';
 import { Task } from '@/backend/types/supabaseSchema';
 

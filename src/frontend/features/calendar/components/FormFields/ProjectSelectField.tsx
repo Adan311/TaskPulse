@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from "react";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/frontend/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/frontend/components/ui/select";
+import { useToast } from "@/frontend/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UseFormReturn } from "react-hook-form";
 import { FormValues, Project } from "../../EventFormSchema";

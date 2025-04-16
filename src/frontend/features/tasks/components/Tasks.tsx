@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
-import { TaskBoard } from "@/components/Tasks/TaskBoard";
+import { TaskBoard } from "@/frontend/features/tasks/components/TaskBoard";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { AppLayout } from "@/components/AppLayout";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/frontend/components/ui/button";
+import { AppLayout } from "@/frontend/components/layout/AppLayout";
+import { useToast } from "@/frontend/hooks/use-toast";
 
 const Tasks = () => {
   const [user, setUser] = useState<any>(null);
