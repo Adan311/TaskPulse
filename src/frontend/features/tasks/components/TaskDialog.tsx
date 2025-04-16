@@ -1,6 +1,6 @@
 
 import * as React from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/frontend/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,19 +8,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from "@/frontend/components/ui/dialog";
+import { Input } from "@/frontend/components/ui/input";
+import { Textarea } from "@/frontend/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+} from "@/frontend/components/ui/select";
+import { Label } from "@/frontend/components/ui/label";
 import { Task } from "@/backend/types/supabaseSchema";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/frontend/hooks/use-toast";
 import { supabase } from "@/backend/api/client/supabase";
 import { useState, useEffect } from "react";
 

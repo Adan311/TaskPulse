@@ -1,10 +1,10 @@
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useToast } from "@/components/ui/use-toast";
+import { Card, CardContent } from '@/frontend/components/ui/card';
+import { ScrollArea } from '@/frontend/components/ui/scroll-area';
+import { useToast } from "@/frontend/hooks/use-toast";
 import { startOfWeek, endOfWeek, eachDayOfInterval, format, parseISO, addDays } from 'date-fns';
-import { Event, getEvents } from '@/services/eventService';
+import { Event, getEvents } from '@/backend/api/services/eventService';
 import { EventDialog } from './EventDialog';
 
 export function WeekView() {

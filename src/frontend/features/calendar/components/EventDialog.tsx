@@ -5,9 +5,9 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/frontend/components/ui/dialog";
 import { EventForm } from "./EventForm";
-import { Event } from "@/services/eventService";
+import { Event } from "@/backend/api/services/eventService";
 
 interface EventDialogProps {
   open: boolean;

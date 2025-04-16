@@ -1,6 +1,6 @@
 
-import { AppLayout } from "@/components/AppLayout";
-import { Button } from "@/components/ui/button";
+import { AppLayout } from "@/frontend/components/layout/AppLayout";
+import { Button } from "@/frontend/components/ui/button";
 import { 
   Card, 
   CardContent, 
@@ -8,40 +8,40 @@ import {
   CardFooter, 
   CardHeader, 
   CardTitle 
-} from "@/components/ui/card";
+} from "@/frontend/components/ui/card";
 import { 
   Tabs, 
   TabsContent, 
   TabsList, 
   TabsTrigger 
-} from "@/components/ui/tabs";
+} from "@/frontend/components/ui/tabs";
 import { 
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
+} from "@/frontend/components/ui/accordion";
+import { Badge } from "@/frontend/components/ui/badge";
 import { 
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+} from "@/frontend/components/ui/select";
+import { Calendar } from "@/frontend/components/ui/calendar";
+import { Switch } from "@/frontend/components/ui/switch";
+import { Label } from "@/frontend/components/ui/label";
+import { Slider } from "@/frontend/components/ui/slider";
+import { Input } from "@/frontend/components/ui/input";
+import { Checkbox } from "@/frontend/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/frontend/components/ui/radio-group";
 import { 
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/frontend/components/ui/tooltip";
 import { AlertCircle, CalendarDays, Bell, User, Shield, Copy, Check } from "lucide-react";
 
 export default function Components() {

@@ -65,9 +65,11 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
 
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className={`${getPriorityColor(task.priority)} text-white`}>
-              {task.priority}
-            </Badge>
+            {task.priority && (
+              <Badge variant="outline" className={`${getPriorityColor(task.priority)} text-white`}>
+                {task.priority}
+              </Badge>
+            )}
             
             {task.due_date && (
               <div className="flex items-center text-xs text-muted-foreground">

@@ -4,7 +4,7 @@ import { Button } from "@/frontend/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Calendar, ListTodo, FileText, Star } from "lucide-react";
 import { useToast } from "@/frontend/hooks/use-toast";
-import { logout } from "@/backend/api/services/auth.service";
+import { logout } from "@/frontend/utils/auth";
 
 const Index = () => {
   const navigate = useNavigate();

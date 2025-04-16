@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/frontend/components/layout/AppLayout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/frontend/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/frontend/components/ui/card";
 import { supabase } from "@/backend/api/client/supabase";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { Project } from "@/backend/types/supabaseSchema";

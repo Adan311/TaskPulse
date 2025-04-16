@@ -1,10 +1,10 @@
 
 import { useState, useEffect } from "react";
-import { AppLayout } from "@/components/AppLayout";
-import { Button } from "@/components/ui/button";
+import { AppLayout } from "@/frontend/components/layout/AppLayout";
+import { Button } from "@/frontend/components/ui/button";
 import { Plus } from "lucide-react";
 import { format } from "date-fns";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card";
 import { CalendarHeader } from "@/frontend/features/calendar/components/CalendarHeader";
 import { CalendarSidebar } from "@/frontend/features/calendar/components/CalendarSidebar";
 import { MonthView } from "@/frontend/features/calendar/components/MonthView";
@@ -12,9 +12,9 @@ import { WeekView } from "@/frontend/features/calendar/components/WeekView";
 import { ListView } from "@/frontend/features/calendar/components/ListView";
 import { EventDialog } from "@/frontend/features/calendar/components/EventDialog";
 import { GoogleCalendarButton } from "@/frontend/features/calendar/components/GoogleCalendarButton";
-import { getEvents } from "@/services/eventService";
-import { getConnectedCalendars } from "@/services/googleCalendarService";
-import { supabase } from "@/integrations/supabase/client";
+import { getEvents } from "@/backend/api/services/eventService";
+import { getConnectedCalendars } from "@/backend/api/services/googleCalendarService";
+import { supabase } from "@/backend/api/client/supabase";
 
 export default function Calendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
