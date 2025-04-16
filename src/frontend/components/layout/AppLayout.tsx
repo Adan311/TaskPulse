@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Calendar, Home, ListTodo, FileText, Settings, LogOut } from "lucide-react";
 import { useToast } from "@/frontend/hooks/use-toast";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/frontend/components/ui/button";
 import { supabase } from "@/backend/api/client/supabase";
 import { useNavigate } from "react-router-dom";
 
