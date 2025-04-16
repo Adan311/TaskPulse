@@ -100,13 +100,14 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
       return;
     }
 
-    const taskData: Omit<Task, "id" | "user_id" | "created_at" | "updated_at"> = {
+    const taskData = {
       title,
       description,
       status,
       priority,
       project: projectId === "none" ? null : projectId,
-      due_date: undefined
+      due_date: undefined,
+      user: '' // This will be replaced by the backend service
     };
 
     onSave(taskData);

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Event as DbEvent } from "@/backend/types/supabaseSchema";
 
@@ -180,6 +179,49 @@ export async function disconnectGoogleCalendar(calendarId: string) {
     return true;
   } catch (error) {
     console.error("Error disconnecting Google Calendar:", error);
+    throw error;
+  }
+}
+
+// Initiate Google Calendar Auth
+export async function initiateGoogleCalendarAuth(): Promise<string | null> {
+  try {
+    // Get the current user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
+    // Generate a random state parameter
+    const state = Math.random().toString(36).substring(2);
+    
+    // Save state in localStorage to verify it later
+    localStorage.setItem("googleCalendarState", state);
+    localStorage.setItem("googleCalendarUserId", user.id);
+
+    // Redirect URI should be your callback endpoint
+    const redirectUri = `${window.location.origin}/api/google-calendar-callback`;
+    
+    const { data, error } = await supabase.functions.invoke(
+      "google-calendar-auth",
+      {
+        body: { 
+          action: "initiate",
+          redirectUri,
+          userId: user.id,
+          state
+        },
+      }
+    );
+
+    if (error) {
+      throw new Error(`Failed to initiate Google Calendar auth: ${error.message}`);
+    }
+
+    return data?.authUrl || null;
+  } catch (error) {
+    console.error("Error initiating Google Calendar auth:", error);
     throw error;
   }
 }

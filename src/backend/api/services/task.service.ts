@@ -44,9 +44,7 @@ export const createTask = async (taskData: Omit<Task, 'id' | 'user' | 'created_a
         priority: taskData.priority,
         project: taskData.project,
         due_date: taskData.due_date,
-        user: user.id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        user: user.id
       })
       .select();
     
@@ -76,8 +74,7 @@ export const updateTask = async (taskData: Partial<Task> & { id: string }) => {
         status: taskData.status,
         priority: taskData.priority,
         project: taskData.project,
-        due_date: taskData.due_date,
-        updated_at: new Date().toISOString()
+        due_date: taskData.due_date
       })
       .eq('id', taskData.id)
       .eq('user', user.id)
@@ -127,10 +124,7 @@ export const updateTaskStatus = async (taskId: string, status: Task['status']) =
     
     const { error } = await supabase
       .from('tasks')
-      .update({ 
-        status, 
-        updated_at: new Date().toISOString() 
-      })
+      .update({ status })
       .eq('id', taskId)
       .eq('user', user.id);
     
