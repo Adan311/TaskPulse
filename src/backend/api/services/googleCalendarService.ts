@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Event } from "@/services/eventService";
+import { Event } from "@/backend/types/supabaseSchema";
 
 export interface GoogleCalendarTokens {
   id: string;
