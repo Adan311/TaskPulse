@@ -1,6 +1,7 @@
 
 import { supabase } from "../client/supabase";
 import { Task } from "@/backend/types/supabaseSchema";
+import { v4 as uuidv4 } from "uuid";
 
 // Fetch all tasks for the current user
 export const fetchTasks = async (): Promise<Task[]> => {
@@ -35,9 +36,13 @@ export const createTask = async (taskData: Omit<Task, 'id' | 'user' | 'created_a
       throw new Error('User not authenticated');
     }
     
+    // Generate a UUID for the new task
+    const taskId = uuidv4();
+    
     const { data, error } = await supabase
       .from('tasks')
       .insert({
+        id: taskId,
         title: taskData.title,
         description: taskData.description,
         status: taskData.status,
