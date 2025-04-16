@@ -46,7 +46,7 @@ export async function getEvents(): Promise<FrontendEvent[]> {
     return [];
   }
 
-  // Use eq method with proper types
+  // Use properly typed query
   const { data, error } = await supabase
     .from("events")
     .select("*")
@@ -57,7 +57,20 @@ export async function getEvents(): Promise<FrontendEvent[]> {
     throw error;
   }
 
-  return (data || []).map(formatEventForFrontend);
+  // Type-safe transformation
+  return (data || []).map((eventData) => {
+    if (!eventData) return {
+      id: '',
+      title: '',
+      startTime: '',
+      endTime: '',
+      participants: []
+    };
+    
+    // Ensure this is treated as a DatabaseEvent
+    const dbEvent = eventData as unknown as DatabaseEvent;
+    return formatEventForFrontend(dbEvent);
+  });
 }
 
 export async function getEventById(id: string): Promise<FrontendEvent> {
@@ -68,7 +81,7 @@ export async function getEventById(id: string): Promise<FrontendEvent> {
     throw new Error("User not authenticated");
   }
 
-  // Use eq method for proper typing
+  // Use properly typed query
   const { data, error } = await supabase
     .from("events")
     .select("*")
@@ -85,7 +98,9 @@ export async function getEventById(id: string): Promise<FrontendEvent> {
     throw new Error(`Event with id ${id} not found`);
   }
 
-  return formatEventForFrontend(data[0] as DatabaseEvent);
+  // Type-safe transformation
+  const dbEvent = data[0] as unknown as DatabaseEvent;
+  return formatEventForFrontend(dbEvent);
 }
 
 export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<FrontendEvent> {
@@ -112,6 +127,8 @@ export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<Fro
     google_event_id: event.googleEventId ?? null
   };
 
+  console.log("Creating new event:", newEvent);
+
   const { data, error } = await supabase
     .from("events")
     .insert(newEvent)
@@ -128,17 +145,20 @@ export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<Fro
 
   // Sync to Google Calendar if connected
   try {
+    console.log("Attempting to sync new event to Google Calendar");
     // Convert to DbEvent format for Google Calendar sync
-    const formattedData = data[0];
+    const formattedData = data[0] as unknown as DatabaseEvent;
     if (formattedData) {
-      await saveEventToGoogleCalendar(formattedData as DatabaseEvent);
+      const syncResult = await saveEventToGoogleCalendar(formattedData);
+      console.log("Google Calendar sync result:", syncResult);
     }
   } catch (syncError) {
     console.error("Error syncing to Google Calendar:", syncError);
     // Continue even if sync fails
   }
 
-  return formatEventForFrontend(data[0] as DatabaseEvent);
+  const dbEvent = data[0] as unknown as DatabaseEvent;
+  return formatEventForFrontend(dbEvent);
 }
 
 export async function updateEvent(id: string, event: Partial<FrontendEvent>): Promise<FrontendEvent> {
@@ -158,6 +178,8 @@ export async function updateEvent(id: string, event: Partial<FrontendEvent>): Pr
     updated_at: new Date().toISOString()
   };
 
+  console.log("Updating event:", id, updateData);
+
   const { data, error } = await supabase
     .from("events")
     .update(updateData)
@@ -176,17 +198,20 @@ export async function updateEvent(id: string, event: Partial<FrontendEvent>): Pr
 
   // Sync to Google Calendar if connected
   try {
+    console.log("Attempting to sync updated event to Google Calendar");
     // Convert to DbEvent format for Google Calendar sync
-    const formattedData = data[0];
+    const formattedData = data[0] as unknown as DatabaseEvent;
     if (formattedData) {
-      await saveEventToGoogleCalendar(formattedData as DatabaseEvent);
+      const syncResult = await saveEventToGoogleCalendar(formattedData);
+      console.log("Google Calendar sync result:", syncResult);
     }
   } catch (syncError) {
     console.error("Error syncing to Google Calendar:", syncError);
     // Continue even if sync fails
   }
 
-  return formatEventForFrontend(data[0] as DatabaseEvent);
+  const dbEvent = data[0] as unknown as DatabaseEvent;
+  return formatEventForFrontend(dbEvent);
 }
 
 export async function deleteEvent(id: string): Promise<boolean> {
@@ -199,7 +224,9 @@ export async function deleteEvent(id: string): Promise<boolean> {
 
   // Delete from Google Calendar first if it's linked
   try {
-    await deleteEventFromGoogleCalendar(id);
+    console.log("Attempting to delete event from Google Calendar:", id);
+    const deleteResult = await deleteEventFromGoogleCalendar(id);
+    console.log("Google Calendar delete result:", deleteResult);
   } catch (syncError) {
     console.error("Error deleting from Google Calendar:", syncError);
     // Continue even if sync fails
@@ -239,7 +266,10 @@ export async function getGoogleCalendarEvents(): Promise<FrontendEvent[]> {
     throw error;
   }
 
-  return (data || []).map(formatEventForFrontend);
+  return (data || []).map((eventData) => {
+    const dbEvent = eventData as unknown as DatabaseEvent;
+    return formatEventForFrontend(dbEvent);
+  });
 }
 
 // Re-export the frontend Event type

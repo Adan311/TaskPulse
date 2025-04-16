@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/backend/api/client/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/frontend/components/ui/card";
 import { Button } from "@/frontend/components/ui/button";
@@ -65,6 +65,7 @@ export function GoogleCalendarCallback() {
         const redirectUri = `${window.location.origin}/api/google-calendar-callback`;
         
         console.log("Calling edge function with:", { 
+          action: "callback",
           code: "present", 
           redirectUri,
           userId 

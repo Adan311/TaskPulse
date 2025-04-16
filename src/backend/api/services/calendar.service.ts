@@ -25,7 +25,7 @@ export const fetchEvents = async (): Promise<CalendarEvent[]> => {
     return [];
   }
 
-  // Use "eq" operator with proper typing
+  // Use typed query with proper error handling
   const { data, error } = await supabase
     .from("events")
     .select("*")
@@ -36,19 +36,26 @@ export const fetchEvents = async (): Promise<CalendarEvent[]> => {
     throw error;
   }
 
-  // Transform the data to match CalendarEvent interface with null checks and proper typing
+  // Transform the data with proper type checking
   return (data || []).map(event => {
-    // Check each property safely
+    if (!event) return {
+      id: '',
+      title: '',
+      start_time: '',
+      end_time: '',
+      user_id: user.id
+    };
+    
     return {
-      id: event?.id ?? '',
-      title: event?.title ?? '',
-      description: event?.description ?? undefined,
-      start_time: event?.start_time ?? '',
-      end_time: event?.end_time ?? '',
+      id: event.id || '',
+      title: event.title || '',
+      description: event.description || undefined,
+      start_time: event.start_time || '',
+      end_time: event.end_time || '',
       all_day: false, // Default value since it's not in the database
-      color: event?.color ?? undefined,
-      project_id: event?.project ?? undefined,
-      user_id: event?.user ?? (user?.id || ''),
+      color: event.color || undefined,
+      project_id: event.project || undefined,
+      user_id: event.user || user.id,
     };
   });
 };
@@ -64,16 +71,17 @@ export const createEvent = async (event: Omit<CalendarEvent, "id" | "user_id">):
   const newEvent: DatabaseEventInsert = {
     id: uuidv4(),
     title: event.title,
-    description: event.description ?? null,
+    description: event.description || null,
     start_time: event.start_time,
     end_time: event.end_time,
-    color: event.color ?? null,
-    project: event.project_id ?? null,
+    color: event.color || null,
+    project: event.project_id || null,
     user: user.id,
     google_event_id: null,
     source: 'app'
   };
 
+  // Insert a single event with proper typing
   const { data, error } = await supabase
     .from("events")
     .insert(newEvent)
@@ -88,17 +96,21 @@ export const createEvent = async (event: Omit<CalendarEvent, "id" | "user_id">):
     throw new Error("Failed to create event: No data returned");
   }
 
-  // Transform the data to match CalendarEvent interface
+  // Transform with safe checks
   const createdEvent = data[0];
+  if (!createdEvent) {
+    throw new Error("Failed to retrieve created event data");
+  }
+  
   return {
-    id: createdEvent?.id ?? '',
-    title: createdEvent?.title ?? '',
-    description: createdEvent?.description ?? undefined,
-    start_time: createdEvent?.start_time ?? '',
-    end_time: createdEvent?.end_time ?? '',
-    all_day: false, // Default value since it's not in the database
-    color: createdEvent?.color ?? undefined,
-    project_id: createdEvent?.project ?? undefined,
-    user_id: createdEvent?.user ?? user.id,
+    id: createdEvent.id || '',
+    title: createdEvent.title || '',
+    description: createdEvent.description || undefined,
+    start_time: createdEvent.start_time || '',
+    end_time: createdEvent.end_time || '',
+    all_day: false,
+    color: createdEvent.color || undefined,
+    project_id: createdEvent.project || undefined,
+    user_id: createdEvent.user || user.id,
   };
 };

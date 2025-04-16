@@ -15,7 +15,8 @@ import { TimePickerField } from "./FormFields/TimePickerField";
 import { ColorPickerField } from "./FormFields/ColorPickerField";
 import { ProjectSelectField } from "./FormFields/ProjectSelectField";
 import { hasGoogleCalendarConnected } from "@/backend/api/services/googleCalendarService";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/frontend/components/ui/alert";
 
 interface EventFormProps {
   onSuccess: () => void;
@@ -34,6 +35,7 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
     const checkGoogleCalendar = async () => {
       try {
         const connected = await hasGoogleCalendarConnected();
+        console.log("Google Calendar connection status:", connected);
         setHasGoogleCalendar(connected);
       } catch (error) {
         console.error("Error checking Google Calendar connection:", error);
@@ -82,8 +84,10 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
         endTime: formattedEndTime,
         color: values.color,
         project: values.project === "none" ? undefined : values.project,
-        participants: [] // Add empty participants array to match the type
+        participants: []
       };
+
+      console.log("Submitting event:", eventData);
 
       if (event) {
         await updateEvent(event.id, eventData);
@@ -94,7 +98,7 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
             : "Your event has been updated successfully.",
         });
       } else {
-        await createEvent(eventData as any);
+        await createEvent(eventData);
         toast({
           title: "Event created",
           description: canSyncToGoogle 
@@ -120,20 +124,30 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         {isGoogleEvent && (
-          <div className="bg-muted p-3 rounded-md mb-4">
-            <p className="text-sm text-muted-foreground">
+          <Alert variant="default" className="bg-muted">
+            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+            <AlertDescription>
               This event is synchronized from Google Calendar. Changes made here will not affect the original Google Calendar event.
-            </p>
-          </div>
+            </AlertDescription>
+          </Alert>
         )}
         
         {canSyncToGoogle && (
-          <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-md mb-4 flex items-start gap-2">
-            <CalendarClock className="h-5 w-5 text-blue-500 mt-0.5" />
-            <p className="text-sm text-blue-600 dark:text-blue-400">
+          <Alert variant="default" className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+            <CalendarClock className="h-4 w-4 text-blue-500" />
+            <AlertDescription className="text-blue-600 dark:text-blue-400">
               This event will be synced to your Google Calendar automatically.
-            </p>
-          </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {!hasGoogleCalendar && !isGoogleEvent && (
+          <Alert variant="default" className="bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
+            <AlertCircle className="h-4 w-4 text-amber-500" />
+            <AlertDescription className="text-amber-600 dark:text-amber-400">
+              Connect Google Calendar to sync your events automatically.
+            </AlertDescription>
+          </Alert>
         )}
         
         <FormField

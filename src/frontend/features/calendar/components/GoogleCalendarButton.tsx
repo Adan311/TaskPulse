@@ -16,10 +16,14 @@ export function GoogleCalendarButton({ onSuccess }: GoogleCalendarButtonProps) {
   const handleConnectGoogleCalendar = async () => {
     setIsLoading(true);
     try {
+      console.log("Starting Google Calendar connection process");
       const authUrl = await initiateGoogleCalendarAuth();
       if (authUrl) {
+        console.log("Redirecting to Google auth URL:", authUrl);
+        // Redirect to Google auth page
         window.location.href = authUrl;
       } else {
+        console.error("No auth URL returned");
         toast({
           title: "Error",
           description: "Could not initiate Google Calendar authentication.",
@@ -35,9 +39,7 @@ export function GoogleCalendarButton({ onSuccess }: GoogleCalendarButtonProps) {
       });
     } finally {
       setIsLoading(false);
-      if (onSuccess) {
-        onSuccess();
-      }
+      // Don't call onSuccess here - it should be called after successful callback
     }
   };
 
