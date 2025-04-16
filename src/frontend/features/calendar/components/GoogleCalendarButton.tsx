@@ -1,7 +1,7 @@
+
 import { useState } from "react";
 import { Button } from "@/frontend/components/ui/button";
 import { Calendar, ExternalLink } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { initiateGoogleCalendarAuth } from "@/backend/api/services/googleCalendarService";
 
@@ -11,7 +11,6 @@ interface GoogleCalendarButtonProps {
 
 export function GoogleCalendarButton({ onSuccess }: GoogleCalendarButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleConnectGoogleCalendar = async () => {
@@ -20,7 +19,6 @@ export function GoogleCalendarButton({ onSuccess }: GoogleCalendarButtonProps) {
       const authUrl = await initiateGoogleCalendarAuth();
       if (authUrl) {
         window.location.href = authUrl;
-        // navigate(authUrl); // Use window.location.href instead of navigate
       } else {
         toast({
           title: "Error",

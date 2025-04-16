@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { DatabaseEvent } from '@/backend/types/supabaseSchema';
 
@@ -11,11 +12,11 @@ export async function hasGoogleCalendarConnected(): Promise<boolean> {
     return false;
   }
 
-  // Use eq operator for proper typing
+  // Use proper typing for filter method
   const { data, error } = await supabase
     .from('google_calendar_tokens')
     .select('id')
-    .eq('user_id', user.id)
+    .filter('user_id', 'eq', user.id)
     .limit(1);
 
   if (error) {
@@ -36,11 +37,11 @@ export async function getConnectedCalendars(): Promise<any[]> {
     return [];
   }
 
-  // Use eq operator for proper typing
+  // Use proper typing for filter method
   const { data, error } = await supabase
     .from('google_calendar_tokens')
     .select('*')
-    .eq('user_id', user.id);
+    .filter('user_id', 'eq', user.id);
 
   if (error) {
     console.error('Error fetching connected calendars:', error);
@@ -48,6 +49,44 @@ export async function getConnectedCalendars(): Promise<any[]> {
   }
 
   return data || [];
+}
+
+/**
+ * Initiates the Google Calendar authorization flow
+ * This function is called by the GoogleCalendarButton component
+ */
+export async function initiateGoogleCalendarAuth(): Promise<string | null> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.error("User must be authenticated to connect Google Calendar");
+      return null;
+    }
+    
+    const origin = window.location.origin;
+    const redirectUri = `${origin}/api/google-calendar-callback`;
+    
+    // Call the edge function to get the auth URL
+    const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
+      body: { 
+        action: 'init',
+        userId: user.id,
+        origin,
+        redirectUri
+      }
+    });
+    
+    if (error) {
+      console.error("Error initiating Google Calendar auth:", error);
+      return null;
+    }
+    
+    return data?.authUrl || null;
+  } catch (err) {
+    console.error("Exception initiating Google Calendar auth:", err);
+    return null;
+  }
 }
 
 /**
@@ -112,7 +151,7 @@ export async function deleteEventFromGoogleCalendar(eventId: string): Promise<bo
     const { data, error } = await supabase
       .from('events')
       .select('source, google_event_id')
-      .eq('id', eventId)
+      .filter('id', 'eq', eventId)
       .limit(1);
 
     if (error || !data || data.length === 0) {
