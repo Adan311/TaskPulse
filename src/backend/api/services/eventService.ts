@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { saveEventToGoogleCalendar, deleteEventFromGoogleCalendar } from "./googleCalendarService";
@@ -47,15 +48,14 @@ export async function getEvents(): Promise<FrontendEvent[]> {
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .eq("user", user.id)
-    .order("start_time", { ascending: true });
+    .filter("user", "eq", user.id);
 
   if (error) {
     console.error("Error fetching events:", error);
     throw error;
   }
 
-  return data.map(formatEventForFrontend);
+  return (data || []).map(formatEventForFrontend);
 }
 
 export async function getEventById(id: string): Promise<FrontendEvent> {
@@ -69,16 +69,20 @@ export async function getEventById(id: string): Promise<FrontendEvent> {
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .eq("id", id)
-    .eq("user", user.id)
-    .single();
+    .filter("id", "eq", id)
+    .filter("user", "eq", user.id)
+    .limit(1);
 
   if (error) {
     console.error("Error fetching event:", error);
     throw error;
   }
 
-  return formatEventForFrontend(data);
+  if (!data || data.length === 0) {
+    throw new Error(`Event with id ${id} not found`);
+  }
+
+  return formatEventForFrontend(data[0]);
 }
 
 export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<FrontendEvent> {
@@ -89,9 +93,10 @@ export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<Fro
     throw new Error("User not authenticated");
   }
 
+  const newEventId = uuidv4();
   const newEvent = {
     ...formatEventForDatabase(event),
-    id: uuidv4(),
+    id: newEventId,
     source: event.source || "app",
     user: user.id,
     created_at: new Date().toISOString(),
@@ -101,24 +106,27 @@ export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<Fro
   const { data, error } = await supabase
     .from("events")
     .insert(newEvent)
-    .select()
-    .single();
+    .select();
 
   if (error) {
     console.error("Error creating event:", error);
     throw error;
   }
 
+  if (!data || data.length === 0) {
+    throw new Error("Failed to create event: No data returned");
+  }
+
   // Sync to Google Calendar if connected
   try {
     // Convert to DbEvent format for Google Calendar sync
     const formattedData = {
-      ...data,
-      start_time: data.start_time,
-      end_time: data.end_time,
-      google_event_id: data.google_event_id,
-      created_at: data.created_at,
-      updated_at: data.updated_at
+      ...data[0],
+      start_time: data[0].start_time,
+      end_time: data[0].end_time,
+      google_event_id: data[0].google_event_id,
+      created_at: data[0].created_at,
+      updated_at: data[0].updated_at
     };
     await saveEventToGoogleCalendar(formattedData);
   } catch (syncError) {
@@ -126,7 +134,7 @@ export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<Fro
     // Continue even if sync fails
   }
 
-  return formatEventForFrontend(data);
+  return formatEventForFrontend(data[0]);
 }
 
 export async function updateEvent(id: string, event: Partial<FrontendEvent>): Promise<FrontendEvent> {
@@ -145,26 +153,29 @@ export async function updateEvent(id: string, event: Partial<FrontendEvent>): Pr
   const { data, error } = await supabase
     .from("events")
     .update(dbEvent)
-    .eq("id", id)
-    .eq("user", user.id)
-    .select()
-    .single();
+    .filter("id", "eq", id)
+    .filter("user", "eq", user.id)
+    .select();
 
   if (error) {
     console.error("Error updating event:", error);
     throw error;
   }
 
+  if (!data || data.length === 0) {
+    throw new Error(`Event with id ${id} not found or you don't have permission to update it`);
+  }
+
   // Sync to Google Calendar if connected
   try {
     // Convert to DbEvent format for Google Calendar sync
     const formattedData = {
-      ...data,
-      start_time: data.start_time,
-      end_time: data.end_time,
-      google_event_id: data.google_event_id,
-      created_at: data.created_at,
-      updated_at: data.updated_at
+      ...data[0],
+      start_time: data[0].start_time,
+      end_time: data[0].end_time,
+      google_event_id: data[0].google_event_id,
+      created_at: data[0].created_at,
+      updated_at: data[0].updated_at
     };
     await saveEventToGoogleCalendar(formattedData);
   } catch (syncError) {
@@ -172,7 +183,7 @@ export async function updateEvent(id: string, event: Partial<FrontendEvent>): Pr
     // Continue even if sync fails
   }
 
-  return formatEventForFrontend(data);
+  return formatEventForFrontend(data[0]);
 }
 
 export async function deleteEvent(id: string): Promise<boolean> {
@@ -194,8 +205,8 @@ export async function deleteEvent(id: string): Promise<boolean> {
   const { error } = await supabase
     .from("events")
     .delete()
-    .eq("id", id)
-    .eq("user", user.id);
+    .filter("id", "eq", id)
+    .filter("user", "eq", user.id);
 
   if (error) {
     console.error("Error deleting event:", error);
@@ -216,8 +227,8 @@ export async function getGoogleCalendarEvents(): Promise<FrontendEvent[]> {
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .eq("source", "google")
-    .eq("user", user.id)
+    .filter("source", "eq", "google")
+    .filter("user", "eq", user.id)
     .order("start_time", { ascending: true });
 
   if (error) {
@@ -225,7 +236,7 @@ export async function getGoogleCalendarEvents(): Promise<FrontendEvent[]> {
     throw error;
   }
 
-  return data.map(formatEventForFrontend);
+  return (data || []).map(formatEventForFrontend);
 }
 
 // Re-export the frontend Event type

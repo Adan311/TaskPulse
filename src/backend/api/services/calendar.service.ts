@@ -1,5 +1,5 @@
 
-import { supabase } from '../client/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from "uuid";
 
 export interface CalendarEvent {
@@ -33,17 +33,17 @@ export const fetchEvents = async (): Promise<CalendarEvent[]> => {
     throw error;
   }
 
-  // Transform the data to match CalendarEvent interface
+  // Transform the data to match CalendarEvent interface with null checks
   return (data || []).map(event => ({
-    id: event.id,
-    title: event.title,
-    description: event.description,
-    start_time: event.start_time,
-    end_time: event.end_time,
+    id: event?.id || '',
+    title: event?.title || '',
+    description: event?.description,
+    start_time: event?.start_time || '',
+    end_time: event?.end_time || '',
     all_day: false, // Default value since it's not in the database
-    color: event.color,
-    project_id: event.project,
-    user_id: event.user || user.id,
+    color: event?.color,
+    project_id: event?.project,
+    user_id: event?.user || (user?.id || ''),
   }));
 };
 
@@ -56,7 +56,12 @@ export const createEvent = async (event: Omit<CalendarEvent, "id" | "user_id">):
   
   const newEvent = {
     id: uuidv4(),
-    ...event,
+    title: event.title,
+    description: event.description,
+    start_time: event.start_time,
+    end_time: event.end_time,
+    color: event.color,
+    project: event.project_id, // Map project_id to project for the database
     user: user.id, // Map to the database field 'user'
   };
 
@@ -70,16 +75,20 @@ export const createEvent = async (event: Omit<CalendarEvent, "id" | "user_id">):
     throw error;
   }
 
+  if (!data || data.length === 0) {
+    throw new Error("Failed to create event: No data returned");
+  }
+
   // Transform the data to match CalendarEvent interface
   return {
-    id: data![0].id,
-    title: data![0].title,
-    description: data![0].description,
-    start_time: data![0].start_time,
-    end_time: data![0].end_time,
+    id: data[0]?.id || '',
+    title: data[0]?.title || '',
+    description: data[0]?.description,
+    start_time: data[0]?.start_time || '',
+    end_time: data[0]?.end_time || '',
     all_day: false, // Default value since it's not in the database
-    color: data![0].color,
-    project_id: data![0].project,
-    user_id: data![0].user || user.id,
+    color: data[0]?.color,
+    project_id: data[0]?.project,
+    user_id: data[0]?.user || user.id,
   };
 };
