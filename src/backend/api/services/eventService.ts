@@ -1,9 +1,9 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { saveEventToGoogleCalendar, deleteEventFromGoogleCalendar } from "./googleCalendarService";
 import { Event as FrontendEvent } from "@/frontend/types/calendar";
 import { Event as DbEvent } from "@/backend/types/supabaseSchema";
+import { Database } from "@/integrations/supabase/types";
 
 // Convert database event to frontend event format
 function formatEventForFrontend(dbEvent: any): FrontendEvent {
@@ -45,10 +45,11 @@ export async function getEvents(): Promise<FrontendEvent[]> {
     return [];
   }
 
+  // Use the column name approach instead of equality filter for better type safety
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .filter("user", "eq", user.id);
+    .eq("user", user.id);
 
   if (error) {
     console.error("Error fetching events:", error);
@@ -66,11 +67,12 @@ export async function getEventById(id: string): Promise<FrontendEvent> {
     throw new Error("User not authenticated");
   }
 
+  // Use column names directly for better type safety
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .filter("id", "eq", id)
-    .filter("user", "eq", user.id)
+    .eq("id", id)
+    .eq("user", user.id)
     .limit(1);
 
   if (error) {
@@ -94,13 +96,19 @@ export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<Fro
   }
 
   const newEventId = uuidv4();
-  const newEvent = {
-    ...formatEventForDatabase(event),
+  
+  // Create a properly typed database event for insertion
+  const newEvent: Database['public']['Tables']['events']['Insert'] = {
     id: newEventId,
+    title: event.title,
+    description: event.description ?? null,
+    start_time: event.startTime,
+    end_time: event.endTime,
+    color: event.color ?? null,
+    project: event.project ?? null,
     source: event.source || "app",
     user: user.id,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    google_event_id: event.googleEventId ?? null
   };
 
   const { data, error } = await supabase
@@ -120,15 +128,10 @@ export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<Fro
   // Sync to Google Calendar if connected
   try {
     // Convert to DbEvent format for Google Calendar sync
-    const formattedData = {
-      ...data[0],
-      start_time: data[0].start_time,
-      end_time: data[0].end_time,
-      google_event_id: data[0].google_event_id,
-      created_at: data[0].created_at,
-      updated_at: data[0].updated_at
-    };
-    await saveEventToGoogleCalendar(formattedData);
+    const formattedData = data[0];
+    if (formattedData) {
+      await saveEventToGoogleCalendar(formattedData as any);
+    }
   } catch (syncError) {
     console.error("Error syncing to Google Calendar:", syncError);
     // Continue even if sync fails
@@ -145,16 +148,20 @@ export async function updateEvent(id: string, event: Partial<FrontendEvent>): Pr
     throw new Error("User not authenticated");
   }
 
-  const dbEvent = {
-    ...formatEventForDatabase(event),
+  // Format the event for the database update
+  const dbEvent = formatEventForDatabase(event);
+  
+  // Add updated_at field
+  const updateData = {
+    ...dbEvent,
     updated_at: new Date().toISOString()
   };
 
   const { data, error } = await supabase
     .from("events")
-    .update(dbEvent)
-    .filter("id", "eq", id)
-    .filter("user", "eq", user.id)
+    .update(updateData)
+    .eq("id", id)
+    .eq("user", user.id)
     .select();
 
   if (error) {
@@ -169,15 +176,10 @@ export async function updateEvent(id: string, event: Partial<FrontendEvent>): Pr
   // Sync to Google Calendar if connected
   try {
     // Convert to DbEvent format for Google Calendar sync
-    const formattedData = {
-      ...data[0],
-      start_time: data[0].start_time,
-      end_time: data[0].end_time,
-      google_event_id: data[0].google_event_id,
-      created_at: data[0].created_at,
-      updated_at: data[0].updated_at
-    };
-    await saveEventToGoogleCalendar(formattedData);
+    const formattedData = data[0];
+    if (formattedData) {
+      await saveEventToGoogleCalendar(formattedData as any);
+    }
   } catch (syncError) {
     console.error("Error syncing to Google Calendar:", syncError);
     // Continue even if sync fails
@@ -205,8 +207,8 @@ export async function deleteEvent(id: string): Promise<boolean> {
   const { error } = await supabase
     .from("events")
     .delete()
-    .filter("id", "eq", id)
-    .filter("user", "eq", user.id);
+    .eq("id", id)
+    .eq("user", user.id);
 
   if (error) {
     console.error("Error deleting event:", error);
@@ -227,8 +229,8 @@ export async function getGoogleCalendarEvents(): Promise<FrontendEvent[]> {
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .filter("source", "eq", "google")
-    .filter("user", "eq", user.id)
+    .eq("source", "google")
+    .eq("user", user.id)
     .order("start_time", { ascending: true });
 
   if (error) {

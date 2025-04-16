@@ -1,5 +1,6 @@
 
 // Define database schema types
+import { Database } from '@/integrations/supabase/types';
 
 export interface Task {
   id: string;
@@ -20,17 +21,21 @@ export interface Project {
   color?: string;
 }
 
+// Make sure Event interface matches the database schema
 export interface Event {
   id: string;
   title: string;
-  description?: string;
+  description?: string | null;
   start_time: string;
   end_time: string;
-  color?: string;
-  project?: string;
+  color?: string | null;
+  project?: string | null;
   user: string; // Changed from user_id to user to match the database
-  google_event_id?: string;
-  source?: 'app' | 'google';
-  created_at: string;
-  updated_at: string;
+  google_event_id?: string | null;
+  source?: 'app' | 'google' | null;
+  created_at?: string;
+  updated_at?: string;
 }
+
+// Helper type to extract event type from Database
+export type DatabaseEvent = Database['public']['Tables']['events']['Row'];

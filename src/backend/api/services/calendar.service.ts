@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from "uuid";
+import { Database } from '@/integrations/supabase/types';
 
 export interface CalendarEvent {
   id: string;
@@ -23,6 +24,7 @@ export const fetchEvents = async (): Promise<CalendarEvent[]> => {
     return [];
   }
 
+  // Use column name instead of equality filter for improved type safety
   const { data, error } = await supabase
     .from("events")
     .select("*")
@@ -35,15 +37,15 @@ export const fetchEvents = async (): Promise<CalendarEvent[]> => {
 
   // Transform the data to match CalendarEvent interface with null checks
   return (data || []).map(event => ({
-    id: event?.id || '',
-    title: event?.title || '',
+    id: event?.id ?? '',
+    title: event?.title ?? '',
     description: event?.description,
-    start_time: event?.start_time || '',
-    end_time: event?.end_time || '',
+    start_time: event?.start_time ?? '',
+    end_time: event?.end_time ?? '',
     all_day: false, // Default value since it's not in the database
     color: event?.color,
     project_id: event?.project,
-    user_id: event?.user || (user?.id || ''),
+    user_id: event?.user ?? (user?.id || ''),
   }));
 };
 
@@ -54,6 +56,7 @@ export const createEvent = async (event: Omit<CalendarEvent, "id" | "user_id">):
     throw new Error("User must be authenticated to create events");
   }
   
+  // Create a new event object with the correct field names to match the database
   const newEvent = {
     id: uuidv4(),
     title: event.title,
@@ -63,11 +66,11 @@ export const createEvent = async (event: Omit<CalendarEvent, "id" | "user_id">):
     color: event.color,
     project: event.project_id, // Map project_id to project for the database
     user: user.id, // Map to the database field 'user'
-  };
+  } as Database['public']['Tables']['events']['Insert'];
 
   const { data, error } = await supabase
     .from("events")
-    .insert([newEvent])
+    .insert(newEvent)
     .select();
 
   if (error) {
@@ -80,15 +83,16 @@ export const createEvent = async (event: Omit<CalendarEvent, "id" | "user_id">):
   }
 
   // Transform the data to match CalendarEvent interface
+  const createdEvent = data[0];
   return {
-    id: data[0]?.id || '',
-    title: data[0]?.title || '',
-    description: data[0]?.description,
-    start_time: data[0]?.start_time || '',
-    end_time: data[0]?.end_time || '',
+    id: createdEvent?.id ?? '',
+    title: createdEvent?.title ?? '',
+    description: createdEvent?.description,
+    start_time: createdEvent?.start_time ?? '',
+    end_time: createdEvent?.end_time ?? '',
     all_day: false, // Default value since it's not in the database
-    color: data[0]?.color,
-    project_id: data[0]?.project,
-    user_id: data[0]?.user || user.id,
+    color: createdEvent?.color,
+    project_id: createdEvent?.project,
+    user_id: createdEvent?.user ?? user.id,
   };
 };
