@@ -1,7 +1,7 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card";
+import { Calendar } from "@/frontend/components/ui/calendar";
+import { cn } from "@/frontend/utils/utils";
 
 interface CalendarSidebarProps {
   date: Date | undefined;

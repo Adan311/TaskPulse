@@ -1,57 +1,30 @@
 
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/frontend/components/ui/card';
 import { ScrollArea } from '@/frontend/components/ui/scroll-area';
-import { useToast } from "@/frontend/hooks/use-toast";
-import { startOfWeek, endOfWeek, eachDayOfInterval, format, parseISO, addDays } from 'date-fns';
-import { Event, getEvents } from '@/backend/api/services/eventService';
-import { EventDialog } from './EventDialog';
+import { startOfWeek, endOfWeek, eachDayOfInterval, format, parseISO, isSameDay } from 'date-fns';
+import { Event } from '@/frontend/types/calendar';
 
-export function WeekView() {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(undefined);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const { toast } = useToast();
+interface WeekViewProps {
+  events: Event[];
+  date: Date | undefined;
+  onEditEvent: (event: Event) => void;
+  onEventsChange: () => void;
+}
 
-  const today = new Date();
-  const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Start week on Monday
-  const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
+export function WeekView({ events, date, onEditEvent, onEventsChange }: WeekViewProps) {
+  const currentDate = date || new Date();
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }); // Start week on Monday
+  const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
   const hours = Array.from({ length: 24 }, (_, i) => i);
-
-  const fetchEvents = async () => {
-    try {
-      setLoading(true);
-      const data = await getEvents();
-      setEvents(data);
-    } catch (error) {
-      console.error('Error fetching events:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load events. Please try again."
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  const handleEditEvent = (event: Event) => {
-    setSelectedEvent(event);
-    setDialogOpen(true);
-  };
 
   // Function to get events for a specific day and hour
   const getEventsForTimeSlot = (day: Date, hour: number) => {
     return events.filter(event => {
-      const eventDate = parseISO(event.start_time);
+      const eventDate = parseISO(event.startTime);
       const eventHour = eventDate.getHours();
-      return format(eventDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd') && eventHour === hour;
+      return isSameDay(eventDate, day) && eventHour === hour;
     });
   };
 
@@ -74,8 +47,8 @@ export function WeekView() {
 
             {/* Time slots */}
             {hours.map((hour) => (
-              <>
-                <div key={`hour-${hour}`} className="text-xs text-muted-foreground p-1 text-right sticky left-0 pr-2">
+              <React.Fragment key={`hour-${hour}`}>
+                <div className="text-xs text-muted-foreground p-1 text-right sticky left-0 pr-2">
                   {`${hour.toString().padStart(2, '0')}:00`}
                 </div>
                 {days.map((day, dayIndex) => {
@@ -94,7 +67,7 @@ export function WeekView() {
                             top: '2px',
                             bottom: '2px'
                           }}
-                          onClick={() => handleEditEvent(event)}
+                          onClick={() => onEditEvent(event)}
                         >
                           {event.title}
                         </div>
@@ -102,18 +75,11 @@ export function WeekView() {
                     </div>
                   );
                 })}
-              </>
+              </React.Fragment>
             ))}
           </div>
         </ScrollArea>
       </CardContent>
-
-      <EventDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSuccess={fetchEvents}
-        event={selectedEvent}
-      />
     </Card>
   );
 }

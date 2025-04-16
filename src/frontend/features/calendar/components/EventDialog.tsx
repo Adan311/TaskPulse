@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/frontend/components/ui/dialog";
 import { EventForm } from "./EventForm";
-import { Event } from "@/backend/api/services/eventService";
+import { Event } from "@/frontend/types/calendar";
 
 interface EventDialogProps {
   open: boolean;

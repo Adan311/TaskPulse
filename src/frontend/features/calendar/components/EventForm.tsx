@@ -3,18 +3,18 @@ import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { format } from "date-fns";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Event, createEvent, updateEvent } from "@/services/eventService";
+import { useToast } from "@/frontend/hooks/use-toast";
+import { Button } from "@/frontend/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/frontend/components/ui/form";
+import { Input } from "@/frontend/components/ui/input";
+import { Textarea } from "@/frontend/components/ui/textarea";
+import { Event, createEvent, updateEvent } from "@/backend/api/services/eventService";
 import { formSchema, FormValues } from "../EventFormSchema";
 import { DatePickerField } from "./FormFields/DatePickerField";
 import { TimePickerField } from "./FormFields/TimePickerField";
 import { ColorPickerField } from "./FormFields/ColorPickerField";
 import { ProjectSelectField } from "./FormFields/ProjectSelectField";
-import { hasGoogleCalendarConnected } from "@/services/googleCalendarService";
+import { hasGoogleCalendarConnected } from "@/backend/api/services/googleCalendarService";
 import { CalendarClock } from "lucide-react";
 
 interface EventFormProps {
@@ -27,7 +27,7 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasGoogleCalendar, setHasGoogleCalendar] = useState(false);
-  const isGoogleEvent = event?.source === "google" && event?.google_event_id;
+  const isGoogleEvent = event?.source === "google" && event?.googleEventId;
   const canSyncToGoogle = hasGoogleCalendar && !isGoogleEvent;
 
   useEffect(() => {
@@ -47,9 +47,9 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
     ? {
         title: event.title,
         description: event.description || "",
-        date: new Date(event.start_time.split("T")[0]),
-        startTime: event.start_time.split("T")[1].substring(0, 5),
-        endTime: event.end_time.split("T")[1].substring(0, 5),
+        date: new Date(event.startTime.split("T")[0]),
+        startTime: event.startTime.split("T")[1].substring(0, 5),
+        endTime: event.endTime.split("T")[1].substring(0, 5),
         color: event.color || "#3b82f6",
         project: event.project || "none",
       }
@@ -78,10 +78,10 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
       const eventData = {
         title: values.title,
         description: values.description,
-        start_time: formattedStartTime,
-        end_time: formattedEndTime,
+        startTime: formattedStartTime,
+        endTime: formattedEndTime,
         color: values.color,
-        project: values.project === "none" ? null : values.project,
+        project: values.project === "none" ? undefined : values.project,
       };
 
       if (event) {
@@ -93,7 +93,7 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
             : "Your event has been updated successfully.",
         });
       } else {
-        await createEvent(eventData);
+        await createEvent(eventData as any);
         toast({
           title: "Event created",
           description: canSyncToGoogle 

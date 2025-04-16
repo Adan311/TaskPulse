@@ -1,59 +1,45 @@
 
-import { useState, useEffect } from 'react';
-import { Calendar } from '@/components/ui/calendar';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from "@/components/ui/use-toast";
+import { useState } from 'react';
+import { Calendar } from '@/frontend/components/ui/calendar';
+import { Card, CardContent } from '@/frontend/components/ui/card';
+import { useToast } from "@/frontend/hooks/use-toast";
 import { format, isSameDay, parseISO } from 'date-fns';
-import { Event, getEvents } from '@/services/eventService';
+import { Event } from '@/frontend/types/calendar';
 import { EventItem } from './EventItem';
 import { EventDialog } from './EventDialog';
 
-export function MonthView() {
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(undefined);
+interface MonthViewProps {
+  events: Event[];
+  date: Date | undefined;
+  onEditEvent: (event: Event) => void;
+  onEventsChange: () => void;
+}
+
+export function MonthView({ events, date, onEditEvent, onEventsChange }: MonthViewProps) {
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(date);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(undefined);
   const { toast } = useToast();
 
-  const fetchEvents = async () => {
-    try {
-      setLoading(true);
-      const data = await getEvents();
-      setEvents(data);
-    } catch (error) {
-      console.error('Error fetching events:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load events. Please try again."
-      });
-    } finally {
-      setLoading(false);
-    }
+  const handleDateChange = (newDate: Date | undefined) => {
+    setSelectedDate(newDate);
   };
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
   const handleEditEvent = (event: Event) => {
-    setSelectedEvent(event);
-    setDialogOpen(true);
+    onEditEvent(event);
   };
 
   // Get events for the selected date
-  const selectedDateEvents = date 
+  const selectedDateEvents = selectedDate 
     ? events.filter(event => {
-        const eventDate = parseISO(event.start_time);
-        return isSameDay(eventDate, date);
+        const eventDate = parseISO(event.startTime);
+        return isSameDay(eventDate, selectedDate);
       })
     : [];
 
   // Create a map of dates with events for calendar highlighting
   const eventDates = events.reduce((acc, event) => {
-    const date = event.start_time.split('T')[0];
+    const date = event.startTime.split('T')[0];
     if (!acc[date]) {
       acc[date] = [];
     }
@@ -68,8 +54,8 @@ export function MonthView() {
           <div className="lg:col-span-5">
             <Calendar
               mode="single"
-              selected={date}
-              onSelect={setDate}
+              selected={selectedDate}
+              onSelect={handleDateChange}
               className="rounded-md border"
               modifiers={{
                 hasEvent: (date) => {
@@ -90,11 +76,9 @@ export function MonthView() {
           <div className="lg:col-span-2 space-y-4">
             <div className="space-y-2">
               <h3 className="font-medium">
-                {date ? `Events on ${format(date, 'MMMM d, yyyy')}` : 'Select a date'}
+                {selectedDate ? `Events on ${format(selectedDate, 'MMMM d, yyyy')}` : 'Select a date'}
               </h3>
-              {loading ? (
-                <div className="py-2 text-sm text-muted-foreground">Loading events...</div>
-              ) : selectedDateEvents.length === 0 ? (
+              {selectedDateEvents.length === 0 ? (
                 <div className="py-2 text-sm text-muted-foreground">No events scheduled for this day.</div>
               ) : (
                 <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
@@ -103,7 +87,7 @@ export function MonthView() {
                       key={event.id} 
                       event={event} 
                       onEdit={handleEditEvent}
-                      onDelete={fetchEvents}
+                      onDelete={onEventsChange}
                     />
                   ))}
                 </div>
@@ -112,13 +96,6 @@ export function MonthView() {
           </div>
         </div>
       </CardContent>
-
-      <EventDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSuccess={fetchEvents}
-        event={selectedEvent}
-      />
     </Card>
   );
 }

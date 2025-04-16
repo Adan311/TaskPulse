@@ -2,21 +2,41 @@
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { saveEventToGoogleCalendar, deleteEventFromGoogleCalendar } from "./googleCalendarService";
+import { Event } from "@/frontend/types/calendar";
 
-export interface Event {
-  id: string;
-  title: string;
-  description?: string;
-  start_time: string;
-  end_time: string;
-  color?: string;
-  user?: string;
-  project?: string;
-  google_event_id?: string;
-  source?: string;
+// Convert database event to frontend event format
+function formatEventForFrontend(dbEvent: any): Event {
+  return {
+    id: dbEvent.id,
+    title: dbEvent.title,
+    description: dbEvent.description,
+    startTime: dbEvent.start_time,
+    endTime: dbEvent.end_time,
+    color: dbEvent.color,
+    project: dbEvent.project,
+    user: dbEvent.user,
+    googleEventId: dbEvent.google_event_id,
+    source: dbEvent.source
+  };
 }
 
-export async function getEvents() {
+// Convert frontend event to database format
+function formatEventForDatabase(event: Partial<Event>): any {
+  const dbEvent: any = {};
+  
+  if (event.title !== undefined) dbEvent.title = event.title;
+  if (event.description !== undefined) dbEvent.description = event.description;
+  if (event.startTime !== undefined) dbEvent.start_time = event.startTime;
+  if (event.endTime !== undefined) dbEvent.end_time = event.endTime;
+  if (event.color !== undefined) dbEvent.color = event.color;
+  if (event.project !== undefined) dbEvent.project = event.project;
+  if (event.googleEventId !== undefined) dbEvent.google_event_id = event.googleEventId;
+  if (event.source !== undefined) dbEvent.source = event.source;
+  
+  return dbEvent;
+}
+
+export async function getEvents(): Promise<Event[]> {
   // Get the current user
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -35,10 +55,10 @@ export async function getEvents() {
     throw error;
   }
 
-  return data || [];
+  return data.map(formatEventForFrontend);
 }
 
-export async function getEventById(id: string) {
+export async function getEventById(id: string): Promise<Event> {
   // Get the current user
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -58,10 +78,10 @@ export async function getEventById(id: string) {
     throw error;
   }
 
-  return data;
+  return formatEventForFrontend(data);
 }
 
-export async function createEvent(event: Omit<Event, "id">) {
+export async function createEvent(event: Omit<Event, "id">): Promise<Event> {
   // Get the current user
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -70,9 +90,9 @@ export async function createEvent(event: Omit<Event, "id">) {
   }
 
   const newEvent = {
-    ...event,
+    ...formatEventForDatabase(event),
     id: uuidv4(),
-    source: "app",
+    source: event.source || "app",
     user: user.id
   };
 
@@ -89,16 +109,16 @@ export async function createEvent(event: Omit<Event, "id">) {
 
   // Sync to Google Calendar if connected
   try {
-    await saveEventToGoogleCalendar(data);
+    await saveEventToGoogleCalendar(formatEventForFrontend(data));
   } catch (syncError) {
     console.error("Error syncing to Google Calendar:", syncError);
     // Continue even if sync fails
   }
 
-  return data;
+  return formatEventForFrontend(data);
 }
 
-export async function updateEvent(id: string, event: Partial<Event>) {
+export async function updateEvent(id: string, event: Partial<Event>): Promise<Event> {
   // Get the current user
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -106,9 +126,11 @@ export async function updateEvent(id: string, event: Partial<Event>) {
     throw new Error("User not authenticated");
   }
 
+  const dbEvent = formatEventForDatabase(event);
+
   const { data, error } = await supabase
     .from("events")
-    .update(event)
+    .update(dbEvent)
     .eq("id", id)
     .eq("user", user.id)
     .select()
@@ -121,16 +143,16 @@ export async function updateEvent(id: string, event: Partial<Event>) {
 
   // Sync to Google Calendar if connected
   try {
-    await saveEventToGoogleCalendar(data);
+    await saveEventToGoogleCalendar(formatEventForFrontend(data));
   } catch (syncError) {
     console.error("Error syncing to Google Calendar:", syncError);
     // Continue even if sync fails
   }
 
-  return data;
+  return formatEventForFrontend(data);
 }
 
-export async function deleteEvent(id: string) {
+export async function deleteEvent(id: string): Promise<boolean> {
   // Get the current user
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -160,7 +182,7 @@ export async function deleteEvent(id: string) {
   return true;
 }
 
-export async function getGoogleCalendarEvents() {
+export async function getGoogleCalendarEvents(): Promise<Event[]> {
   // Get the current user
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -180,5 +202,5 @@ export async function getGoogleCalendarEvents() {
     throw error;
   }
 
-  return data || [];
+  return data.map(formatEventForFrontend);
 }

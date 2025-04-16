@@ -12,17 +12,21 @@ import { WeekView } from "@/frontend/features/calendar/components/WeekView";
 import { ListView } from "@/frontend/features/calendar/components/ListView";
 import { EventDialog } from "@/frontend/features/calendar/components/EventDialog";
 import { GoogleCalendarButton } from "@/frontend/features/calendar/components/GoogleCalendarButton";
-import { getEvents } from "@/backend/api/services/eventService";
+import { getEvents, Event } from "@/backend/api/services/eventService";
 import { getConnectedCalendars } from "@/backend/api/services/googleCalendarService";
-import { supabase } from "@/backend/api/client/supabase";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/frontend/hooks/use-toast";
 
 export default function Calendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [view, setView] = useState<"month" | "week" | "day" | "list">("month");
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(undefined);
   const [hasGoogleCalendar, setHasGoogleCalendar] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
   
   useEffect(() => {
     // Get the current user when component mounts
@@ -45,12 +49,23 @@ export default function Calendar() {
   
   const fetchEvents = async () => {
     try {
-      if (!user) return;
+      if (!user) {
+        setEvents([]);
+        return;
+      }
       
+      setLoading(true);
       const data = await getEvents();
       setEvents(data);
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching events:", error);
+      toast({
+        variant: "destructive",
+        title: "Error loading events",
+        description: "Failed to load your calendar events. Please try again.",
+      });
+      setLoading(false);
     }
   };
 
@@ -75,17 +90,55 @@ export default function Calendar() {
     }
   }, [user]);
 
+  // Subscribe to real-time updates for events
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('events-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'events', filter: `user=eq.${user.id}` },
+        (payload) => {
+          console.log('Event changed:', payload);
+          fetchEvents();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  const handleEditEvent = (event: Event) => {
+    setSelectedEvent(event);
+    setEventDialogOpen(true);
+  };
+
   const renderView = () => {
+    if (loading) {
+      return (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      );
+    }
+
     switch (view) {
       case "month":
-        return <MonthView />;
+        return <MonthView events={events} date={date} onEditEvent={handleEditEvent} onEventsChange={fetchEvents} />;
       case "week":
-        return <WeekView />;
+        return <WeekView events={events} date={date} onEditEvent={handleEditEvent} onEventsChange={fetchEvents} />;
       case "list":
-        return <ListView />;
+        return <ListView events={events} onEditEvent={handleEditEvent} onEventsChange={fetchEvents} />;
       default:
-        return <MonthView />;
+        return <MonthView events={events} date={date} onEditEvent={handleEditEvent} onEventsChange={fetchEvents} />;
     }
+  };
+
+  const handleAddEvent = () => {
+    setSelectedEvent(undefined);
+    setEventDialogOpen(true);
   };
 
   return (
@@ -109,7 +162,7 @@ export default function Calendar() {
                 </CardTitle>
                 <div className="flex space-x-2">
                   {!hasGoogleCalendar && user && <GoogleCalendarButton onSuccess={checkGoogleCalendar} />}
-                  <Button size="sm" onClick={() => setEventDialogOpen(true)} disabled={!user}>
+                  <Button size="sm" onClick={handleAddEvent} disabled={!user}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Event
                   </Button>
@@ -133,6 +186,7 @@ export default function Calendar() {
         open={eventDialogOpen}
         onOpenChange={setEventDialogOpen}
         onSuccess={fetchEvents}
+        event={selectedEvent}
       />
     </AppLayout>
   );
