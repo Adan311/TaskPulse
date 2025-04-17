@@ -98,12 +98,18 @@ export const GoogleCalendarSync = {
         .eq('id', eventId as any)
         .limit(1);
 
-      if (error || !data || data.length === 0) {
+      if (error) {
         console.error('Error fetching event for deletion:', error);
         return false;
       }
 
-      const event = data[0];
+      if (!data || data.length === 0) {
+        console.log("Event not found for deletion");
+        return false;
+      }
+
+      // We need to safely access the properties from the result
+      const event = data[0] as any;
       
       // Don't delete Google-sourced events from Google Calendar through this flow
       if (event.source === 'google') {

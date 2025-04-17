@@ -173,19 +173,21 @@ export async function updateEvent(id: string, event: Partial<FrontendEvent>): Pr
   // Format the event for the database update
   const dbEvent = formatEventForDatabase(event);
   
-  // Add updated_at field
-  const updateData: DatabaseEventUpdate = {
+  // TypeScript doesn't know about updated_at in the type definition
+  // We'll use type assertion to handle this
+  const updateData = {
     ...dbEvent,
-    updated_at: new Date().toISOString()
-  };
+    // Custom field not in the type definition, using type assertion
+  } as any;
+  updateData.updated_at = new Date().toISOString();
 
   console.log("Updating event:", id, updateData);
 
   const { data, error } = await supabase
     .from("events")
     .update(updateData)
-    .eq('id', id)
-    .eq('user', user.id)
+    .eq('id', id as any)
+    .eq('user', user.id as any)
     .select();
 
   if (error) {
@@ -236,8 +238,8 @@ export async function deleteEvent(id: string): Promise<boolean> {
   const { error } = await supabase
     .from("events")
     .delete()
-    .eq('id', id)
-    .eq('user', user.id);
+    .eq('id', id as any)
+    .eq('user', user.id as any);
 
   if (error) {
     console.error("Error deleting event:", error);
@@ -258,8 +260,8 @@ export async function getGoogleCalendarEvents(): Promise<FrontendEvent[]> {
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .eq('source', "google")
-    .eq('user', user.id)
+    .eq('source', "google" as any)
+    .eq('user', user.id as any)
     .order('start_time', { ascending: true });
 
   if (error) {

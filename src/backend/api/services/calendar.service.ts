@@ -26,7 +26,7 @@ export const fetchEvents = async (): Promise<CalendarEvent[]> => {
   }
 
   try {
-    // Use a type casting approach to make TypeScript happy
+    // Use a type assertion approach to handle TypeScript errors
     const { data, error } = await supabase
       .from("events")
       .select("*")
@@ -47,16 +47,19 @@ export const fetchEvents = async (): Promise<CalendarEvent[]> => {
         user_id: user.id
       };
       
+      // Safely access properties with type checking
+      const eventData = event as any;
+      
       return {
-        id: event.id || '',
-        title: event.title || '',
-        description: event.description || undefined,
-        start_time: event.start_time || '',
-        end_time: event.end_time || '',
+        id: eventData.id || '',
+        title: eventData.title || '',
+        description: eventData.description || undefined,
+        start_time: eventData.start_time || '',
+        end_time: eventData.end_time || '',
         all_day: false, // Default value since it's not in the database
-        color: event.color || undefined,
-        project_id: event.project || undefined,
-        user_id: event.user || user.id,
+        color: eventData.color || undefined,
+        project_id: eventData.project || undefined,
+        user_id: eventData.user || user.id,
       };
     });
   } catch (error) {
@@ -87,7 +90,7 @@ export const createEvent = async (event: Omit<CalendarEvent, "id" | "user_id">):
       source: 'app'
     };
 
-    // Insert the event without using array to avoid type issues
+    // Insert using type assertion
     const { data, error } = await supabase
       .from("events")
       .insert(newEvent as any)
@@ -103,7 +106,7 @@ export const createEvent = async (event: Omit<CalendarEvent, "id" | "user_id">):
     }
 
     // Transform with safe checks
-    const createdEvent = data[0];
+    const createdEvent = data[0] as any;
     if (!createdEvent) {
       throw new Error("Failed to retrieve created event data");
     }

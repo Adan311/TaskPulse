@@ -13,7 +13,7 @@ export async function hasGoogleCalendarConnected(): Promise<boolean> {
     return false;
   }
 
-  // Use proper typing for queries
+  // Use proper typing for queries with type assertion
   const { data, error } = await supabase
     .from('google_calendar_tokens')
     .select('id')
@@ -38,7 +38,7 @@ export async function getConnectedCalendars(): Promise<any[]> {
     return [];
   }
 
-  // Use proper typing for queries
+  // Use proper typing for queries with type assertion
   const { data, error } = await supabase
     .from('google_calendar_tokens')
     .select('*')
@@ -54,7 +54,8 @@ export async function getConnectedCalendars(): Promise<any[]> {
 
 // Export all functionality from sub-modules
 export const { 
-  initiateGoogleCalendarAuth 
+  initiateGoogleCalendarAuth,
+  revokeGoogleCalendarAccess 
 } = GoogleCalendarAuth;
 
 export const {
