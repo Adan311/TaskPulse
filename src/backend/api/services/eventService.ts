@@ -157,8 +157,8 @@ export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<Fro
     // Continue even if sync fails
   }
 
-  const dbEvent = data[0] as unknown as DatabaseEvent;
-  return formatEventForFrontend(dbEvent);
+  const returnedEvent = data[0] as unknown as DatabaseEvent;
+  return formatEventForFrontend(returnedEvent);
 }
 
 export async function updateEvent(id: string, event: Partial<FrontendEvent>): Promise<FrontendEvent> {
@@ -210,8 +210,8 @@ export async function updateEvent(id: string, event: Partial<FrontendEvent>): Pr
     // Continue even if sync fails
   }
 
-  const dbEvent = data[0] as unknown as DatabaseEvent;
-  return formatEventForFrontend(dbEvent);
+  const updatedEvent = data[0] as unknown as DatabaseEvent;
+  return formatEventForFrontend(updatedEvent);
 }
 
 export async function deleteEvent(id: string): Promise<boolean> {
@@ -267,8 +267,8 @@ export async function getGoogleCalendarEvents(): Promise<FrontendEvent[]> {
   }
 
   return (data || []).map((eventData) => {
-    const dbEvent = eventData as unknown as DatabaseEvent;
-    return formatEventForFrontend(dbEvent);
+    const eventDbData = eventData as unknown as DatabaseEvent;
+    return formatEventForFrontend(eventDbData);
   });
 }
 
