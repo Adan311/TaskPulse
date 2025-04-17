@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
@@ -28,9 +29,15 @@ function generateRandomString(length: number) {
 // Get events from Google Calendar
 async function getGoogleCalendarEvents(accessToken: string) {
   try {
+    console.log("Fetching events from Google Calendar");
+    
+    // Get events starting from 3 months ago to include more potential matches
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    
     const response = await fetch(
-      "https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=100&timeMin=" + 
-      new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString(),
+      "https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=250&timeMin=" + 
+      threeMonthsAgo.toISOString(),
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -39,10 +46,13 @@ async function getGoogleCalendarEvents(accessToken: string) {
     );
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Failed to fetch events: ${response.status} ${response.statusText}`, errorText);
       throw new Error(`Failed to fetch events: ${response.statusText}`);
     }
 
     const data = await response.json();
+    console.log(`Fetched ${data.items?.length || 0} events from Google Calendar`);
     return data.items || [];
   } catch (error) {
     console.error("Error fetching Google Calendar events:", error);
@@ -53,6 +63,8 @@ async function getGoogleCalendarEvents(accessToken: string) {
 // Create event in Google Calendar
 async function createGoogleCalendarEvent(accessToken: string, event: any) {
   try {
+    console.log("Creating event in Google Calendar:", event.title);
+    
     const googleEvent = {
       summary: event.title,
       description: event.description || "",
@@ -80,10 +92,13 @@ async function createGoogleCalendarEvent(accessToken: string, event: any) {
     );
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Failed to create event: ${response.status} ${response.statusText}`, errorText);
       throw new Error(`Failed to create event: ${response.statusText}`);
     }
 
     const data = await response.json();
+    console.log("Event created in Google Calendar with ID:", data.id);
     return data;
   } catch (error) {
     console.error("Error creating Google Calendar event:", error);
@@ -94,6 +109,8 @@ async function createGoogleCalendarEvent(accessToken: string, event: any) {
 // Update event in Google Calendar
 async function updateGoogleCalendarEvent(accessToken: string, googleEventId: string, event: any) {
   try {
+    console.log("Updating event in Google Calendar:", googleEventId);
+    
     const googleEvent = {
       summary: event.title,
       description: event.description || "",
@@ -121,10 +138,13 @@ async function updateGoogleCalendarEvent(accessToken: string, googleEventId: str
     );
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Failed to update event: ${response.status} ${response.statusText}`, errorText);
       throw new Error(`Failed to update event: ${response.statusText}`);
     }
 
     const data = await response.json();
+    console.log("Event updated in Google Calendar with ID:", data.id);
     return data;
   } catch (error) {
     console.error("Error updating Google Calendar event:", error);
@@ -135,6 +155,8 @@ async function updateGoogleCalendarEvent(accessToken: string, googleEventId: str
 // Delete event from Google Calendar
 async function deleteGoogleCalendarEvent(accessToken: string, googleEventId: string) {
   try {
+    console.log("Deleting event from Google Calendar:", googleEventId);
+    
     const response = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`,
       {
@@ -146,9 +168,12 @@ async function deleteGoogleCalendarEvent(accessToken: string, googleEventId: str
     );
 
     if (!response.ok && response.status !== 410) { // 410 Gone means already deleted
+      const errorText = await response.text();
+      console.error(`Failed to delete event: ${response.status} ${response.statusText}`, errorText);
       throw new Error(`Failed to delete event: ${response.statusText}`);
     }
 
+    console.log("Event deleted from Google Calendar");
     return true;
   } catch (error) {
     console.error("Error deleting Google Calendar event:", error);
@@ -214,11 +239,7 @@ async function importGoogleCalendarEvents(accessToken: string, email: string, us
       .from("events")
       .select("google_event_id")
       .eq("source", "google")
-      .eq("user", userId)
-      .in(
-        "google_event_id",
-        eventsToInsert.map((e) => e.google_event_id)
-      );
+      .eq("user", userId);
     
     if (queryError) {
       console.error("Error querying existing events:", queryError);
@@ -239,15 +260,26 @@ async function importGoogleCalendarEvents(accessToken: string, email: string, us
       return { count: 0 };
     }
 
-    // Insert new events
-    const { error } = await supabase.from("events").insert(newEvents);
-
-    if (error) {
-      console.error("Error inserting events:", error);
-      throw error;
+    // Insert events in batches to avoid request size limits
+    const batchSize = 50;
+    let insertedCount = 0;
+    
+    for (let i = 0; i < newEvents.length; i += batchSize) {
+      const batch = newEvents.slice(i, i + batchSize);
+      console.log(`Inserting batch of ${batch.length} events (${i} to ${i + batch.length} of ${newEvents.length})`);
+      
+      const { error } = await supabase.from("events").insert(batch);
+      
+      if (error) {
+        console.error("Error inserting events batch:", error);
+        // Continue with next batch
+      } else {
+        insertedCount += batch.length;
+      }
     }
 
-    return { count: newEvents.length };
+    console.log(`Successfully inserted ${insertedCount} events`);
+    return { count: insertedCount };
   } catch (error) {
     console.error("Error importing Google Calendar events:", error);
     throw error;
@@ -266,7 +298,8 @@ async function pushEventsToGoogleCalendar(accessToken: string, userId: string) {
       .eq("user", userId)
       .is("google_event_id", null) // Events not synced to Google yet
       .eq("source", "app") // Only events created in the app
-      .order("start_time", { ascending: false });
+      .order("start_time", { ascending: false })
+      .limit(100); // Limit to avoid rate limits
     
     if (queryError) {
       console.error("Error querying app events:", queryError);
@@ -282,9 +315,10 @@ async function pushEventsToGoogleCalendar(accessToken: string, userId: string) {
     
     let syncedCount = 0;
     
-    // Push each event to Google Calendar
+    // Push each event to Google Calendar with rate limiting
     for (const event of appEvents) {
       try {
+        console.log(`Pushing event ${event.id} to Google Calendar: ${event.title}`);
         const googleEvent = await createGoogleCalendarEvent(accessToken, event);
         
         if (googleEvent && googleEvent.id) {
@@ -303,12 +337,16 @@ async function pushEventsToGoogleCalendar(accessToken: string, userId: string) {
             syncedCount++;
           }
         }
+        
+        // Add a small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 100));
       } catch (eventError) {
         console.error(`Error pushing event ${event.id} to Google Calendar:`, eventError);
         // Continue with next event
       }
     }
     
+    console.log(`Successfully pushed ${syncedCount} events to Google Calendar`);
     return { count: syncedCount };
   } catch (error) {
     console.error("Error pushing events to Google Calendar:", error);
@@ -356,7 +394,78 @@ async function getUserToken(userId: string) {
     throw new Error(`No valid Google Calendar connection found for this user: ${error.message}`);
   }
   
+  // Check if token is expired
+  const now = new Date();
+  const expiresAt = new Date(data.expires_at);
+  
+  if (now > expiresAt) {
+    console.log("Token expired, refreshing...");
+    
+    if (!data.refresh_token) {
+      throw new Error("No refresh token available");
+    }
+    
+    const refreshedToken = await refreshGoogleToken(data.refresh_token, userId);
+    return refreshedToken;
+  }
+  
   return data;
+}
+
+// Refresh Google Calendar token
+async function refreshGoogleToken(refreshToken: string, userId: string) {
+  try {
+    console.log(`Refreshing token for user ${userId}`);
+    
+    const response = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        client_id: GOOGLE_CLIENT_ID,
+        client_secret: GOOGLE_CLIENT_SECRET,
+        refresh_token: refreshToken,
+        grant_type: "refresh_token",
+      }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Token refresh error:", errorText);
+      throw new Error(`Failed to refresh token: ${errorText}`);
+    }
+    
+    const tokens = await response.json();
+    
+    // Calculate new expiration
+    const expiresAt = new Date();
+    expiresAt.setSeconds(expiresAt.getSeconds() + tokens.expires_in);
+    
+    // Update token in database
+    const { data, error } = await supabase
+      .from("google_calendar_tokens")
+      .update({
+        access_token: tokens.access_token,
+        expires_at: expiresAt.toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", userId)
+      .eq("refresh_token", refreshToken)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error updating token:", error);
+      throw error;
+    }
+    
+    console.log("Token refreshed successfully");
+    return data;
+  } catch (error) {
+    console.error("Error refreshing token:", error);
+    throw new Error(`Failed to refresh token: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 // Handle the force sync action

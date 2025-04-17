@@ -25,7 +25,9 @@ export function SyncGoogleCalendarButton({
   const handleSync = async () => {
     setIsLoading(true);
     try {
+      console.log("Starting Google Calendar sync...");
       const result = await syncWithGoogleCalendar();
+      console.log("Sync result:", result);
       
       if (result && result.success) {
         const successMessage = `Calendar synced successfully! ${
@@ -43,9 +45,10 @@ export function SyncGoogleCalendarButton({
           onSuccess();
         }
       } else {
+        console.error("Sync incomplete or failed:", result);
         toast({
           title: "Sync incomplete",
-          description: "Calendar sync completed but with potential issues. Please check your events.",
+          description: result.error || "Calendar sync completed but with potential issues. Please check your events.",
           variant: "default",
         });
       }
@@ -53,7 +56,7 @@ export function SyncGoogleCalendarButton({
       console.error("Error syncing with Google Calendar:", error);
       toast({
         title: "Sync error",
-        description: "An error occurred while syncing with Google Calendar.",
+        description: error instanceof Error ? error.message : "An error occurred while syncing with Google Calendar.",
         variant: "destructive",
       });
     } finally {

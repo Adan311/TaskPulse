@@ -57,22 +57,24 @@ export async function getConnectedCalendars(): Promise<any[]> {
  * This will pull the latest events from Google Calendar and update the local database
  * as well as push local events to Google Calendar
  * 
- * @returns {Promise<{success: boolean, imported?: number, pushed?: number}>} Result of the sync operation
+ * @returns {Promise<{success: boolean, imported?: number, pushed?: number, error?: string}>} Result of the sync operation
  */
-export async function syncWithGoogleCalendar(): Promise<{success: boolean, imported?: number, pushed?: number}> {
+export async function syncWithGoogleCalendar(): Promise<{success: boolean, imported?: number, pushed?: number, error?: string}> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
       console.log("No user found, cannot sync with Google Calendar");
-      return { success: false };
+      return { success: false, error: "You must be signed in to sync with Google Calendar" };
     }
     
     const isConnected = await hasGoogleCalendarConnected();
     if (!isConnected) {
       console.log("Google Calendar not connected, skipping sync");
-      return { success: false };
+      return { success: false, error: "Google Calendar is not connected to your account" };
     }
+    
+    console.log("Invoking edge function for Google Calendar sync");
     
     // Call the edge function to sync events
     const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
@@ -84,7 +86,7 @@ export async function syncWithGoogleCalendar(): Promise<{success: boolean, impor
     
     if (error) {
       console.error("Error syncing with Google Calendar:", error);
-      return { success: false };
+      return { success: false, error: error.message || "Failed to sync with Google Calendar" };
     }
     
     console.log("Google Calendar sync response:", data);
@@ -95,7 +97,10 @@ export async function syncWithGoogleCalendar(): Promise<{success: boolean, impor
     };
   } catch (error) {
     console.error("Exception syncing with Google Calendar:", error);
-    return { success: false };
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "Unknown error during sync" 
+    };
   }
 }
 
