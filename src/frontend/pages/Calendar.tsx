@@ -12,6 +12,7 @@ import { WeekView } from "@/frontend/features/calendar/components/WeekView";
 import { ListView } from "@/frontend/features/calendar/components/ListView";
 import { EventDialog } from "@/frontend/features/calendar/components/EventDialog";
 import { GoogleCalendarButton } from "@/frontend/features/calendar/components/GoogleCalendarButton";
+import { SyncGoogleCalendarButton } from "@/frontend/features/calendar/components/SyncGoogleCalendarButton";
 import { getEvents, Event } from "@/backend/api/services/eventService";
 import { getConnectedCalendars } from "@/backend/api/services/googleCalendarService";
 import { supabase } from "@/integrations/supabase/client";
@@ -149,6 +150,8 @@ export default function Calendar() {
           view={view}
           setDate={setDate}
           setView={setView}
+          hasGoogleCalendar={hasGoogleCalendar}
+          onSyncSuccess={fetchEvents}
         />
 
         <div className="flex gap-6">
@@ -161,6 +164,7 @@ export default function Calendar() {
                   {date ? format(date, "EEEE, MMMM d, yyyy") : "Select a date"}
                 </CardTitle>
                 <div className="flex space-x-2">
+                  {hasGoogleCalendar && <SyncGoogleCalendarButton onSuccess={fetchEvents} />}
                   {!hasGoogleCalendar && user && <GoogleCalendarButton onSuccess={checkGoogleCalendar} />}
                   <Button size="sm" onClick={handleAddEvent} disabled={!user}>
                     <Plus className="h-4 w-4 mr-2" />

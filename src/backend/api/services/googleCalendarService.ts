@@ -52,6 +52,46 @@ export async function getConnectedCalendars(): Promise<any[]> {
   return data || [];
 }
 
+/**
+ * Force sync with Google Calendar
+ * This will pull the latest events from Google Calendar and update the local database
+ */
+export async function syncWithGoogleCalendar(): Promise<boolean> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.log("No user found, cannot sync with Google Calendar");
+      return false;
+    }
+    
+    const isConnected = await hasGoogleCalendarConnected();
+    if (!isConnected) {
+      console.log("Google Calendar not connected, skipping sync");
+      return false;
+    }
+    
+    // Call the edge function to sync events
+    const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
+      body: { 
+        action: 'syncEvents',
+        userId: user.id
+      },
+    });
+    
+    if (error) {
+      console.error("Error syncing with Google Calendar:", error);
+      return false;
+    }
+    
+    console.log("Google Calendar sync response:", data);
+    return true;
+  } catch (error) {
+    console.error("Exception syncing with Google Calendar:", error);
+    return false;
+  }
+}
+
 // Export all functionality from sub-modules
 export const { 
   initiateGoogleCalendarAuth,

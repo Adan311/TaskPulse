@@ -8,9 +8,18 @@ interface CalendarHeaderProps {
   view: "month" | "week" | "day" | "list";
   setDate: (date: Date) => void;
   setView: (view: "month" | "week" | "day" | "list") => void;
+  hasGoogleCalendar?: boolean;
+  onSyncSuccess?: () => void;
 }
 
-export function CalendarHeader({ date, view, setDate, setView }: CalendarHeaderProps) {
+export function CalendarHeader({ 
+  date, 
+  view, 
+  setDate, 
+  setView,
+  hasGoogleCalendar = false,
+  onSyncSuccess
+}: CalendarHeaderProps) {
   const navigatePrevious = () => {
     if (!date) return;
     

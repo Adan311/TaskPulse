@@ -255,6 +255,68 @@ async function importGoogleCalendarEvents(accessToken: string, email: string, us
   }
 }
 
+// Push app events to Google Calendar
+async function pushEventsToGoogleCalendar(accessToken: string, userId: string) {
+  try {
+    console.log(`Pushing events for user ${userId} to Google Calendar`);
+    
+    // Get app events that haven't been synced to Google
+    const { data: appEvents, error: queryError } = await supabase
+      .from("events")
+      .select("*")
+      .eq("user", userId)
+      .is("google_event_id", null) // Events not synced to Google yet
+      .eq("source", "app") // Only events created in the app
+      .order("start_time", { ascending: false });
+    
+    if (queryError) {
+      console.error("Error querying app events:", queryError);
+      throw queryError;
+    }
+    
+    if (!appEvents || appEvents.length === 0) {
+      console.log("No app events to push to Google Calendar");
+      return { count: 0 };
+    }
+    
+    console.log(`Found ${appEvents.length} app events to push to Google Calendar`);
+    
+    let syncedCount = 0;
+    
+    // Push each event to Google Calendar
+    for (const event of appEvents) {
+      try {
+        const googleEvent = await createGoogleCalendarEvent(accessToken, event);
+        
+        if (googleEvent && googleEvent.id) {
+          // Update the local event with the Google Calendar ID
+          const { error: updateError } = await supabase
+            .from("events")
+            .update({
+              google_event_id: googleEvent.id,
+              source: "app_synced"
+            })
+            .eq("id", event.id);
+            
+          if (updateError) {
+            console.error("Error updating event with Google ID:", updateError);
+          } else {
+            syncedCount++;
+          }
+        }
+      } catch (eventError) {
+        console.error(`Error pushing event ${event.id} to Google Calendar:`, eventError);
+        // Continue with next event
+      }
+    }
+    
+    return { count: syncedCount };
+  } catch (error) {
+    console.error("Error pushing events to Google Calendar:", error);
+    throw error;
+  }
+}
+
 // Verify user exists
 async function verifyUser(userId: string) {
   if (!userId) {
@@ -296,6 +358,47 @@ async function getUserToken(userId: string) {
   }
   
   return data;
+}
+
+// Handle the force sync action
+async function handleForceSync(userId: string) {
+  try {
+    console.log(`Force syncing for user ${userId}`);
+    
+    // Verify the user exists
+    const userExists = await verifyUser(userId);
+    if (!userExists) {
+      throw new Error("Invalid user ID");
+    }
+    
+    // Get the user's token
+    const tokenData = await getUserToken(userId);
+    if (!tokenData || !tokenData.access_token) {
+      throw new Error("No Google Calendar token found for this user");
+    }
+    
+    // Import events from Google Calendar
+    const importResult = await importGoogleCalendarEvents(
+      tokenData.access_token,
+      tokenData.email,
+      userId
+    );
+    
+    // Push app events to Google Calendar
+    const pushResult = await pushEventsToGoogleCalendar(
+      tokenData.access_token,
+      userId
+    );
+    
+    return {
+      success: true,
+      imported: importResult.count,
+      pushed: pushResult.count
+    };
+  } catch (error) {
+    console.error("Error during force sync:", error);
+    throw error;
+  }
 }
 
 // Handler for HTTP requests
@@ -474,6 +577,25 @@ serve(async (req) => {
           email,
           events_imported: importResult.count,
         }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
+    // Force sync with Google Calendar
+    if (action === "syncEvents") {
+      console.log("Handling force sync request");
+      
+      if (!userId) {
+        throw new Error("User ID is required for syncing");
+      }
+      
+      const syncResult = await handleForceSync(userId);
+      
+      return new Response(
+        JSON.stringify(syncResult),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
