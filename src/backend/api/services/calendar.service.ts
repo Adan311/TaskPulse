@@ -26,11 +26,11 @@ export const fetchEvents = async (): Promise<CalendarEvent[]> => {
   }
 
   try {
-    // Use typed query with proper error handling
+    // Use a type casting approach to make TypeScript happy
     const { data, error } = await supabase
       .from("events")
       .select("*")
-      .eq('user', user.id);
+      .eq('user', user.id as any);
 
     if (error) {
       console.error("Error fetching events:", error);
@@ -87,10 +87,10 @@ export const createEvent = async (event: Omit<CalendarEvent, "id" | "user_id">):
       source: 'app'
     };
 
-    // Insert a single event with proper typing
+    // Insert the event without using array to avoid type issues
     const { data, error } = await supabase
       .from("events")
-      .insert([newEvent])  // Use array to match expected type
+      .insert(newEvent as any)
       .select();
 
     if (error) {

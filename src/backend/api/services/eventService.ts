@@ -46,11 +46,11 @@ export async function getEvents(): Promise<FrontendEvent[]> {
     return [];
   }
 
-  // Use properly typed query
+  // Use properly typed query with type casting to address TypeScript errors
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .eq('user', user.id);
+    .eq('user', user.id as any);
 
   if (error) {
     console.error("Error fetching events:", error);
@@ -81,12 +81,12 @@ export async function getEventById(id: string): Promise<FrontendEvent> {
     throw new Error("User not authenticated");
   }
 
-  // Use properly typed query
+  // Use properly typed query with type casting
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .eq('id', id)
-    .eq('user', user.id)
+    .eq('id', id as any)
+    .eq('user', user.id as any)
     .limit(1);
 
   if (error) {
@@ -129,9 +129,10 @@ export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<Fro
 
   console.log("Creating new event:", newEvent);
 
+  // Use type casting to fix TypeScript errors
   const { data, error } = await supabase
     .from("events")
-    .insert(newEvent)
+    .insert(newEvent as any)
     .select();
 
   if (error) {

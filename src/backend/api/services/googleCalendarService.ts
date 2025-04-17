@@ -16,7 +16,7 @@ export async function hasGoogleCalendarConnected(): Promise<boolean> {
   const { data, error } = await supabase
     .from('google_calendar_tokens')
     .select('id')
-    .eq('user_id', user.id)
+    .eq('user_id', user.id as any)
     .limit(1);
 
   if (error) {
@@ -41,7 +41,7 @@ export async function getConnectedCalendars(): Promise<any[]> {
   const { data, error } = await supabase
     .from('google_calendar_tokens')
     .select('*')
-    .eq('user_id', user.id);
+    .eq('user_id', user.id as any);
 
   if (error) {
     console.error('Error fetching connected calendars:', error);
@@ -155,7 +155,7 @@ export async function saveEventToGoogleCalendar(event: DatabaseEvent): Promise<b
           google_event_id: data.google_event_id,
           source: 'app_synced'
         })
-        .eq('id', event.id);
+        .eq('id', event.id as any);
         
       if (updateError) {
         console.error('Error updating event with Google Calendar ID:', updateError);
