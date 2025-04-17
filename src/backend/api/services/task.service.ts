@@ -21,7 +21,7 @@ export const fetchTasks = async (): Promise<Task[]> => {
     if (error) throw error;
     
     // Use type assertion to fix TypeScript errors
-    return (data || []) as Task[];
+    return (data || []) as unknown as Task[];
   } catch (error) {
     console.error('Error fetching tasks:', error);
     throw error;
@@ -56,7 +56,7 @@ export const createTask = async (taskData: Omit<Task, 'id' | 'user' | 'created_a
     
     if (error) throw error;
     
-    return data[0] as Task;
+    return data[0] as unknown as Task;
   } catch (error) {
     console.error('Error creating task:', error);
     throw error;
@@ -88,7 +88,7 @@ export const updateTask = async (taskData: Partial<Task> & { id: string }) => {
     
     if (error) throw error;
     
-    return data[0] as Task;
+    return data[0] as unknown as Task;
   } catch (error) {
     console.error('Error updating task:', error);
     throw error;

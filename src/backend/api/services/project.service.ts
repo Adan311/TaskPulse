@@ -32,7 +32,7 @@ export const fetchProjects = async (): Promise<Project[]> => {
   }
 
   // Use proper type assertion to avoid TypeScript errors
-  return (data || []) as Project[];
+  return (data || []) as unknown as Project[];
 };
 
 export const createProject = async (project: Omit<Project, "id" | "user" | "created_at">): Promise<Project> => {
@@ -63,5 +63,5 @@ export const createProject = async (project: Omit<Project, "id" | "user" | "crea
   }
 
   // Use type assertion to fix TypeScript errors
-  return data[0] as Project;
+  return data[0] as unknown as Project;
 };

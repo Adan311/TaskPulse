@@ -26,7 +26,7 @@ export const fetchTasks = async (): Promise<Task[]> => {
   const { data, error } = await supabase
     .from("tasks")
     .select("*")
-    .eq("user", user.id)
+    .eq("user", user.id as any)
     .order("title");
 
   if (error) {
@@ -34,7 +34,7 @@ export const fetchTasks = async (): Promise<Task[]> => {
     throw error;
   }
 
-  return data as Task[];
+  return data as unknown as Task[];
 };
 
 export const createTask = async (task: Omit<Task, "id" | "user">): Promise<Task> => {
@@ -64,7 +64,7 @@ export const createTask = async (task: Omit<Task, "id" | "user">): Promise<Task>
 
   const { data, error } = await supabase
     .from("tasks")
-    .insert([newTask])
+    .insert([newTask as any])
     .select();
 
   if (error) {
@@ -72,7 +72,7 @@ export const createTask = async (task: Omit<Task, "id" | "user">): Promise<Task>
     throw error;
   }
 
-  return data![0] as Task;
+  return data![0] as unknown as Task;
 };
 
 export const updateTask = async (task: Partial<Task> & { id: string }): Promise<void> => {
@@ -86,9 +86,9 @@ export const updateTask = async (task: Partial<Task> & { id: string }): Promise<
 
   const { error } = await supabase
     .from("tasks")
-    .update(task)
-    .eq("id", task.id)
-    .eq("user", user.id);
+    .update(task as any)
+    .eq("id", task.id as any)
+    .eq("user", user.id as any);
 
   if (error) {
     console.error("Error updating task:", error);
@@ -108,8 +108,8 @@ export const deleteTask = async (taskId: string): Promise<void> => {
   const { error } = await supabase
     .from("tasks")
     .delete()
-    .eq("id", taskId)
-    .eq("user", user.id);
+    .eq("id", taskId as any)
+    .eq("user", user.id as any);
 
   if (error) {
     console.error("Error deleting task:", error);
