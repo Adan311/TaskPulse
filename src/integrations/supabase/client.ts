@@ -24,9 +24,6 @@ const supabaseOptions = {
     headers: {
       'x-application-name': 'TaskPulse'
     }
-  },
-  db: {
-    schema: 'public'
   }
 };
 
