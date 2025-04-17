@@ -1,7 +1,8 @@
 
 import { Button } from "@/frontend/components/ui/button";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
+import { SyncGoogleCalendarButton } from "./SyncGoogleCalendarButton";
 
 interface CalendarHeaderProps {
   date: Date | undefined;
@@ -57,10 +58,21 @@ export function CalendarHeader({
   };
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between flex-wrap gap-2">
       <div className="flex items-center space-x-4">
         <CalendarIcon className="h-6 w-6 text-primary" />
         <h1 className="text-3xl font-bold">Calendar</h1>
+        
+        {hasGoogleCalendar && (
+          <div className="ml-4">
+            <SyncGoogleCalendarButton 
+              onSuccess={onSyncSuccess}
+              variant="secondary" 
+              size="default"
+              className="flex items-center gap-2"
+            />
+          </div>
+        )}
       </div>
       
       <div className="flex items-center space-x-2">

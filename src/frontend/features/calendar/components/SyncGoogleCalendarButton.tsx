@@ -7,10 +7,19 @@ import { syncWithGoogleCalendar } from "@/backend/api/services/googleCalendarSer
 
 interface SyncGoogleCalendarButtonProps {
   onSuccess?: () => void;
+  variant?: "outline" | "default" | "secondary" | "ghost" | null;
+  size?: "sm" | "default" | "lg" | "icon" | null;
+  className?: string;
 }
 
-export function SyncGoogleCalendarButton({ onSuccess }: SyncGoogleCalendarButtonProps) {
+export function SyncGoogleCalendarButton({ 
+  onSuccess, 
+  variant = "outline", 
+  size = "sm",
+  className = "gap-1" 
+}: SyncGoogleCalendarButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [lastSynced, setLastSynced] = useState<Date | null>(null);
   const { toast } = useToast();
 
   const handleSync = async () => {
@@ -18,20 +27,26 @@ export function SyncGoogleCalendarButton({ onSuccess }: SyncGoogleCalendarButton
     try {
       const result = await syncWithGoogleCalendar();
       
-      if (result) {
+      if (result && result.success) {
+        const successMessage = `Calendar synced successfully! ${
+          result.imported ? `Imported ${result.imported} events.` : ''
+        } ${result.pushed ? `Pushed ${result.pushed} events.` : ''}`;
+        
         toast({
           title: "Calendar synced",
-          description: "Your Google Calendar events have been synced successfully.",
+          description: successMessage,
         });
+        
+        setLastSynced(new Date());
         
         if (onSuccess) {
           onSuccess();
         }
       } else {
         toast({
-          title: "Sync failed",
-          description: "Failed to sync with Google Calendar. Please try again.",
-          variant: "destructive",
+          title: "Sync incomplete",
+          description: "Calendar sync completed but with potential issues. Please check your events.",
+          variant: "default",
         });
       }
     } catch (error) {
@@ -48,11 +63,12 @@ export function SyncGoogleCalendarButton({ onSuccess }: SyncGoogleCalendarButton
 
   return (
     <Button
-      variant="outline"
-      size="sm"
+      variant={variant}
+      size={size}
       onClick={handleSync}
       disabled={isLoading}
-      className="gap-1"
+      className={className}
+      title={lastSynced ? `Last synced: ${lastSynced.toLocaleTimeString()}` : "Sync with Google Calendar"}
     >
       <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
       {isLoading ? "Syncing..." : "Sync Calendar"}
