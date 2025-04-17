@@ -72,10 +72,10 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
       const { data, error } = await supabase
         .from("projects")
         .select("id, name")
-        .eq("user", user.id);
+        .eq("user", user.id as any);
       
       if (error) throw error;
-      setProjects(data || []);
+      setProjects(data as unknown as Project[] || []);
     } catch (error) {
       console.error("Error fetching projects:", error);
       toast({
