@@ -15,12 +15,13 @@ export const fetchTasks = async (): Promise<Task[]> => {
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
-      .eq('user', user.id)
+      .eq('user', user.id as any)
       .order('created_at', { ascending: false });
     
     if (error) throw error;
     
-    return data as Task[];
+    // Use type assertion to fix TypeScript errors
+    return (data || []) as Task[];
   } catch (error) {
     console.error('Error fetching tasks:', error);
     throw error;
@@ -50,7 +51,7 @@ export const createTask = async (taskData: Omit<Task, 'id' | 'user' | 'created_a
         project: taskData.project,
         due_date: taskData.due_date,
         user: user.id
-      })
+      } as any)
       .select();
     
     if (error) throw error;
@@ -80,9 +81,9 @@ export const updateTask = async (taskData: Partial<Task> & { id: string }) => {
         priority: taskData.priority,
         project: taskData.project,
         due_date: taskData.due_date
-      })
-      .eq('id', taskData.id)
-      .eq('user', user.id)
+      } as any)
+      .eq('id', taskData.id as any)
+      .eq('user', user.id as any)
       .select();
     
     if (error) throw error;
@@ -106,8 +107,8 @@ export const deleteTask = async (taskId: string) => {
     const { error } = await supabase
       .from('tasks')
       .delete()
-      .eq('id', taskId)
-      .eq('user', user.id);
+      .eq('id', taskId as any)
+      .eq('user', user.id as any);
     
     if (error) throw error;
     
@@ -129,9 +130,9 @@ export const updateTaskStatus = async (taskId: string, status: Task['status']) =
     
     const { error } = await supabase
       .from('tasks')
-      .update({ status })
-      .eq('id', taskId)
-      .eq('user', user.id);
+      .update({ status } as any)
+      .eq('id', taskId as any)
+      .eq('user', user.id as any);
     
     if (error) throw error;
     

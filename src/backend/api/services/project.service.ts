@@ -1,5 +1,5 @@
 
-import { supabase } from '../client/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from "uuid";
 
 export interface Project {
@@ -23,7 +23,7 @@ export const fetchProjects = async (): Promise<Project[]> => {
   const { data, error } = await supabase
     .from("projects")
     .select("*")
-    .eq("user", user.id)
+    .eq("user", user.id as any)
     .order("name");
 
   if (error) {
@@ -31,7 +31,8 @@ export const fetchProjects = async (): Promise<Project[]> => {
     throw error;
   }
 
-  return data as Project[];
+  // Use proper type assertion to avoid TypeScript errors
+  return (data || []) as Project[];
 };
 
 export const createProject = async (project: Omit<Project, "id" | "user" | "created_at">): Promise<Project> => {
@@ -49,7 +50,7 @@ export const createProject = async (project: Omit<Project, "id" | "user" | "crea
 
   const { data, error } = await supabase
     .from("projects")
-    .insert([newProject])
+    .insert([newProject as any])
     .select();
 
   if (error) {
@@ -57,5 +58,10 @@ export const createProject = async (project: Omit<Project, "id" | "user" | "crea
     throw error;
   }
 
-  return data![0] as Project;
+  if (!data || data.length === 0) {
+    throw new Error("Failed to create project");
+  }
+
+  // Use type assertion to fix TypeScript errors
+  return data[0] as Project;
 };
