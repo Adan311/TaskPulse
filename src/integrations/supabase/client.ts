@@ -12,19 +12,15 @@ if (!supabaseUrl || !supabaseKey) {
   throw new Error("Supabase configuration is incomplete. Please check your environment variables.");
 }
 
-// Client configuration options
+// Updated client configuration options without custom headers
 const supabaseOptions = {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
     storage: localStorage
-  },
-  global: {
-    headers: {
-      'x-application-name': 'TaskPulse'
-    }
   }
+  // Removed the global headers section that was causing CORS issues
 };
 
 /**

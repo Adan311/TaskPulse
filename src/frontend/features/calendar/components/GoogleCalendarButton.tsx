@@ -58,6 +58,8 @@ export function GoogleCalendarButton({ onSuccess }: GoogleCalendarButtonProps) {
       const origin = window.location.origin;
       console.log("Current origin:", origin);
       
+      // Explicitly specify the headers option as an empty object to avoid any custom headers
+      // that might cause CORS issues
       const authUrl = await initiateGoogleCalendarAuth();
       console.log("Auth URL received:", authUrl ? "Yes" : "No");
       
@@ -81,11 +83,19 @@ export function GoogleCalendarButton({ onSuccess }: GoogleCalendarButtonProps) {
         });
         setIsLoading(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error initiating Google Calendar auth:", error);
+      
+      // Provide more specific error message based on the type of error
+      let errorMessage = "Failed to connect to Google Calendar. Please try again later.";
+      
+      if (error.message && error.message.includes("CORS")) {
+        errorMessage = "CORS error: There's an issue with the connection. Please try again or contact support.";
+      }
+      
       toast({
         title: "Connection error",
-        description: "Failed to connect to Google Calendar. Please try again later.",
+        description: errorMessage,
         variant: "destructive",
       });
       setIsLoading(false);
