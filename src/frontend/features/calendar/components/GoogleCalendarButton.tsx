@@ -17,30 +17,43 @@ export function GoogleCalendarButton({ onSuccess }: GoogleCalendarButtonProps) {
     setIsLoading(true);
     try {
       console.log("Starting Google Calendar connection process");
+      
+      // Clear any previous state
+      localStorage.removeItem("googleCalendarState");
+      localStorage.removeItem("googleCalendarUserId");
+      
       const authUrl = await initiateGoogleCalendarAuth();
+      
       if (authUrl) {
-        console.log("Redirecting to Google auth URL:", authUrl);
-        // Redirect to Google auth page
-        window.location.href = authUrl;
+        console.log("Redirecting to Google auth URL");
+        toast({
+          title: "Connecting to Google Calendar",
+          description: "You'll be redirected to Google to authorize access to your calendar.",
+        });
+        
+        // Small delay to allow toast to show
+        setTimeout(() => {
+          window.location.href = authUrl;
+        }, 500);
       } else {
         console.error("No auth URL returned");
         toast({
-          title: "Error",
-          description: "Could not initiate Google Calendar authentication.",
+          title: "Connection error",
+          description: "Could not initiate Google Calendar authentication. Please try again.",
           variant: "destructive",
         });
+        setIsLoading(false);
       }
     } catch (error) {
       console.error("Error initiating Google Calendar auth:", error);
       toast({
-        title: "Error",
-        description: "Failed to connect to Google Calendar.",
+        title: "Connection error",
+        description: "Failed to connect to Google Calendar. Please try again later.",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
-      // Don't call onSuccess here - it should be called after successful callback
     }
+    // Don't set isLoading to false here as we're redirecting
   };
 
   return (

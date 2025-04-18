@@ -7,49 +7,61 @@ import { GoogleCalendarSync } from './googleCalendar/googleCalendarSync';
  * Checks if the user has connected their Google Calendar
  */
 export async function hasGoogleCalendarConnected(): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.log("No authenticated user, cannot check Google Calendar connection");
+      return false;
+    }
+
+    // Use proper typing for queries with type assertion
+    const { data, error } = await supabase
+      .from('google_calendar_tokens')
+      .select('id')
+      .eq('user_id', user.id as any)
+      .limit(1);
+
+    if (error) {
+      console.error('Error checking Google Calendar connection:', error);
+      return false;
+    }
+
+    return data && data.length > 0;
+  } catch (error) {
+    console.error("Exception checking Google Calendar connection:", error);
     return false;
   }
-
-  // Use proper typing for queries with type assertion
-  const { data, error } = await supabase
-    .from('google_calendar_tokens')
-    .select('id')
-    .eq('user_id', user.id as any)
-    .limit(1);
-
-  if (error) {
-    console.error('Error checking Google Calendar connection:', error);
-    return false;
-  }
-
-  return data && data.length > 0;
 }
 
 /**
  * Gets the list of connected Google Calendars
  */
 export async function getConnectedCalendars(): Promise<any[]> {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.log("No authenticated user, cannot get connected calendars");
+      return [];
+    }
+
+    // Use proper typing for queries with type assertion
+    const { data, error } = await supabase
+      .from('google_calendar_tokens')
+      .select('*')
+      .eq('user_id', user.id as any);
+
+    if (error) {
+      console.error('Error fetching connected calendars:', error);
+      return [];
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Exception fetching connected calendars:", error);
     return [];
   }
-
-  // Use proper typing for queries with type assertion
-  const { data, error } = await supabase
-    .from('google_calendar_tokens')
-    .select('*')
-    .eq('user_id', user.id as any);
-
-  if (error) {
-    console.error('Error fetching connected calendars:', error);
-    return [];
-  }
-
-  return data || [];
 }
 
 /**
@@ -71,7 +83,7 @@ export async function syncWithGoogleCalendar(): Promise<{success: boolean, impor
     const isConnected = await hasGoogleCalendarConnected();
     if (!isConnected) {
       console.log("Google Calendar not connected, skipping sync");
-      return { success: false, error: "Google Calendar is not connected to your account" };
+      return { success: false, error: "Google Calendar is not connected to your account. Please connect your calendar first." };
     }
     
     console.log("Invoking edge function for Google Calendar sync");
@@ -86,7 +98,18 @@ export async function syncWithGoogleCalendar(): Promise<{success: boolean, impor
     
     if (error) {
       console.error("Error syncing with Google Calendar:", error);
-      return { success: false, error: error.message || "Failed to sync with Google Calendar" };
+      return { 
+        success: false, 
+        error: error.message || "Failed to sync with Google Calendar. Please try reconnecting your account." 
+      };
+    }
+    
+    if (!data || !data.success) {
+      console.error("Sync returned unsuccessful status:", data);
+      return { 
+        success: false, 
+        error: data?.error || "Calendar sync failed. Please try reconnecting your Google Calendar." 
+      };
     }
     
     console.log("Google Calendar sync response:", data);
@@ -99,7 +122,7 @@ export async function syncWithGoogleCalendar(): Promise<{success: boolean, impor
     console.error("Exception syncing with Google Calendar:", error);
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : "Unknown error during sync" 
+      error: error instanceof Error ? error.message : "Unknown error during sync. Please try again later." 
     };
   }
 }

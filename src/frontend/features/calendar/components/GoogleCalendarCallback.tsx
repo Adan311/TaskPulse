@@ -42,8 +42,8 @@ export function GoogleCalendarCallback() {
         const savedState = localStorage.getItem("googleCalendarState");
         if (!savedState || state !== savedState) {
           setStatus("error");
-          setMessage("Invalid state parameter. Authorization failed.");
-          setErrorDetails(`Received state: ${state}, Saved state: ${savedState}`);
+          setMessage("Invalid state parameter. Authorization failed for security reasons.");
+          setErrorDetails(`Received state: ${state}, Expected state: ${savedState || "missing"}`);
           return;
         }
 
@@ -51,7 +51,7 @@ export function GoogleCalendarCallback() {
         const userId = localStorage.getItem("googleCalendarUserId");
         if (!userId) {
           setStatus("error");
-          setMessage("User ID not found. Please try again.");
+          setMessage("User ID not found. Please try connecting again from the calendar page.");
           return;
         }
 

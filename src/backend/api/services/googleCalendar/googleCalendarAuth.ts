@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -20,11 +21,15 @@ export const GoogleCalendarAuth = {
       // Generate a random state parameter for security
       const state = Math.random().toString(36).substring(2, 15);
       
+      // Store state and user ID in localStorage for verification during callback
+      localStorage.setItem("googleCalendarState", state);
+      localStorage.setItem("googleCalendarUserId", user.id);
+      
       const origin = window.location.origin;
       
-      // Use the Supabase Edge Function public URL as the redirect URI
-      // Hardcode your project ref for reliability
-      const redirectUri = "https://b92b88c56ce4albba899d0761d8f1933c010b329d8b.functions.supabase.co/google-calendar-auth";
+      // Set actual redirect URL from the current origin
+      // This is crucial for OAuth to work properly
+      const redirectUri = `${origin}/api/google-calendar-callback`;
       
       console.log("Initiating Google Calendar auth with:", {
         userId: user.id,
@@ -49,6 +54,8 @@ export const GoogleCalendarAuth = {
         return null;
       }
       
+      console.log("Google auth URL received:", data?.authUrl ? "URL received" : "No URL");
+      
       return data?.authUrl || null;
     } catch (err) {
       console.error("Exception initiating Google Calendar auth:", err);
@@ -58,7 +65,6 @@ export const GoogleCalendarAuth = {
 
   /**
    * Revokes access to Google Calendar
-   * Currently not used in the UI but could be added to settings
    */
   revokeGoogleCalendarAccess: async (calendarId: string): Promise<boolean> => {
     try {
@@ -68,6 +74,8 @@ export const GoogleCalendarAuth = {
         console.log("No user found, cannot revoke Google Calendar");
         return false;
       }
+
+      console.log("Attempting to revoke Google Calendar access for calendar ID:", calendarId);
 
       // Call the edge function to revoke the token
       const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
@@ -85,6 +93,7 @@ export const GoogleCalendarAuth = {
 
       // Check the response for success
       if (data && data.success) {
+        console.log("Successfully revoked Google Calendar access");
         return true;
       } else {
         console.error('Failed to revoke Google Calendar access:', data);

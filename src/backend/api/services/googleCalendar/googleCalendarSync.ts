@@ -28,11 +28,16 @@ export const GoogleCalendarSync = {
       
       // Check if this is a Google-sourced event, if so, don't sync back
       if (event.source === 'google') {
-        console.log("Event is from Google, skipping sync back");
+        console.log("Event is from Google, skipping sync back to avoid duplicates");
         return false;
       }
 
-      console.log("Syncing event to Google Calendar:", event);
+      console.log("Syncing event to Google Calendar:", {
+        id: event.id,
+        title: event.title,
+        start: event.start_time,
+        end: event.end_time
+      });
 
       // Call the edge function to save the event to Google Calendar
       const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
@@ -52,6 +57,8 @@ export const GoogleCalendarSync = {
 
       // If this was a new event and we got a Google event ID back, update our local record
       if (!event.google_event_id && data && data.google_event_id) {
+        console.log("Updating local event with Google Calendar ID:", data.google_event_id);
+        
         const { error: updateError } = await supabase
           .from("events")
           .update({ 
@@ -113,7 +120,7 @@ export const GoogleCalendarSync = {
       
       // Don't delete Google-sourced events from Google Calendar through this flow
       if (event.source === 'google') {
-        console.log("Event is from Google, skipping delete");
+        console.log("Event is from Google, skipping delete to avoid inconsistency");
         return false;
       }
 
@@ -143,6 +150,7 @@ export const GoogleCalendarSync = {
         return false;
       }
 
+      console.log("Successfully deleted event from Google Calendar");
       return true;
     } catch (error) {
       console.error('Exception deleting event from Google Calendar:', error);

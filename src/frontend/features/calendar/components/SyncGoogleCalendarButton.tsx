@@ -47,16 +47,16 @@ export function SyncGoogleCalendarButton({
       } else {
         console.error("Sync incomplete or failed:", result);
         toast({
-          title: "Sync incomplete",
-          description: result.error || "Calendar sync completed but with potential issues. Please check your events.",
-          variant: "default",
+          title: "Sync issue",
+          description: result.error || "Calendar sync encountered an issue. Please check your connection to Google Calendar.",
+          variant: "destructive",
         });
       }
     } catch (error) {
       console.error("Error syncing with Google Calendar:", error);
       toast({
-        title: "Sync error",
-        description: error instanceof Error ? error.message : "An error occurred while syncing with Google Calendar.",
+        title: "Sync failed",
+        description: error instanceof Error ? error.message : "Failed to sync with Google Calendar. Please reconnect your account.",
         variant: "destructive",
       });
     } finally {

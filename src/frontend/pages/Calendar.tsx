@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/frontend/components/layout/AppLayout";
 import { Button } from "@/frontend/components/ui/button";
@@ -30,6 +31,7 @@ export default function Calendar() {
   const [loading, setLoading] = useState(true);
   const [calendarId, setCalendarId] = useState<string | null>(null);
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
+  const [syncInProgress, setSyncInProgress] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -55,6 +57,7 @@ export default function Calendar() {
     try {
       if (!user) {
         setEvents([]);
+        setLoading(false);
         return;
       }
       
@@ -81,12 +84,20 @@ export default function Calendar() {
         return;
       }
       
+      setSyncInProgress(true);
       const calendars = await getConnectedCalendars();
       setHasGoogleCalendar(calendars.length > 0);
       setCalendarId(calendars.length > 0 ? calendars[0].id : null);
+      setSyncInProgress(false);
     } catch (error) {
       console.error("Error checking Google Calendar:", error);
       setCalendarId(null);
+      setSyncInProgress(false);
+      toast({
+        variant: "destructive",
+        title: "Connection error",
+        description: "Could not check Google Calendar connection status.",
+      });
     }
   };
 
@@ -153,9 +164,19 @@ export default function Calendar() {
     setLastSynced(new Date());
   };
 
-  const handleConnectSuccess = () => checkGoogleCalendar();
+  const handleConnectSuccess = async () => {
+    await checkGoogleCalendar();
+    fetchEvents();
+  };
 
-  const handleDisconnectSuccess = () => checkGoogleCalendar();
+  const handleDisconnectSuccess = async () => {
+    await checkGoogleCalendar();
+    fetchEvents();
+    toast({
+      title: "Calendar disconnected",
+      description: "Your Google Calendar has been disconnected successfully.",
+    });
+  };
 
   return (
     <AppLayout>
@@ -166,11 +187,59 @@ export default function Calendar() {
           setDate={setDate}
           setView={setView}
           hasGoogleCalendar={hasGoogleCalendar}
-          onSyncSuccess={fetchEvents}
+          onSyncSuccess={handleSyncSuccess}
         />
 
-        <div className="flex gap-6">
-          <CalendarSidebar date={date} setDate={setDate} />
+        <div className="flex gap-6 flex-col md:flex-row">
+          <div className="md:w-64 w-full">
+            <CalendarSidebar date={date} setDate={setDate} />
+            
+            {/* Google Calendar Connection Status */}
+            <div className="mt-6 space-y-4 border rounded-md p-4">
+              <h3 className="font-medium">Google Calendar</h3>
+              
+              <div className="text-sm">
+                {syncInProgress ? (
+                  <div className="flex items-center text-yellow-500">
+                    <div className="mr-2 h-3 w-3 rounded-full bg-yellow-500 animate-pulse"></div>
+                    Checking connection...
+                  </div>
+                ) : hasGoogleCalendar ? (
+                  <div className="flex items-center text-green-500">
+                    <CheckCircle className="h-4 w-4 mr-1" /> Connected
+                  </div>
+                ) : (
+                  <div className="flex items-center text-red-500">
+                    <XCircle className="h-4 w-4 mr-1" /> Not connected
+                  </div>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                {hasGoogleCalendar && calendarId ? (
+                  <>
+                    <SyncGoogleCalendarButton 
+                      onSuccess={handleSyncSuccess} 
+                      variant="outline" 
+                      size="default"
+                      className="w-full"
+                    />
+                    <DisconnectGoogleCalendarButton 
+                      calendarId={calendarId} 
+                      onSuccess={handleDisconnectSuccess} 
+                    />
+                    {lastSynced && (
+                      <div className="text-xs text-gray-500 mt-2">
+                        Last synced: {lastSynced.toLocaleString()}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <GoogleCalendarButton onSuccess={handleConnectSuccess} />
+                )}
+              </div>
+            </div>
+          </div>
 
           <div className="flex-1">
             <Card>
@@ -178,38 +247,10 @@ export default function Calendar() {
                 <CardTitle>
                   {date ? format(date, "EEEE, MMMM d, yyyy") : "Select a date"}
                 </CardTitle>
-                <div className="flex space-x-2 items-center">
-                  {/* Google Calendar Sync Status Indicator */}
-                  {user && (
-                    hasGoogleCalendar && calendarId ? (
-                      <span className="flex items-center text-green-500 font-medium mr-2">
-                        <CheckCircle className="h-4 w-4 mr-1" /> Synced with Google Calendar
-                      </span>
-                    ) : (
-                      <span className="flex items-center text-red-500 font-medium mr-2">
-                        <XCircle className="h-4 w-4 mr-1" /> Not synced with Google Calendar
-                      </span>
-                    )
-                  )}
-                  {lastSynced && (
-                    <span className="text-sm text-gray-500">
-                      Last synced at {lastSynced.toLocaleTimeString()}
-                    </span>
-                  )}
-                  {/* Google Calendar Buttons */}
-                  {hasGoogleCalendar && calendarId && user ? (
-                    <>
-                      <SyncGoogleCalendarButton onSuccess={handleSyncSuccess} />
-                      <DisconnectGoogleCalendarButton calendarId={calendarId} onSuccess={handleDisconnectSuccess} />
-                    </>
-                  ) : (
-                    user && <GoogleCalendarButton onSuccess={handleConnectSuccess} />
-                  )}
-                  <Button size="sm" onClick={handleAddEvent} disabled={!user}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Event
-                  </Button>
-                </div>
+                <Button size="sm" onClick={handleAddEvent} disabled={!user}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Event
+                </Button>
               </CardHeader>
               <CardContent>
                 {!user ? (
