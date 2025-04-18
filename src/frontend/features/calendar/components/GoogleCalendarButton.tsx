@@ -1,9 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/frontend/components/ui/button";
 import { Calendar, ExternalLink } from "lucide-react";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { initiateGoogleCalendarAuth } from "@/backend/api/services/googleCalendarService";
+import { supabase } from "@/integrations/supabase/client";
 
 interface GoogleCalendarButtonProps {
   onSuccess?: () => void;
@@ -11,21 +12,57 @@ interface GoogleCalendarButtonProps {
 
 export function GoogleCalendarButton({ onSuccess }: GoogleCalendarButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const { toast } = useToast();
+
+  // Check if user is logged in
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    };
+    
+    checkUser();
+    
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, []);
 
   const handleConnectGoogleCalendar = async () => {
     setIsLoading(true);
     try {
       console.log("Starting Google Calendar connection process");
       
+      // Check if user is authenticated first
+      if (!user) {
+        console.error("User not authenticated, cannot connect Google Calendar");
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to connect Google Calendar.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       // Clear any previous state
       localStorage.removeItem("googleCalendarState");
       localStorage.removeItem("googleCalendarUserId");
       
+      // Get current application URL for proper redirect
+      const origin = window.location.origin;
+      console.log("Current origin:", origin);
+      
       const authUrl = await initiateGoogleCalendarAuth();
+      console.log("Auth URL received:", authUrl ? "Yes" : "No");
       
       if (authUrl) {
-        console.log("Redirecting to Google auth URL");
+        console.log("Redirecting to Google auth URL:", authUrl);
         toast({
           title: "Connecting to Google Calendar",
           description: "You'll be redirected to Google to authorize access to your calendar.",
@@ -59,8 +96,9 @@ export function GoogleCalendarButton({ onSuccess }: GoogleCalendarButtonProps) {
   return (
     <Button
       variant="outline"
-      disabled={isLoading}
+      disabled={isLoading || !user}
       onClick={handleConnectGoogleCalendar}
+      title={!user ? "Please sign in to connect Google Calendar" : "Connect to Google Calendar"}
     >
       <Calendar className="mr-2 h-4 w-4" />
       {isLoading ? "Connecting..." : "Connect Google Calendar"}

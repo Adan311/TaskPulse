@@ -29,7 +29,7 @@ export const GoogleCalendarAuth = {
       
       // Set actual redirect URL from the current origin
       // This is crucial for OAuth to work properly
-      const redirectUri = `${origin}/api/google-calendar-callback`;
+      const redirectUri = `${origin}/calendar/google-callback`;
       
       console.log("Initiating Google Calendar auth with:", {
         userId: user.id,

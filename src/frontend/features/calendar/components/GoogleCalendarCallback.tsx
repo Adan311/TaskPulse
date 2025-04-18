@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/frontend/components/ui/card";
@@ -14,13 +14,14 @@ export function GoogleCalendarCallback() {
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
         // Parse the URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
+        const urlParams = new URLSearchParams(location.search);
         const code = urlParams.get("code");
         const state = urlParams.get("state");
         const error = urlParams.get("error");
@@ -62,7 +63,8 @@ export function GoogleCalendarCallback() {
         localStorage.removeItem("googleCalendarUserId");
 
         // Exchange the authorization code for tokens
-        const redirectUri = `${window.location.origin}/api/google-calendar-callback`;
+        const origin = window.location.origin;
+        const redirectUri = `${origin}/calendar/google-callback`;
         
         console.log("Calling edge function with:", { 
           action: "callback",
@@ -134,10 +136,10 @@ export function GoogleCalendarCallback() {
     };
 
     handleCallback();
-  }, [navigate, toast]);
+  }, [navigate, toast, location]);
 
   return (
-    <div className="flex h-screen items-center justify-center p-6">
+    <div className="flex h-screen items-center justify-center p-6 bg-background">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
