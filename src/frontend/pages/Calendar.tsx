@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/frontend/components/layout/AppLayout";
 import { Button } from "@/frontend/components/ui/button";
 import { Plus } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card";
 import { CalendarHeader } from "@/frontend/features/calendar/components/CalendarHeader";
@@ -12,6 +12,7 @@ import { WeekView } from "@/frontend/features/calendar/components/WeekView";
 import { ListView } from "@/frontend/features/calendar/components/ListView";
 import { EventDialog } from "@/frontend/features/calendar/components/EventDialog";
 import { GoogleCalendarButton } from "@/frontend/features/calendar/components/GoogleCalendarButton";
+import { DisconnectGoogleCalendarButton } from "@/frontend/features/calendar/components/DisconnectGoogleCalendarButton";
 import { SyncGoogleCalendarButton } from "@/frontend/features/calendar/components/SyncGoogleCalendarButton";
 import { getEvents, Event } from "@/backend/api/services/eventService";
 import { getConnectedCalendars } from "@/backend/api/services/googleCalendarService";
@@ -27,6 +28,8 @@ export default function Calendar() {
   const [hasGoogleCalendar, setHasGoogleCalendar] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [calendarId, setCalendarId] = useState<string | null>(null);
+  const [lastSynced, setLastSynced] = useState<Date | null>(null);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -74,13 +77,16 @@ export default function Calendar() {
     try {
       if (!user) {
         setHasGoogleCalendar(false);
+        setCalendarId(null);
         return;
       }
       
       const calendars = await getConnectedCalendars();
       setHasGoogleCalendar(calendars.length > 0);
+      setCalendarId(calendars.length > 0 ? calendars[0].id : null);
     } catch (error) {
       console.error("Error checking Google Calendar:", error);
+      setCalendarId(null);
     }
   };
 
@@ -142,6 +148,15 @@ export default function Calendar() {
     setEventDialogOpen(true);
   };
 
+  const handleSyncSuccess = () => {
+    fetchEvents();
+    setLastSynced(new Date());
+  };
+
+  const handleConnectSuccess = () => checkGoogleCalendar();
+
+  const handleDisconnectSuccess = () => checkGoogleCalendar();
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
@@ -163,9 +178,33 @@ export default function Calendar() {
                 <CardTitle>
                   {date ? format(date, "EEEE, MMMM d, yyyy") : "Select a date"}
                 </CardTitle>
-                <div className="flex space-x-2">
-                  {hasGoogleCalendar && <SyncGoogleCalendarButton onSuccess={fetchEvents} />}
-                  {!hasGoogleCalendar && user && <GoogleCalendarButton onSuccess={checkGoogleCalendar} />}
+                <div className="flex space-x-2 items-center">
+                  {/* Google Calendar Sync Status Indicator */}
+                  {user && (
+                    hasGoogleCalendar && calendarId ? (
+                      <span className="flex items-center text-green-500 font-medium mr-2">
+                        <CheckCircle className="h-4 w-4 mr-1" /> Synced with Google Calendar
+                      </span>
+                    ) : (
+                      <span className="flex items-center text-red-500 font-medium mr-2">
+                        <XCircle className="h-4 w-4 mr-1" /> Not synced with Google Calendar
+                      </span>
+                    )
+                  )}
+                  {lastSynced && (
+                    <span className="text-sm text-gray-500">
+                      Last synced at {lastSynced.toLocaleTimeString()}
+                    </span>
+                  )}
+                  {/* Google Calendar Buttons */}
+                  {hasGoogleCalendar && calendarId && user ? (
+                    <>
+                      <SyncGoogleCalendarButton onSuccess={handleSyncSuccess} />
+                      <DisconnectGoogleCalendarButton calendarId={calendarId} onSuccess={handleDisconnectSuccess} />
+                    </>
+                  ) : (
+                    user && <GoogleCalendarButton onSuccess={handleConnectSuccess} />
+                  )}
                   <Button size="sm" onClick={handleAddEvent} disabled={!user}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Event

@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/frontend/components/layout/AppLayout";
 import { Button } from "@/frontend/components/ui/button";
 import { Plus } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/frontend/components/ui/card";
 import { CalendarHeader } from "@/frontend/features/calendar/components/CalendarHeader";
@@ -12,6 +12,7 @@ import { WeekView } from "@/frontend/features/calendar/components/WeekView";
 import { ListView } from "@/frontend/features/calendar/components/ListView";
 import { EventDialog } from "@/frontend/features/calendar/components/EventDialog";
 import { GoogleCalendarButton } from "@/frontend/features/calendar/components/GoogleCalendarButton";
+import { DisconnectGoogleCalendarButton } from "@/frontend/features/calendar/components/DisconnectGoogleCalendarButton";
 import { getEvents } from "@/backend/api/services/eventService";
 import { getConnectedCalendars } from "@/backend/api/services/googleCalendarService";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,7 +27,8 @@ export default function Calendar() {
   const [hasGoogleCalendar, setHasGoogleCalendar] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
+  const [calendarId, setCalendarId] = useState<string | null>(null);
+
   useEffect(() => {
     // Get the current user when component mounts
     const getCurrentUser = async () => {
@@ -45,11 +47,11 @@ export default function Calendar() {
       authListener?.subscription?.unsubscribe();
     };
   }, []);
-  
+
   const fetchEvents = async () => {
     try {
       if (!user) return;
-      
+
       setLoading(true);
       const data = await getEvents();
       setEvents(data);
@@ -64,13 +66,17 @@ export default function Calendar() {
     try {
       if (!user) {
         setHasGoogleCalendar(false);
+        setCalendarId(null);
         return;
       }
-      
+
+      // Fetch connected calendars, expect [{ id, ... }]
       const calendars = await getConnectedCalendars();
       setHasGoogleCalendar(calendars.length > 0);
+      setCalendarId(calendars.length > 0 ? calendars[0].id : null);
     } catch (error) {
       console.error("Error checking Google Calendar:", error);
+      setCalendarId(null);
     }
   };
 
@@ -91,7 +97,7 @@ export default function Calendar() {
       events,
       date,
       onEditEvent: handleEditEvent,
-      onEventsChange: fetchEvents
+      onEventsChange: fetchEvents,
     };
 
     switch (view) {
@@ -109,7 +115,7 @@ export default function Calendar() {
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
-        <CalendarHeader 
+        <CalendarHeader
           date={date}
           view={view}
           setDate={setDate}
@@ -125,8 +131,32 @@ export default function Calendar() {
                 <CardTitle>
                   {date ? format(date, "EEEE, MMMM d, yyyy") : "Select a date"}
                 </CardTitle>
-                <div className="flex space-x-2">
-                  {!hasGoogleCalendar && user && <GoogleCalendarButton onSuccess={checkGoogleCalendar} />}
+                <div className="flex space-x-2 items-center">
+                  {/* Google Calendar Sync Status Indicator */}
+                  {user && (
+                    hasGoogleCalendar && calendarId ? (
+                      <span className="flex items-center text-green-500 font-medium mr-2">
+                        <CheckCircle className="h-4 w-4 mr-1" /> Synced with Google Calendar
+                      </span>
+                    ) : (
+                      <span className="flex items-center text-red-500 font-medium mr-2">
+                        <XCircle className="h-4 w-4 mr-1" /> Not synced with Google Calendar
+                      </span>
+                    )
+                  )}
+                  {/* Google Calendar Connect/Disconnect Buttons */}
+                  {!hasGoogleCalendar && user && (
+                    <GoogleCalendarButton onSuccess={checkGoogleCalendar} />
+                  )}
+                  {hasGoogleCalendar && calendarId && user && (
+                    <DisconnectGoogleCalendarButton
+                      calendarId={calendarId}
+                      onSuccess={() => {
+                        setHasGoogleCalendar(false);
+                        setCalendarId(null);
+                      }}
+                    />
+                  )}
                   <Button size="sm" onClick={() => setEventDialogOpen(true)} disabled={!user}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Event
@@ -136,7 +166,9 @@ export default function Calendar() {
               <CardContent>
                 {!user ? (
                   <div className="text-center p-6">
-                    <p className="text-muted-foreground">Please sign in to view and manage your calendar.</p>
+                    <p className="text-muted-foreground">
+                      Please sign in to view and manage your calendar.
+                    </p>
                   </div>
                 ) : (
                   renderView()
@@ -147,7 +179,7 @@ export default function Calendar() {
         </div>
       </div>
 
-      <EventDialog 
+      <EventDialog
         open={eventDialogOpen}
         onOpenChange={setEventDialogOpen}
         onSuccess={fetchEvents}

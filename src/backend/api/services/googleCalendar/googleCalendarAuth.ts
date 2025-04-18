@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -18,15 +17,14 @@ export const GoogleCalendarAuth = {
         return null;
       }
       
-      // Save user ID for later use in the OAuth callback
-      localStorage.setItem('googleCalendarUserId', user.id);
-      
       // Generate a random state parameter for security
       const state = Math.random().toString(36).substring(2, 15);
-      localStorage.setItem('googleCalendarState', state);
       
       const origin = window.location.origin;
-      const redirectUri = `${origin}/api/google-calendar-callback`;
+      
+      // Use the Supabase Edge Function public URL as the redirect URI
+      // Hardcode your project ref for reliability
+      const redirectUri = "https://b92b88c56ce4albba899d0761d8f1933c010b329d8b.functions.supabase.co/google-calendar-auth";
       
       console.log("Initiating Google Calendar auth with:", {
         userId: user.id,
@@ -72,7 +70,7 @@ export const GoogleCalendarAuth = {
       }
 
       // Call the edge function to revoke the token
-      const { error } = await supabase.functions.invoke('google-calendar-auth', {
+      const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
         body: { 
           action: 'revoke',
           calendarId,
@@ -85,7 +83,13 @@ export const GoogleCalendarAuth = {
         return false;
       }
 
-      return true;
+      // Check the response for success
+      if (data && data.success) {
+        return true;
+      } else {
+        console.error('Failed to revoke Google Calendar access:', data);
+        return false;
+      }
     } catch (error) {
       console.error('Exception revoking Google Calendar access:', error);
       return false;
