@@ -88,12 +88,13 @@ export async function syncWithGoogleCalendar(): Promise<{success: boolean, impor
     
     console.log("Invoking edge function for Google Calendar sync");
     
-    // Call the edge function to sync events
+    // Call the edge function to sync events - with explicit headers option to avoid CORS issues
     const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
       body: { 
         action: 'syncEvents',
         userId: user.id
       },
+      headers: {} // Explicitly provide empty headers to avoid custom headers
     });
     
     if (error) {

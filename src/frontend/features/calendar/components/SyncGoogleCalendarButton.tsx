@@ -46,17 +46,39 @@ export function SyncGoogleCalendarButton({
         }
       } else {
         console.error("Sync incomplete or failed:", result);
+        
+        // More descriptive error message based on the error type
+        let errorMessage = result.error || "Calendar sync encountered an issue.";
+        
+        if (errorMessage.includes("CORS")) {
+          errorMessage = "Connection issue detected. This might be due to a CORS error. Please try again or contact support.";
+        } else if (errorMessage.includes("Failed to send")) {
+          errorMessage = "Could not connect to the sync service. Please check your network connection and try again.";
+        }
+        
         toast({
           title: "Sync issue",
-          description: result.error || "Calendar sync encountered an issue. Please check your connection to Google Calendar.",
+          description: errorMessage,
           variant: "destructive",
         });
       }
     } catch (error) {
       console.error("Error syncing with Google Calendar:", error);
+      
+      // Determine appropriate error message
+      let errorMessage = "Failed to sync with Google Calendar. Please try reconnecting your account.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes("CORS") || error.message.includes("Failed to send")) {
+          errorMessage = "Network connection issue. Please check your connection and try again.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Sync failed",
-        description: error instanceof Error ? error.message : "Failed to sync with Google Calendar. Please reconnect your account.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

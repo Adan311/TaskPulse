@@ -39,7 +39,7 @@ export const GoogleCalendarAuth = {
       });
       
       // Call the edge function to get the auth URL
-      // Remove any custom headers that might cause CORS issues
+      // Always specify empty headers to avoid CORS issues
       const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
         body: { 
           action: 'init',
@@ -47,7 +47,8 @@ export const GoogleCalendarAuth = {
           origin,
           redirectUri,
           state
-        }
+        },
+        headers: {} // Explicitly set empty headers
       });
       
       if (error) {
@@ -79,13 +80,14 @@ export const GoogleCalendarAuth = {
       console.log("Attempting to revoke Google Calendar access for calendar ID:", calendarId);
 
       // Call the edge function to revoke the token
-      // Again, avoid custom headers
+      // Always specify empty headers to avoid CORS issues
       const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
         body: { 
           action: 'revoke',
           calendarId,
           userId: user.id
-        }
+        },
+        headers: {} // Explicitly set empty headers
       });
 
       if (error) {

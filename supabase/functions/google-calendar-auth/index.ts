@@ -9,10 +9,12 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "
 // Create a Supabase client with the service role key
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-// Updated CORS headers to include x-application-name
+// Comprehensive CORS headers to address all potential issues
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-application-name",
+  "Access-Control-Max-Age": "86400"
 };
 
 // Generate a random state for OAuth security
@@ -27,9 +29,13 @@ function generateRandomString(length: number) {
 
 // Handler for HTTP requests
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // Handle CORS preflight requests - improved to be more robust
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    console.log("Handling OPTIONS preflight request");
+    return new Response(null, { 
+      status: 204, 
+      headers: corsHeaders 
+    });
   }
 
   try {
@@ -100,6 +106,73 @@ serve(async (req) => {
       console.log("Generated auth URL:", authUrl.substring(0, 100) + "...");
       
       return new Response(JSON.stringify({ authUrl, state }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+    
+    // Handle syncEvents action for Google Calendar sync
+    if (action === "syncEvents") {
+      console.log(`Force syncing for user ${userId}`);
+      
+      // Verify the user exists
+      const userExists = await verifyUser(userId);
+      if (!userExists) {
+        throw new Error("Invalid user ID");
+      }
+      
+      // Get the user's token
+      const tokenData = await getUserToken(userId);
+      if (!tokenData || !tokenData.access_token) {
+        throw new Error("No Google Calendar token found for this user");
+      }
+      
+      // Import events from Google Calendar
+      const importResult = await importGoogleCalendarEvents(
+        tokenData.access_token,
+        tokenData.email,
+        userId
+      );
+      
+      // Push app events to Google Calendar
+      const pushResult = await pushEventsToGoogleCalendar(
+        tokenData.access_token,
+        userId
+      );
+      
+      return new Response(JSON.stringify({
+        success: true,
+        imported: importResult.count,
+        pushed: pushResult.count
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // Handle revoke action
+    if (action === "revoke") {
+      console.log(`Revoking access for calendar ID ${calendarId}`);
+      
+      // Verify user exists
+      const userExists = await verifyUser(userId);
+      if (!userExists) {
+        throw new Error("Invalid user ID");
+      }
+      
+      // Delete the token from the database
+      const { error: deleteError } = await supabase
+        .from("google_calendar_tokens")
+        .delete()
+        .eq("id", calendarId)
+        .eq("user_id", userId);
+        
+      if (deleteError) {
+        console.error("Error deleting token:", deleteError);
+        throw new Error(`Failed to revoke access: ${deleteError.message}`);
+      }
+      
+      return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -224,8 +297,11 @@ serve(async (req) => {
       );
     }
 
-    // ... keep existing code for all the other actions like syncEvents, createEvent, updateEvent, deleteEvent, revoke
-
+    // If no valid action was found
+    return new Response(JSON.stringify({ error: "Invalid action" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 400,
+    });
   } catch (error) {
     console.error(`Error processing request:`, error);
     
