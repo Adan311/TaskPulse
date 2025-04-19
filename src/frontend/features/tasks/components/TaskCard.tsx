@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Task } from '@/backend/types/supabaseSchema';
+import { Task } from '@/backend/api/services/task.service';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +25,7 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
     }
   };
 
-  const getPriorityColor = (priority: Task['priority']) => {
+  const getPriorityColor = (priority?: Task['priority']) => {
     switch (priority) {
       case 'high':
         return 'bg-red-500';

@@ -1,6 +1,6 @@
 
 import { Draggable } from 'react-beautiful-dnd';
-import { Task } from '@/backend/types/supabaseSchema';
+import { Task } from '@/backend/api/services/task.service';
 import { TaskCard } from './TaskCard';
 
 interface TaskListProps {
@@ -25,7 +25,7 @@ export function TaskList({ tasks, onEdit, onDelete }: TaskListProps) {
               {...provided.dragHandleProps}
             >
               <TaskCard 
-                task={task} 
+                task={task}
                 onEdit={onEdit}
                 onDelete={onDelete}
               />

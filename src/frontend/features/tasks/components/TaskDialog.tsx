@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { Button } from "@/frontend/components/ui/button";
 import {
@@ -18,7 +19,7 @@ import {
   SelectValue,
 } from "@/frontend/components/ui/select";
 import { Label } from "@/frontend/components/ui/label";
-import { Task } from "@/backend/types/supabaseSchema";
+import { Task } from "@/backend/api/services/task.service";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { supabase } from "@/backend/api/client/supabase";
 import { useState, useEffect } from "react";
@@ -34,7 +35,7 @@ interface TaskDialogProps {
   task?: Task;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (task: Omit<Task, "id" | "user_id" | "created_at" | "updated_at">) => void;
+  onSave: (task: Omit<Task, "id" | "user" | "created_at" | "updated_at">) => void;
 }
 
 export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps) {
@@ -42,7 +43,9 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
   const [title, setTitle] = useState(task?.title || "");
   const [description, setDescription] = useState(task?.description || "");
   const [status, setStatus] = useState<Task["status"]>(task?.status || "todo");
-  const [priority, setPriority] = useState<Task["priority"]>(task?.priority || "medium");
+  const [priority, setPriority] = useState<"low" | "medium" | "high">(
+    (task?.priority as "low" | "medium" | "high") || "medium"
+  );
   const [projectId, setProjectId] = useState(task?.project || "none");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);

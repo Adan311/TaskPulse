@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { DropResult } from 'react-beautiful-dnd';
 import { useToast } from '@/frontend/hooks/use-toast';
@@ -27,7 +26,6 @@ export function useTaskBoard() {
   ];
 
   useEffect(() => {
-    // Check for authenticated user
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
@@ -36,7 +34,6 @@ export function useTaskBoard() {
     checkUser();
     loadTasks();
 
-    // Subscribe to realtime updates
     const channel = supabase
       .channel('tasks-changes')
       .on(
@@ -138,13 +135,11 @@ export function useTaskBoard() {
       return;
     }
 
-    // If dropped in a different column, update the task status
     if (destination.droppableId !== source.droppableId) {
       try {
         const newStatus = destination.droppableId as Task['status'];
         await updateTaskStatus(draggableId, newStatus);
         
-        // Optimistically update the UI
         const updatedTasks = tasks.map(task => 
           task.id === draggableId 
             ? { ...task, status: newStatus, updated_at: new Date().toISOString() } 

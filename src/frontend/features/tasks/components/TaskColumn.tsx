@@ -3,7 +3,7 @@ import { Droppable } from 'react-beautiful-dnd';
 import { ScrollArea } from '@/frontend/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/ui/card';
 import { TaskList } from './TaskList';
-import { Task } from '@/backend/types/supabaseSchema';
+import { Task } from '@/backend/api/services/task.service';
 
 interface TaskColumnProps {
   id: string;

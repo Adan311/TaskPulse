@@ -1,3 +1,4 @@
+
 import { TaskDialog } from './TaskDialog';
 import { TaskBoardHeader } from './TaskBoardHeader';
 import { TaskColumnsContainer } from './TaskColumnsContainer';
@@ -42,10 +43,10 @@ export function TaskBoard() {
         <TaskBoardLoader />
       ) : (
         <TaskColumnsContainer
-          tasks={tasks}
+          tasks={tasks as any}
           columns={columns}
           onDragEnd={onDragEnd}
-          onEditTask={handleEditTask}
+          onEditTask={handleEditTask as any}
           onDeleteTask={handleDeleteTask}
         />
       )}
