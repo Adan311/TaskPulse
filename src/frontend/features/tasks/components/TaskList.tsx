@@ -33,21 +33,25 @@ export function TaskList({ tasks, onEdit, onDelete }: TaskListProps) {
           index={index}
         >
           {(provided, snapshot) => (
-            <motion.div
+            <div
               ref={provided.innerRef}
               {...provided.draggableProps}
               {...provided.dragHandleProps}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
               className={`mb-3 ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+              style={provided.draggableProps.style}
             >
-              <TaskCard 
-                task={task}
-                onEdit={onEdit}
-                onDelete={onDelete}
-              />
-            </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+              >
+                <TaskCard 
+                  task={task}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                />
+              </motion.div>
+            </div>
           )}
         </Draggable>
       ))}

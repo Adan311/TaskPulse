@@ -14,6 +14,7 @@ import { Book, Edit, Plus, Trash2 } from "lucide-react";
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { fetchProjects } from '@/backend/api/services/project.service';
+import { v4 as uuidv4 } from 'uuid';
 
 interface Note {
   id: string;
@@ -88,18 +89,15 @@ export function NotesSection() {
         return;
       }
 
-      const noteData = {
-        content: newNote.content,
-        user: user.id,
-        project: newNote.project || null,
-        last_updated: new Date().toISOString()
-      };
-
       if (selectedNote) {
         // Update existing note
         const { error } = await supabase
           .from('notes')
-          .update(noteData)
+          .update({
+            content: newNote.content,
+            project: newNote.project || null,
+            last_updated: new Date().toISOString()
+          })
           .eq('id', selectedNote.id);
 
         if (error) throw error;
@@ -109,10 +107,16 @@ export function NotesSection() {
           description: "Your note has been updated successfully",
         });
       } else {
-        // Create new note
+        // Create new note with a generated UUID
         const { error } = await supabase
           .from('notes')
-          .insert([noteData]);
+          .insert({
+            id: uuidv4(), // Generate a UUID for the new note
+            content: newNote.content,
+            user: user.id,
+            project: newNote.project || null,
+            last_updated: new Date().toISOString()
+          });
 
         if (error) throw error;
         
