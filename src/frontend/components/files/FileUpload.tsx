@@ -4,6 +4,7 @@ import { Button } from "@/frontend/components/ui/button";
 import { Upload } from "lucide-react";
 import { supabase } from "@/backend/api/client/supabase";
 import { useToast } from "@/frontend/hooks/use-toast";
+import { v4 as uuidv4 } from 'uuid';
 
 interface FileUploadProps {
   onUploadComplete?: (fileUrl: string, fileName: string) => void;
@@ -48,10 +49,14 @@ export function FileUpload({ onUploadComplete, relatedId, relatedType }: FileUpl
         throw uploadError;
       }
 
+      // Generate a unique ID for the file record
+      const fileId = uuidv4();
+
       // Create a record in the files table
       const { error: dbError } = await supabase
         .from('files')
         .insert({
+          id: fileId,  // Add the required id field
           name: file.name,
           file: filePath,
           user: user.id,
