@@ -7,6 +7,7 @@ import Index from "./frontend/pages/Index";
 import Calendar from "./frontend/pages/Calendar";
 import Tasks from "./frontend/pages/Tasks";
 import Projects from "./frontend/pages/Projects";
+import Files from "./frontend/pages/Files";
 import NotFound from "./frontend/pages/NotFound";
 import Components from "./frontend/pages/Components";
 import Timer from "./frontend/pages/Timer";
@@ -38,6 +39,10 @@ const router = createBrowserRouter([
       {
         path: "projects",
         element: <Projects />,
+      },
+      {
+        path: "files",
+        element: <Files />,
       },
       {
         path: "components",

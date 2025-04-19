@@ -1,5 +1,3 @@
-
-// Use the correct imports from the sidebar component
 import {
   Sidebar,
   SidebarContent,
@@ -13,7 +11,7 @@ import {
   SidebarSeparator,
   useSidebar
 } from "@/frontend/components/ui/sidebar";
-import { Home, Calendar, Clock, ListTodo, FileText, User, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
+import { Home, Calendar, Clock, ListTodo, FileText, User, LogOut, ChevronLeft, ChevronRight, Files } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/frontend/components/ui/button";
 import { supabase } from "@/backend/api/client/supabase";
@@ -36,6 +34,11 @@ const mainItems = [
     title: "Timer",
     url: "/timer",
     icon: Clock,
+  },
+  {
+    title: "Files",
+    url: "/files",
+    icon: Files,
   },
 ];
 

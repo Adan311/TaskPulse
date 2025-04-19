@@ -1,28 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
-import { FileUpload } from '@/frontend/components/files/FileUpload';
-import { FileList } from '@/frontend/components/files/FileList';
-import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/ui/card';
 import { AppLayout } from '@/frontend/components/layout/AppLayout';
+import { FileUploadSection } from '@/frontend/components/files/FileUploadSection';
+import { NotesSection } from '@/frontend/components/notes/NotesSection';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/frontend/components/ui/tabs';
+import { Card, CardContent } from '@/frontend/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/frontend/components/ui/button';
-
-const ALLOWED_FILE_TYPES = [
-  'application/pdf',
-  'image/jpeg', 
-  'image/png', 
-  'image/gif', 
-  'application/msword', 
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
-  'application/vnd.ms-excel', 
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-];
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+import { motion } from 'framer-motion';
 
 const FilesPage = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'files' | 'notes'>('files');
 
   useEffect(() => {
     const checkUser = async () => {
@@ -50,7 +40,7 @@ const FilesPage = () => {
         <div className="container mx-auto p-6">
           <div className="flex flex-col items-center justify-center p-6 h-64">
             <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
-            <p className="text-muted-foreground mb-4">Please sign in to view and manage your files.</p>
+            <p className="text-muted-foreground mb-4">Please sign in to view and manage your files and notes.</p>
             <Button asChild>
               <a href="/auth/SignIn">Sign In</a>
             </Button>
@@ -63,27 +53,32 @@ const FilesPage = () => {
   return (
     <AppLayout>
       <div className="container mx-auto p-6 space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>File Management</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-blue-600 text-sm">
-                  Allowed file types: PDF, JPG, PNG, GIF, DOC, DOCX, XLS, XLSX
-                  <br />
-                  Maximum file size: 10 MB
-                </p>
-              </div>
-              <FileUpload 
-                allowedTypes={ALLOWED_FILE_TYPES}
-                maxFileSize={MAX_FILE_SIZE}
-              />
-              <FileList />
-            </div>
-          </CardContent>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1 className="text-3xl font-bold mb-6">Document Manager</h1>
+          
+          <Card className="border rounded-lg shadow-sm">
+            <CardContent className="p-0">
+              <Tabs defaultValue="files" className="w-full" onValueChange={(value) => setActiveTab(value as 'files' | 'notes')}>
+                <TabsList className="grid grid-cols-2 w-full rounded-t-lg border-b">
+                  <TabsTrigger value="files" className="text-base py-3">Files</TabsTrigger>
+                  <TabsTrigger value="notes" className="text-base py-3">Notes</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="files" className="p-6 focus:outline-none">
+                  <FileUploadSection />
+                </TabsContent>
+                
+                <TabsContent value="notes" className="p-6 focus:outline-none">
+                  <NotesSection />
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     </AppLayout>
   );

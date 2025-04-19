@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 
@@ -26,8 +25,7 @@ export const fetchTasks = async (): Promise<Task[]> => {
   const { data, error } = await supabase
     .from("tasks")
     .select("*")
-    .eq("user", user.id)
-    .order("created_at", { ascending: false });
+    .eq("user", user.id);
 
   if (error) {
     console.error("Error fetching tasks:", error);
@@ -48,9 +46,7 @@ export const createTask = async (task: Omit<Task, "id" | "user" | "created_at" |
   const newTask = {
     id: uuidv4(),
     ...task,
-    user: user.id,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    user: user.id
   };
 
   const { data, error } = await supabase
