@@ -71,14 +71,8 @@ export function useTaskBoard() {
     }
   };
 
-  const handleCreateTask = async (taskData: Omit<Task, 'id' | 'user'>) => {
+  const handleCreateTask = async (taskData: Omit<Task, 'id' | 'user' | 'created_at' | 'updated_at'>) => {
     try {
-      // Verify user authentication before attempting to create task
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("You must be logged in to create tasks");
-      }
-      
       await createTask(taskData);
       toast({
         title: 'Success',
@@ -94,7 +88,7 @@ export function useTaskBoard() {
     }
   };
 
-  const handleUpdateTask = async (taskData: Omit<Task, 'id' | 'user'>) => {
+  const handleUpdateTask = async (taskData: Omit<Task, 'id' | 'user' | 'created_at' | 'updated_at'>) => {
     if (!selectedTask) return;
     
     try {
@@ -153,7 +147,7 @@ export function useTaskBoard() {
         // Optimistically update the UI
         const updatedTasks = tasks.map(task => 
           task.id === draggableId 
-            ? { ...task, status: newStatus } 
+            ? { ...task, status: newStatus, updated_at: new Date().toISOString() } 
             : task
         );
         setTasks(updatedTasks);
@@ -183,7 +177,7 @@ export function useTaskBoard() {
     setDialogOpen(true);
   };
 
-  const handleSaveTask = (taskData: Omit<Task, 'id' | 'user'>) => {
+  const handleSaveTask = (taskData: Omit<Task, 'id' | 'user' | 'created_at' | 'updated_at'>) => {
     if (selectedTask) {
       handleUpdateTask(taskData);
     } else {

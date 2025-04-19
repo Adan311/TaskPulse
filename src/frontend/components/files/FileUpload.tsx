@@ -8,11 +8,19 @@ import { v4 as uuidv4 } from 'uuid';
 
 interface FileUploadProps {
   onUploadComplete?: (fileUrl: string, fileName: string) => void;
-  relatedId?: string;  // Can be task_id, event_id, or project_id
+  relatedId?: string;
   relatedType?: 'task' | 'event' | 'project';
+  allowedTypes?: string[];
+  maxFileSize?: number;
 }
 
-export function FileUpload({ onUploadComplete, relatedId, relatedType }: FileUploadProps) {
+export function FileUpload({ 
+  onUploadComplete, 
+  relatedId, 
+  relatedType, 
+  allowedTypes,
+  maxFileSize = 10 * 1024 * 1024 // 10MB default
+}: FileUploadProps) {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
@@ -23,9 +31,29 @@ export function FileUpload({ onUploadComplete, relatedId, relatedType }: FileUpl
       }
 
       const file = event.target.files[0];
+
+      // File type validation
+      if (allowedTypes && !allowedTypes.includes(file.type)) {
+        toast({
+          title: "Invalid File Type",
+          description: `Allowed file types are: ${allowedTypes.join(', ')}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // File size validation
+      if (file.size > maxFileSize) {
+        toast({
+          title: "File Too Large",
+          description: `Maximum file size is ${maxFileSize / (1024 * 1024)} MB`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       setUploading(true);
 
-      // Get the current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
@@ -36,12 +64,11 @@ export function FileUpload({ onUploadComplete, relatedId, relatedType }: FileUpl
         return;
       }
 
-      // Upload file to Supabase storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('files')
         .upload(filePath, file);
 
@@ -49,14 +76,12 @@ export function FileUpload({ onUploadComplete, relatedId, relatedType }: FileUpl
         throw uploadError;
       }
 
-      // Generate a unique ID for the file record
       const fileId = uuidv4();
 
-      // Create a record in the files table
       const { error: dbError } = await supabase
         .from('files')
         .insert({
-          id: fileId,  // Add the required id field
+          id: fileId,
           name: file.name,
           file: filePath,
           user: user.id,
@@ -70,7 +95,6 @@ export function FileUpload({ onUploadComplete, relatedId, relatedType }: FileUpl
         throw dbError;
       }
 
-      // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('files')
         .getPublicUrl(filePath);
@@ -93,7 +117,7 @@ export function FileUpload({ onUploadComplete, relatedId, relatedType }: FileUpl
     } finally {
       setUploading(false);
     }
-  }, [onUploadComplete, relatedId, relatedType, toast]);
+  }, [onUploadComplete, relatedId, relatedType, toast, allowedTypes, maxFileSize]);
 
   return (
     <div>
@@ -112,6 +136,7 @@ export function FileUpload({ onUploadComplete, relatedId, relatedType }: FileUpl
         className="hidden"
         onChange={handleFileUpload}
         disabled={uploading}
+        accept={allowedTypes?.join(',')}
       />
     </div>
   );
