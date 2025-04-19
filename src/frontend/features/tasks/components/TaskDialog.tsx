@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { Button } from "@/frontend/components/ui/button";
 import {
@@ -23,6 +22,8 @@ import { Task } from "@/backend/types/supabaseSchema";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { supabase } from "@/backend/api/client/supabase";
 import { useState, useEffect } from "react";
+import { FileUpload } from "@/frontend/components/files/FileUpload";
+import { FileList } from "@/frontend/components/files/FileList";
 
 interface Project {
   id: string;
@@ -60,7 +61,6 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      // Get the current user
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
@@ -198,6 +198,22 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
               </Select>
             </div>
           </div>
+          {task && (
+            <div className="space-y-4 mt-4">
+              <Label>Files</Label>
+              <FileUpload
+                relatedId={task.id}
+                relatedType="task"
+                onUploadComplete={() => {
+                  toast({
+                    title: "File uploaded",
+                    description: "The file has been attached to this task",
+                  });
+                }}
+              />
+              <FileList relatedId={task.id} relatedType="task" />
+            </div>
+          )}
           <DialogFooter>
             <Button type="submit">{task ? "Update" : "Create"}</Button>
           </DialogFooter>

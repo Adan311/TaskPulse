@@ -94,7 +94,7 @@ export type Database = {
           project: string | null
           task: string | null
           type: string
-          user: string | null
+          user: string
         }
         Insert: {
           event?: string | null
@@ -104,7 +104,7 @@ export type Database = {
           project?: string | null
           task?: string | null
           type: string
-          user?: string | null
+          user: string
         }
         Update: {
           event?: string | null
@@ -114,7 +114,7 @@ export type Database = {
           project?: string | null
           task?: string | null
           type?: string
-          user?: string | null
+          user?: string
         }
         Relationships: [
           {
