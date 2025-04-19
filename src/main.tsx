@@ -17,6 +17,7 @@ import "./index.css";
 import { ThemeProvider } from "./frontend/components/theme/theme-provider";
 import { Toaster } from "./frontend/components/ui/toaster";
 import { GoogleCalendarCallback } from "./frontend/features/calendar/components/GoogleCalendarCallback";
+import { SidebarProvider } from "./frontend/components/ui/sidebar";
 
 const router = createBrowserRouter([
   {
@@ -52,6 +53,10 @@ const router = createBrowserRouter([
         path: "timer",
         element: <Timer />,
       },
+      {
+        path: "settings",
+        element: <Components />, // Placeholder for Settings page, using Components for now
+      },
     ],
   },
   {
@@ -84,8 +89,10 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-      <RouterProvider router={router} />
-      <Toaster />
+      <SidebarProvider>
+        <RouterProvider router={router} />
+        <Toaster />
+      </SidebarProvider>
     </ThemeProvider>
   </React.StrictMode>
 );

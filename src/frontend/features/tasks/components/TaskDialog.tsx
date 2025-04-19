@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { Button } from "@/frontend/components/ui/button";
 import {
@@ -109,8 +108,7 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
       status,
       priority,
       project: projectId === "none" ? null : projectId,
-      due_date: undefined,
-      user: '' // This will be replaced by the backend service
+      due_date: undefined
     };
 
     onSave(taskData);

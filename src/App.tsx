@@ -1,24 +1,23 @@
 
-import { Toaster } from "sonner";
 import { Toaster as SonnerToast } from "sonner";
 import { TooltipProvider } from "@/frontend/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Outlet } from "react-router-dom";
-import { ThemeProvider } from "@/frontend/components/theme/theme-provider";
+import { AppSidebar } from "@/frontend/components/layout/app-sidebar";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="dark" storageKey="app-theme">
-      <TooltipProvider>
-        <div className="min-h-screen bg-background">
-          <Toaster />
+    <TooltipProvider>
+      <div className="min-h-screen flex bg-background">
+        <AppSidebar />
+        <div className="flex-1">
           <SonnerToast />
           <Outlet />
         </div>
-      </TooltipProvider>
-    </ThemeProvider>
+      </div>
+    </TooltipProvider>
   </QueryClientProvider>
 );
 

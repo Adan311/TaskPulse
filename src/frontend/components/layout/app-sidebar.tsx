@@ -1,3 +1,4 @@
+
 import {
   Sidebar,
   SidebarContent,
@@ -11,15 +12,20 @@ import {
   SidebarSeparator,
   useSidebar
 } from "@/frontend/components/ui/sidebar";
-import { Home, Calendar, Clock, ListTodo, FileText, User, LogOut, ChevronLeft, ChevronRight, Files } from "lucide-react";
+import { Home, Calendar, Clock, ListTodo, FileText, User, LogOut, ChevronLeft, ChevronRight, Files, Settings } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/frontend/components/ui/button";
-import { supabase } from "@/backend/api/client/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { logout } from "@/backend/api/services/auth.service";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/frontend/components/ui/avatar";
 
 const mainItems = [
+  {
+    title: "Dashboard",
+    url: "/",
+    icon: Home,
+  },
   {
     title: "Tasks",
     url: "/tasks",
@@ -49,14 +55,9 @@ const extraItems = [
     icon: FileText,
   },
   {
-    title: "Components",
-    url: "/components",
-    icon: Home,
-  },
-  {
-    title: "Goals",
-    url: "/goals",
-    icon: Home,
+    title: "Settings",
+    url: "/settings",
+    icon: Settings,
   },
 ];
 
@@ -110,7 +111,12 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent>
         <div className="flex items-center justify-between p-2">
-          <h2 className={`text-xl font-bold ${isCollapsed ? "hidden" : "block"}`}>Motion</h2>
+          <Link to="/" className="flex items-center space-x-2">
+            <div className={`w-8 h-8 rounded-full bg-primary flex items-center justify-center ${isCollapsed ? "" : "mr-2"}`}>
+              <span className="text-white font-bold">TP</span>
+            </div>
+            <span className={`font-bold text-xl ${isCollapsed ? "hidden" : "block"}`}>TaskPulse</span>
+          </Link>
           <Button 
             variant="ghost" 
             size="icon" 
@@ -132,10 +138,10 @@ export function AppSidebar() {
                     asChild
                     tooltip={isCollapsed ? item.title : undefined}
                   >
-                    <a href={item.url}>
+                    <Link to={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -153,10 +159,10 @@ export function AppSidebar() {
                     asChild
                     tooltip={isCollapsed ? item.title : undefined}
                   >
-                    <a href={item.url}>
+                    <Link to={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -202,10 +208,10 @@ export function AppSidebar() {
               asChild
               tooltip={isCollapsed ? "Sign In" : undefined}
             >
-              <a href="/auth/signin" className="w-full justify-start">
+              <Link to="/auth/signin" className="w-full justify-start">
                 <User className="h-4 w-4" />
                 <span>Sign In</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           )}
         </div>

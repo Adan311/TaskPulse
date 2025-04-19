@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { DropResult } from 'react-beautiful-dnd';
 import { useToast } from '@/frontend/hooks/use-toast';
@@ -9,7 +10,7 @@ import {
   deleteTask, 
   updateTaskStatus 
 } from '@/backend/api/services/task.service';
-import { supabase } from '@/backend/api/client/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 export function useTaskBoard() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -71,6 +72,7 @@ export function useTaskBoard() {
   const handleCreateTask = async (taskData: Omit<Task, 'id' | 'user' | 'created_at' | 'updated_at'>) => {
     try {
       await createTask(taskData);
+      await loadTasks(); // Reload tasks after creating
       toast({
         title: 'Success',
         description: 'Task created successfully',
@@ -93,6 +95,7 @@ export function useTaskBoard() {
         id: selectedTask.id,
         ...taskData,
       });
+      await loadTasks(); // Reload tasks after updating
       toast({
         title: 'Success',
         description: 'Task updated successfully',
@@ -110,6 +113,7 @@ export function useTaskBoard() {
   const handleDeleteTask = async (taskId: string) => {
     try {
       await deleteTask(taskId);
+      await loadTasks(); // Reload tasks after deleting
       toast({
         title: 'Success',
         description: 'Task deleted successfully',
@@ -178,6 +182,7 @@ export function useTaskBoard() {
     } else {
       handleCreateTask(taskData);
     }
+    setDialogOpen(false);
   };
 
   return {
