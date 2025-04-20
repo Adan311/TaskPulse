@@ -61,7 +61,8 @@ export const Sidebar = React.forwardRef<
       ref={ref}
       data-state={state}
       className={cn(
-        "group fixed inset-y-0 left-0 z-30 flex h-full flex-col border-r bg-background transition-all duration-300 data-[state=collapsed]:w-14 data-[state=expanded]:w-64",
+        // Collapsed: w-16 (for icons), Expanded: w-64 (for full menu)
+        "group fixed inset-y-0 left-0 z-30 flex h-full flex-col border-r bg-background transition-all duration-300 data-[state=collapsed]:w-16 data-[state=expanded]:w-64",
         className
       )}
       {...props}

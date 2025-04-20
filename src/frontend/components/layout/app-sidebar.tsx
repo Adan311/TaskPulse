@@ -1,24 +1,23 @@
-
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
-  SidebarSeparator,
   useSidebar
 } from "@/frontend/components/ui/sidebar";
-import { Home, Calendar, Clock, ListTodo, FileText, User, LogOut, ChevronLeft, ChevronRight, Files, Settings } from "lucide-react";
+import { Home, Calendar, Clock, ListTodo, FileText, User, LogOut, ChevronLeft, ChevronRight, Files, Settings, Sun, Moon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/frontend/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { logout } from "@/backend/api/services/auth.service";
 import { useNavigate, Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/frontend/components/ui/avatar";
+import { useTheme } from "@/frontend/components/theme/theme-provider";
+import { ModeToggle } from "@/frontend/components/theme/mode-toggle";
 
 const mainItems = [
   {
@@ -46,9 +45,6 @@ const mainItems = [
     url: "/files",
     icon: Files,
   },
-];
-
-const extraItems = [
   {
     title: "Projects",
     url: "/projects",
@@ -67,6 +63,7 @@ export function AppSidebar() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const isCollapsed = state === "collapsed";
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     async function getUserProfile() {
@@ -110,78 +107,68 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarContent>
-        <div className="flex items-center justify-between p-2">
-          <Link to="/" className="flex items-center space-x-2">
-            <div className={`w-8 h-8 rounded-full bg-primary flex items-center justify-center ${isCollapsed ? "" : "mr-2"}`}>
-              <span className="text-white font-bold">TP</span>
+        <div className={`flex items-center justify-between ${isCollapsed ? 'flex-col gap-2 py-4' : 'p-4'} border-b border-border mb-2`}>
+          <Link to="/" className={`flex items-center ${isCollapsed ? 'justify-center w-full' : 'gap-3'}`}>
+            <div className={`w-9 h-9 rounded-full bg-primary flex items-center justify-center`}>
+              <span className="text-white font-bold text-lg">TP</span>
             </div>
-            <span className={`font-bold text-xl ${isCollapsed ? "hidden" : "block"}`}>TaskPulse</span>
+            {!isCollapsed && (
+              <span className="font-bold text-2xl tracking-tight ml-2">TaskPulse</span>
+            )}
           </Link>
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={toggleSidebar}
-            className="h-8 w-8"
+            className={`mt-2 ${isCollapsed ? 'mx-auto' : ''} h-9 w-9`}
+            aria-label="Toggle sidebar"
           >
-            {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+            {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
           </Button>
         </div>
-        <SidebarSeparator />
         
-        <SidebarGroup>
-          <SidebarGroupLabel className={isCollapsed ? "opacity-0" : ""}>Main</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {mainItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild
-                    tooltip={isCollapsed ? item.title : undefined}
-                  >
-                    <Link to={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel className={isCollapsed ? "opacity-0" : ""}>Resources</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {extraItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild
-                    tooltip={isCollapsed ? item.title : undefined}
-                  >
-                    <Link to={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <div className="mt-4" />
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {mainItems.map((item, idx) => (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton 
+                  asChild
+                  tooltip={isCollapsed ? item.title : undefined}
+                  className={`flex items-center ${isCollapsed ? 'justify-center px-0 py-3' : 'gap-3 px-4 py-2'} rounded-lg hover:bg-accent/70 transition-all duration-150 group`}
+                >
+                  <Link to={item.url} className={`flex items-center ${isCollapsed ? 'justify-center w-full' : 'gap-3 w-full'}`}>
+                    <item.icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors duration-150" />
+                    {!isCollapsed && (
+                      <span className="text-base font-medium text-foreground group-hover:text-primary transition-colors duration-150">
+                        {item.title}
+                      </span>
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+                {/* Add space between pages, except after last item */}
+                {idx !== mainItems.length - 1 && <div className="h-3" />}
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroupContent>
       </SidebarContent>
 
       <SidebarFooter className="mt-auto">
-        <SidebarSeparator />
-        <div className="p-2">
+        <div className="p-2 flex flex-col gap-2">
+          {/* Theme toggle with label when expanded */}
+          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'}`}>
+            <ModeToggle />
+            {!isCollapsed && <span className="text-sm text-muted-foreground">Theme</span>}
+          </div>
           {user ? (
             <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 p-2 rounded-md">
+              <div className={`flex items-center p-2 rounded-md ${isCollapsed ? 'justify-center' : 'gap-2'}`}>
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="" alt={user.email} />
                   <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
                 </Avatar>
-                <div className={`flex flex-col ${isCollapsed ? "hidden" : "block"}`}>
+                <div className={`flex flex-col ${isCollapsed ? 'hidden' : 'block'}`}>
                   <span className="text-sm font-medium">{user.email?.split('@')[0]}</span>
                   <span className="text-xs text-muted-foreground">{user.email}</span>
                 </div>
@@ -189,10 +176,10 @@ export function AppSidebar() {
               <SidebarMenuButton 
                 onClick={handleLogout} 
                 tooltip={isCollapsed ? "Logout" : undefined}
-                className="w-full justify-start"
+                className={`w-full flex items-center gap-2 ${isCollapsed ? 'justify-center' : 'justify-start'} text-muted-foreground hover:text-primary`}
               >
                 <LogOut className="h-4 w-4" />
-                <span>Logout</span>
+                {!isCollapsed && <span>Logout</span>}
               </SidebarMenuButton>
             </div>
           ) : loading ? (
@@ -207,10 +194,11 @@ export function AppSidebar() {
             <SidebarMenuButton 
               asChild
               tooltip={isCollapsed ? "Sign In" : undefined}
+              className={`w-full flex items-center gap-2 ${isCollapsed ? 'justify-center' : 'justify-start'} text-muted-foreground hover:text-primary`}
             >
               <Link to="/auth/signin" className="w-full justify-start">
                 <User className="h-4 w-4" />
-                <span>Sign In</span>
+                {!isCollapsed && <span>Sign In</span>}
               </Link>
             </SidebarMenuButton>
           )}
