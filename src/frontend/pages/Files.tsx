@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/frontend/components/layout/AppLayout';
-import { FileUploadSection } from '@/frontend/components/files/FileUploadSection';
-import { NotesSection } from '@/frontend/components/notes/NotesSection';
+import { FileUploadSection } from '@/frontend/features/files/components/FileUploadSection';
+import { NotesSection } from '@/frontend/features/notes/components/NotesSection';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/frontend/components/ui/tabs';
 import { Card, CardContent } from '@/frontend/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';

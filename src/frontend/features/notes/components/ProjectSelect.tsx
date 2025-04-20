@@ -32,8 +32,8 @@ export function ProjectSelect({
           {projects.map(project => (
             <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
           ))}
-          {projects.length === 0 && (
-            <SelectItem value="no-projects" disabled>
+          {projects.length === 0 && !allOption && (
+            <SelectItem value="no-projects-placeholder" disabled>
               No projects available
             </SelectItem>
           )}

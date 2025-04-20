@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useNotes } from "./useNotes";
+import { useNotes } from "../hooks/useNotes";
 import { ProjectSelect } from "./ProjectSelect";
 import { NewNoteInput } from "./NewNoteInput";
 import { NoteList } from "./NoteList";

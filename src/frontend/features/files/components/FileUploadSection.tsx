@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { FileUpload } from '@/frontend/components/files/FileUpload';
-import { FileList } from '@/frontend/components/files/FileList';
+import { FileUpload } from './FileUpload';
+import { FileList } from './FileList';
 import { motion } from 'framer-motion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/frontend/components/ui/select';
 import { Label } from '@/frontend/components/ui/label';
@@ -55,7 +55,7 @@ export function FileUploadSection() {
               <Label htmlFor="project-select">Link to Project (Optional)</Label>
               <Select 
                 onValueChange={(value) => setSelectedProject(value)} 
-                value={selectedProject || undefined}
+                value={selectedProject || ""}
               >
                 <SelectTrigger id="project-select">
                   <SelectValue placeholder="Select a project" />
