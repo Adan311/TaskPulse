@@ -71,7 +71,6 @@ const router = createBrowserRouter([
     path: "/calendar/google-callback",
     element: <GoogleCalendarCallback />,
   },
-  // Add the routes that were in App.tsx BrowserRouter
   {
     path: "/auth/signin",
     element: <SignIn />,

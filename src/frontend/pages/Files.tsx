@@ -42,7 +42,7 @@ const FilesPage = () => {
             <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
             <p className="text-muted-foreground mb-4">Please sign in to view and manage your files and notes.</p>
             <Button asChild>
-              <a href="/auth/SignIn">Sign In</a>
+              <a href="/auth/sign-in">Sign In</a>
             </Button>
           </div>
         </div>

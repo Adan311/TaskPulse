@@ -19,6 +19,7 @@ import { getEvents, Event } from "@/backend/api/services/eventService";
 import { getConnectedCalendars } from "@/backend/api/services/googleCalendarService";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/frontend/hooks/use-toast";
+import { DayView } from "@/frontend/features/calendar/components/DayView";
 
 export default function Calendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -147,6 +148,8 @@ export default function Calendar() {
         return <MonthView events={events} date={date} onEditEvent={handleEditEvent} onEventsChange={fetchEvents} />;
       case "week":
         return <WeekView events={events} date={date} onEditEvent={handleEditEvent} onEventsChange={fetchEvents} />;
+      case "day":
+        return date ? <DayView events={events} date={date} onEditEvent={handleEditEvent} /> : null;
       case "list":
         return <ListView events={events} onEditEvent={handleEditEvent} onEventsChange={fetchEvents} />;
       default:
