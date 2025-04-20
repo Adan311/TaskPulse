@@ -57,9 +57,9 @@ export function CalendarHeader({
   };
 
   return (
-    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between w-full bg-background/80 rounded-xl border shadow-sm px-4 py-3 mb-4">
+    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between w-full bg-background/80 rounded-xl border shadow-sm px-0 md:ml-[-32px] md:w-[calc(100%+32px)] py-3 mb-4">
       {/* Left: Month/Year */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 ml-6">
         <CalendarIcon className="h-6 w-6 text-primary" />
         <span className="text-2xl font-semibold text-primary">
           {date ? format(date, view === "month" ? "MMMM, yyyy" : "MMMM d, yyyy") : ""}
