@@ -67,13 +67,21 @@ export function CalendarHeader({
       </div>
       {/* Center: View Switcher */}
       <div className="flex items-center gap-2">
-        {["month", "week", "day", "list"].map((v) => (
+        {[
+          "month",
+          "week",
+          "day",
+          "list"
+        ].map((v) => (
           <button
             key={v}
-            onClick={() => setView(v as any)}
+            onClick={() => {
+              console.log('CalendarHeader: switching to', v);
+              setView(v as "month" | "week" | "day" | "list");
+            }}
             className={`px-4 py-1 rounded-full text-sm font-medium transition-colors border 
               ${view === v
-                ? "bg-primary text-white border-primary shadow"
+                ? "bg-accent text-primary border-primary shadow"
                 : "bg-muted text-muted-foreground border-transparent hover:bg-accent hover:text-primary"}
             `}
             aria-pressed={view === v}

@@ -17,10 +17,15 @@ import { getEvents } from "@/backend/api/services/eventService";
 import { getConnectedCalendars } from "@/backend/api/services/googleCalendarService";
 import { supabase } from "@/integrations/supabase/client";
 import { Event } from "@/frontend/types/calendar";
+import { DayView } from "@/frontend/features/calendar/components/DayView";
 
 export default function Calendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [view, setView] = useState<"month" | "week" | "day" | "list">("month");
+  // Debug: log current view on each render
+  useEffect(() => {
+    console.log('Calendar: view changed to', view);
+  }, [view]);
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(undefined);
@@ -93,6 +98,7 @@ export default function Calendar() {
   };
 
   const renderView = () => {
+    console.log('renderView: view =', view, 'date =', date);
     const props = {
       events,
       date,
@@ -105,6 +111,8 @@ export default function Calendar() {
         return <MonthView {...props} />;
       case "week":
         return <WeekView {...props} />;
+      case "day":
+        return date ? <DayView events={events} date={date} onEditEvent={handleEditEvent} /> : null;
       case "list":
         return <ListView events={events} onEditEvent={handleEditEvent} onEventsChange={fetchEvents} />;
       default:
@@ -124,7 +132,6 @@ export default function Calendar() {
 
         <div className="flex gap-6">
           <CalendarSidebar date={date} setDate={setDate} />
-
           <div className="flex-1">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
