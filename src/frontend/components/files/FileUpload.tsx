@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react';
 import { Button } from "@/frontend/components/ui/button";
 import { Upload } from "lucide-react";
-import { supabase } from "@/backend/api/client/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -36,7 +36,7 @@ export function FileUpload({
       if (allowedTypes && !allowedTypes.includes(file.type)) {
         toast({
           title: "Invalid File Type",
-          description: `Allowed file types are: ${allowedTypes.join(', ')}`,
+          description: `Allowed file types are: ${allowedTypes.map(type => type.split('/')[1]).join(', ')}`,
           variant: "destructive",
         });
         return;
@@ -107,6 +107,13 @@ export function FileUpload({
         title: "File uploaded",
         description: "Your file has been uploaded successfully",
       });
+
+      // Reset the input value to allow re-uploading the same file
+      if (event.target.form) {
+        event.target.form.reset();
+      } else {
+        event.target.value = '';
+      }
     } catch (error) {
       console.error('Error uploading file:', error);
       toast({

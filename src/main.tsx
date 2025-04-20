@@ -71,18 +71,6 @@ const router = createBrowserRouter([
     path: "/calendar/google-callback",
     element: <GoogleCalendarCallback />,
   },
-  {
-    path: "/auth/signin",
-    element: <SignIn />,
-  },
-  {
-    path: "/auth/signup",
-    element: <SignUp />,
-  },
-  {
-    path: "/api/google-calendar-callback",
-    element: <GoogleCalendarCallback />,
-  },
 ]);
 
 const rootElement = document.getElementById("root");

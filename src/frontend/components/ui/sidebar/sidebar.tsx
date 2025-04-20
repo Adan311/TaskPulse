@@ -1,4 +1,3 @@
-
 // Basic sidebar implementation for the application
 import * as React from "react";
 import { cn } from "@/frontend/utils/utils";
@@ -189,12 +188,25 @@ export const SidebarMenuButton = React.forwardRef<
     tooltip?: string;
     asChild?: boolean;
   }
->(({ className, asChild = false, tooltip, ...props }, ref) => {
+>(({ className, asChild = false, tooltip, children, ...props }, ref) => {
   const { state } = useSidebar();
-  const Element = asChild ? React.Fragment : "button";
+  
+  if (asChild) {
+    // If asChild is true, we just pass the appropriate props to the children
+    const child = React.Children.only(children) as React.ReactElement;
+    return React.cloneElement(child, {
+      className: cn(
+        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+        className
+      ),
+      title: state === "collapsed" ? tooltip : undefined,
+      ref,
+      ...props
+    });
+  }
   
   return (
-    <Element
+    <button
       ref={ref}
       title={state === "collapsed" ? tooltip : undefined}
       className={cn(
@@ -202,7 +214,9 @@ export const SidebarMenuButton = React.forwardRef<
         className
       )}
       {...props}
-    />
+    >
+      {children}
+    </button>
   );
 });
 SidebarMenuButton.displayName = "SidebarMenuButton";

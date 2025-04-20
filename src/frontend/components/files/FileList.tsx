@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from "@/frontend/components/ui/button";
 import { File, Trash2 } from "lucide-react";
-import { supabase } from "@/backend/api/client/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/frontend/hooks/use-toast";
 
 interface FileItem {
@@ -101,29 +101,30 @@ export function FileList({ relatedId, relatedType }: FileListProps) {
 
   return (
     <div className="space-y-2">
-      {files.map((file) => (
-        <div key={file.id} className="flex items-center justify-between p-2 border rounded">
-          <div className="flex items-center">
-            <File className="h-4 w-4 mr-2" />
-            <a
-              href={supabase.storage.from('files').getPublicUrl(file.file).data.publicUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:underline"
+      {files.length > 0 ? (
+        files.map((file) => (
+          <div key={file.id} className="flex items-center justify-between p-2 border rounded">
+            <div className="flex items-center">
+              <File className="h-4 w-4 mr-2" />
+              <a
+                href={supabase.storage.from('files').getPublicUrl(file.file).data.publicUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline"
+              >
+                {file.name}
+              </a>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDelete(file.id, file.file)}
             >
-              {file.name}
-            </a>
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDelete(file.id, file.file)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      ))}
-      {files.length === 0 && (
+        ))
+      ) : (
         <div className="text-sm text-muted-foreground text-center py-4">
           No files uploaded yet
         </div>

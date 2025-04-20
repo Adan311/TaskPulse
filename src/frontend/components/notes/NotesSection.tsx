@@ -221,7 +221,7 @@ export const NotesSection = () => {
           />
           <div className="flex justify-between items-center">
             <Select 
-              value={selectedProject === 'all' ? '' : selectedProject}
+              value={selectedProject === 'all' ? undefined : selectedProject}
               onValueChange={setSelectedProject}
               disabled={projects.length === 0}
             >
@@ -235,7 +235,7 @@ export const NotesSection = () => {
                     <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
                   ))}
                   {projects.length === 0 && (
-                    <SelectItem value="no-projects">No projects</SelectItem>
+                    <SelectItem value="no-projects-available" disabled>No projects</SelectItem>
                   )}
                 </SelectGroup>
               </SelectContent>
