@@ -1,6 +1,7 @@
 
-// Copy content from the original mode-toggle.tsx
-// For now, I'll create a placeholder that should be replaced with the actual content
+"use client";
+
+import * as React from "react";
 import { Button } from "@/frontend/components/ui/button";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/frontend/components/theme/theme-provider";
