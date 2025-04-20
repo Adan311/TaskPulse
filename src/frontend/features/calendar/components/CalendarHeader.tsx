@@ -1,4 +1,3 @@
-
 import { Button } from "@/frontend/components/ui/button";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths } from "date-fns";
@@ -58,72 +57,63 @@ export function CalendarHeader({
   };
 
   return (
-    <div className="flex items-center justify-between flex-wrap gap-2">
-      <div className="flex items-center space-x-4">
+    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between w-full bg-background/80 rounded-xl border shadow-sm px-4 py-3 mb-4">
+      {/* Left: Month/Year */}
+      <div className="flex items-center gap-2">
         <CalendarIcon className="h-6 w-6 text-primary" />
-        <h1 className="text-3xl font-bold">Calendar</h1>
-        
-        {hasGoogleCalendar && (
-          <div className="ml-4">
-            <SyncGoogleCalendarButton 
-              onSuccess={onSyncSuccess}
-              variant="secondary" 
-              size="default"
-              className="flex items-center gap-2"
-            />
-          </div>
-        )}
+        <span className="text-2xl font-semibold text-primary">
+          {date ? format(date, view === "month" ? "MMMM, yyyy" : "MMMM d, yyyy") : ""}
+        </span>
       </div>
-      
-      <div className="flex items-center space-x-2">
+      {/* Center: View Switcher */}
+      <div className="flex items-center gap-2">
+        {["month", "week", "day", "list"].map((v) => (
+          <button
+            key={v}
+            onClick={() => setView(v as any)}
+            className={`px-4 py-1 rounded-full text-sm font-medium transition-colors border 
+              ${view === v
+                ? "bg-primary text-white border-primary shadow"
+                : "bg-muted text-muted-foreground border-transparent hover:bg-accent hover:text-primary"}
+            `}
+            aria-pressed={view === v}
+          >
+            {v.charAt(0).toUpperCase() + v.slice(1)}
+          </button>
+        ))}
+      </div>
+      {/* Right: Navigation & Actions */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full border bg-muted hover:bg-accent"
+          onClick={navigatePrevious}
+          aria-label="Previous"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full border bg-muted hover:bg-accent"
+          onClick={navigateNext}
+          aria-label="Next"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setDate(new Date())}
+          className="rounded-full font-semibold px-4 ml-2"
+          onClick={() => date && setDate(new Date())}
         >
           Today
         </Button>
-        <div className="flex items-center space-x-1">
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="h-8 w-8"
-            onClick={navigatePrevious}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="h-8 w-8"
-            onClick={navigateNext}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="flex items-center space-x-1">
-          <Button
-            variant={view === "month" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setView("month")}
-          >
-            Month
-          </Button>
-          <Button
-            variant={view === "week" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setView("week")}
-          >
-            Week
-          </Button>
-          <Button
-            variant={view === "list" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setView("list")}
-          >
-            List
-          </Button>
-        </div>
+        {/* Optional: Google Calendar Sync Button */}
+        {hasGoogleCalendar && onSyncSuccess && (
+          <SyncGoogleCalendarButton onSuccess={onSyncSuccess} className="ml-2" />
+        )}
       </div>
     </div>
   );
