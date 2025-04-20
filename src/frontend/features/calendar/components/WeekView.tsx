@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/frontend/components/ui/card';
 import { ScrollArea } from '@/frontend/components/ui/scroll-area';
-import { startOfWeek, endOfWeek, eachDayOfInterval, format, parseISO, isSameDay } from 'date-fns';
+import { startOfWeek, endOfWeek, eachDayOfInterval, format, parseISO, isSameDay, isToday } from 'date-fns';
 import { Event } from '@/frontend/types/calendar';
 
 interface WeekViewProps {
@@ -14,72 +13,200 @@ interface WeekViewProps {
 
 export function WeekView({ events, date, onEditEvent, onEventsChange }: WeekViewProps) {
   const currentDate = date || new Date();
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 }); // Start week on Monday
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
-  const hours = Array.from({ length: 24 }, (_, i) => i);
+  const hours = Array.from({ length: 24 }, (_, i) => i); // 00:00 to 23:00
 
-  // Function to get events for a specific day and hour
-  const getEventsForTimeSlot = (day: Date, hour: number) => {
-    return events.filter(event => {
-      const eventDate = parseISO(event.startTime);
-      const eventHour = eventDate.getHours();
-      return isSameDay(eventDate, day) && eventHour === hour;
-    });
-  };
+  // Utility to get minutes from 00:00
+  const getMinutes = (date: Date) => date.getHours() * 60 + date.getMinutes();
+
+  // Filter events for the current week
+  const weekEvents = events.filter(event => {
+    const start = parseISO(event.startTime);
+    return start >= weekStart && start <= weekEnd;
+  });
+
+  // Group events by day
+  const eventsByDay: Record<string, Event[]> = {};
+  days.forEach(day => {
+    const dayStr = format(day, 'yyyy-MM-dd');
+    eventsByDay[dayStr] = weekEvents.filter(event => isSameDay(parseISO(event.startTime), day));
+  });
+
+  // Constants for grid layout
+  const HOUR_HEIGHT = 48; // px
+  const CAL_START = 0; // 00:00 in minutes
+  const CAL_END = 24 * 60; // 24:00 in minutes
+  const CAL_TOTAL = CAL_END - CAL_START;
+
+  // --- Robust Overlap Handling (Modern Look) ---
+  function getEventLayout(events: Event[]) {
+    // Parse and sort events by start time
+    type ParsedEvent = Event & { _parsedStart: number; _parsedEnd: number; _index: number };
+    const parsed: ParsedEvent[] = events.map((event, i) => ({
+      ...event,
+      _parsedStart: getMinutes(parseISO(event.startTime)),
+      _parsedEnd: getMinutes(parseISO(event.endTime || event.startTime)) || (getMinutes(parseISO(event.startTime)) + 30),
+      _index: i
+    })).sort((a, b) => a._parsedStart - b._parsedStart);
+
+    // Build overlap groups using a sweep line
+    let layouts: { event: Event, slot: number, totalSlots: number }[] = [];
+    let active: { event: ParsedEvent, slot: number }[] = [];
+    for (let i = 0; i < parsed.length; i++) {
+      // Remove finished events
+      active = active.filter(a => a.event._parsedEnd > parsed[i]._parsedStart);
+      // Find available slot
+      let used = active.map(a => a.slot);
+      let slot = 0;
+      while (used.includes(slot)) slot++;
+      active.push({ event: parsed[i], slot });
+      // Find max overlaps in this group
+      let groupStart = parsed[i]._parsedStart;
+      let groupEnd = parsed[i]._parsedEnd;
+      let maxOverlap = 1;
+      for (let j = 0; j < parsed.length; j++) {
+        if (i !== j && parsed[j]._parsedStart < groupEnd && parsed[j]._parsedEnd > groupStart) {
+          let overlapCount = 1;
+          for (let k = 0; k < parsed.length; k++) {
+            if (k !== j && parsed[k]._parsedStart < parsed[j]._parsedEnd && parsed[k]._parsedEnd > parsed[j]._parsedStart) {
+              overlapCount++;
+            }
+          }
+          maxOverlap = Math.max(maxOverlap, overlapCount);
+        }
+      }
+      layouts.push({ event: parsed[i], slot, totalSlots: maxOverlap });
+    }
+    return layouts;
+  }
+
+  // --- Current Time Line ---
+  const now = new Date();
+  const nowMinutes = getMinutes(now);
+  const todayIdx = days.findIndex(day => isToday(day));
+  const nowTop = ((nowMinutes - CAL_START) / CAL_TOTAL) * (HOUR_HEIGHT * hours.length);
 
   return (
-    <Card className="border-0 shadow-none">
-      <CardContent className="p-0">
-        <ScrollArea className="h-[calc(100vh-200px)]">
-          <div className="grid grid-cols-8 gap-1">
-            {/* Time column */}
-            <div className="sticky top-0 bg-background z-10 h-10"></div>
-            {/* Day headers */}
-            {days.map((day, index) => (
-              <div key={index} className="sticky top-0 bg-background z-10 h-10 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="font-medium">{format(day, 'EEE')}</div>
-                  <div className="text-xs text-muted-foreground">{format(day, 'MMM d')}</div>
-                </div>
+    <div className="bg-background rounded-2xl border shadow p-8 w-full h-full flex flex-col">
+      {/* Weekday headers */}
+      <div className="grid w-full" style={{ gridTemplateColumns: `44px repeat(7, 1fr)`, columnGap: '16px', rowGap: 0 }}>
+        <div />
+        {days.map((day, i) => (
+          <div key={i} className="text-center">
+            <div className="text-lg font-bold">
+              {format(day, 'EEE')}
+            </div>
+            <div className="text-xs opacity-70">
+              {format(day, 'MMM d')}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="flex-1 w-full relative" style={{ minHeight: `${HOUR_HEIGHT * hours.length}px` }}>
+        <div className="absolute inset-0 grid" style={{
+          gridTemplateColumns: `44px repeat(7, 1fr)`,
+          columnGap: '16px',
+          rowGap: 0,
+          width: '100%',
+          height: '100%'
+        }}>
+          {/* Time labels */}
+          <div className="flex flex-col items-end pr-1 select-none" style={{ minWidth: 0, width: '44px', padding: 0, margin: 0 }}>
+            {hours.map(hour => (
+              <div key={hour} style={{ height: `${HOUR_HEIGHT}px` }} className="text-xs text-muted-foreground flex items-start justify-end">
+                {format(new Date(2000, 0, 1, hour), 'HH:mm')}
               </div>
             ))}
-
-            {/* Time slots */}
-            {hours.map((hour) => (
-              <React.Fragment key={`hour-${hour}`}>
-                <div className="text-xs text-muted-foreground p-1 text-right sticky left-0 pr-2">
-                  {`${hour.toString().padStart(2, '0')}:00`}
-                </div>
-                {days.map((day, dayIndex) => {
-                  const timeSlotEvents = getEventsForTimeSlot(day, hour);
-                  return (
-                    <div
-                      key={`${day}-${hour}`}
-                      className="h-12 border-t border-l min-w-[80px] relative hover:bg-accent/50 transition-colors"
-                    >
-                      {timeSlotEvents.map((event) => (
-                        <div
-                          key={event.id}
-                          className="absolute left-0 right-0 px-1 py-0.5 text-xs font-medium text-white rounded-sm overflow-hidden cursor-pointer"
-                          style={{ 
-                            backgroundColor: event.color || '#3b82f6',
-                            top: '2px',
-                            bottom: '2px'
-                          }}
-                          onClick={() => onEditEvent(event)}
-                        >
-                          {event.title}
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
-              </React.Fragment>
-            ))}
           </div>
-        </ScrollArea>
-      </CardContent>
-    </Card>
+          {/* Days columns */}
+          {days.map((day, dayIdx) => {
+            const dayStr = format(day, 'yyyy-MM-dd');
+            const dayEvents = eventsByDay[dayStr] || [];
+            const slottedEvents = getEventLayout(dayEvents);
+            return (
+              <div
+                key={dayIdx}
+                className="relative h-full overflow-visible flex"
+                style={{ minHeight: `${HOUR_HEIGHT * hours.length}px` }}
+              >
+                {/* Hour grid lines (horizontal only, subtle) */}
+                {hours.map((hour, i) => (
+                  <div
+                    key={hour}
+                    className="absolute left-0 right-0 border-t border-muted-foreground/10"
+                    style={{
+                      top: `${i * HOUR_HEIGHT}px`,
+                      zIndex: 1
+                    }}
+                  />
+                ))}
+                {/* Current time indicator */}
+                {isToday(day) && nowMinutes >= CAL_START && nowMinutes <= CAL_END && (
+                  <div
+                    className="absolute left-0 right-0 h-1.5 flex items-center"
+                    style={{
+                      top: `${nowTop}px`,
+                      zIndex: 10
+                    }}
+                  >
+                    <div className="w-full h-0.5 bg-red-500 rounded-full"></div>
+                    <div className="w-3 h-3 rounded-full bg-red-500 ml-2"></div>
+                  </div>
+                )}
+                {/* Events: use flex for side-by-side, never overflow column */}
+                <div className="absolute top-0 left-0 w-full h-full flex" style={{ pointerEvents: 'none' }}>
+                  {slottedEvents.map(({ event, slot, totalSlots }, i) => {
+                    const start = parseISO(event.startTime);
+                    const end = parseISO(event.endTime || event.startTime);
+                    const eventStartMin = Math.max(getMinutes(start), CAL_START);
+                    const eventEndMin = Math.min(Math.max(getMinutes(end), eventStartMin + 30), CAL_END);
+                    if (eventEndMin <= CAL_START || eventStartMin >= CAL_END) return null;
+                    const top = ((eventStartMin - CAL_START) / CAL_TOTAL) * (HOUR_HEIGHT * hours.length);
+                    const height = ((eventEndMin - eventStartMin) / CAL_TOTAL) * (HOUR_HEIGHT * hours.length);
+                    const width = `calc((100% - ${(totalSlots-1)*8}px) / ${totalSlots})`;
+                    const left = `calc(${slot} * ((100% - ${(totalSlots-1)*8}px) / ${totalSlots}) + ${slot*8}px`;
+                    return (
+                      <div
+                        key={event.id}
+                        className="absolute rounded-xl shadow-lg flex flex-col justify-start px-3 py-2 cursor-pointer border border-white/30 bg-clip-padding"
+                        style={{
+                          top: `${top}px`,
+                          height: `${height}px`,
+                          width,
+                          left,
+                          background: event.color || '#f1f5f9',
+                          color: '#222',
+                          zIndex: 2 + slot,
+                          boxShadow: '0 4px 16px 0 rgba(0,0,0,0.08)',
+                          minWidth: 0,
+                          maxWidth: '100%',
+                          overflow: 'hidden',
+                          pointerEvents: 'auto',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'flex-start',
+                          alignItems: 'flex-start',
+                        }}
+                        title={`${event.title ? event.title + '\n' : ''}${format(start, 'HH:mm')} – ${format(end, 'HH:mm')}`}
+                        onClick={() => onEditEvent(event)}
+                      >
+                        {event.title && (
+                          <span className="font-semibold text-base truncate w-full block" style={{fontSize: '0.97em', lineHeight: 1.2, whiteSpace: 'nowrap'}}>{event.title}</span>
+                        )}
+                        <span className="text-xs opacity-80 mt-0.5 w-full block" style={{fontSize: '0.95em', whiteSpace: 'nowrap'}}>
+                          {format(start, 'HH:mm')} – {format(end, 'HH:mm')}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
