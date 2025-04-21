@@ -1,4 +1,3 @@
-
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
@@ -60,11 +59,11 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: "/auth/sign-in",
+    path: "/auth/signin",
     element: <SignIn />,
   },
   {
-    path: "/auth/sign-up",
+    path: "/auth/signup",
     element: <SignUp />,
   },
   {

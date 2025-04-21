@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/frontend/components/layout/AppLayout";
 import { Button } from "@/frontend/components/ui/button";
@@ -12,11 +11,7 @@ import { MonthView } from "@/frontend/features/calendar/components/MonthView";
 import { WeekView } from "@/frontend/features/calendar/components/WeekView";
 import { ListView } from "@/frontend/features/calendar/components/ListView";
 import { EventDialog } from "@/frontend/features/calendar/components/EventDialog";
-import { GoogleCalendarButton } from "@/frontend/features/calendar/components/GoogleCalendarButton";
-import { DisconnectGoogleCalendarButton } from "@/frontend/features/calendar/components/DisconnectGoogleCalendarButton";
-import { SyncGoogleCalendarButton } from "@/frontend/features/calendar/components/SyncGoogleCalendarButton";
 import { getEvents, Event } from "@/backend/api/services/eventService";
-import { getConnectedCalendars } from "@/backend/api/services/googleCalendarService";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { DayView } from "@/frontend/features/calendar/components/DayView";
@@ -27,12 +22,8 @@ export default function Calendar() {
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(undefined);
-  const [hasGoogleCalendar, setHasGoogleCalendar] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [calendarId, setCalendarId] = useState<string | null>(null);
-  const [lastSynced, setLastSynced] = useState<Date | null>(null);
-  const [syncInProgress, setSyncInProgress] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -77,35 +68,9 @@ export default function Calendar() {
     }
   };
 
-  const checkGoogleCalendar = async () => {
-    try {
-      if (!user) {
-        setHasGoogleCalendar(false);
-        setCalendarId(null);
-        return;
-      }
-      
-      setSyncInProgress(true);
-      const calendars = await getConnectedCalendars();
-      setHasGoogleCalendar(calendars.length > 0);
-      setCalendarId(calendars.length > 0 ? calendars[0].id : null);
-      setSyncInProgress(false);
-    } catch (error) {
-      console.error("Error checking Google Calendar:", error);
-      setCalendarId(null);
-      setSyncInProgress(false);
-      toast({
-        variant: "destructive",
-        title: "Connection error",
-        description: "Could not check Google Calendar connection status.",
-      });
-    }
-  };
-
   useEffect(() => {
     if (user) {
       fetchEvents();
-      checkGoogleCalendar();
     }
   }, [user]);
 
@@ -162,25 +127,6 @@ export default function Calendar() {
     setEventDialogOpen(true);
   };
 
-  const handleSyncSuccess = () => {
-    fetchEvents();
-    setLastSynced(new Date());
-  };
-
-  const handleConnectSuccess = async () => {
-    await checkGoogleCalendar();
-    fetchEvents();
-  };
-
-  const handleDisconnectSuccess = async () => {
-    await checkGoogleCalendar();
-    fetchEvents();
-    toast({
-      title: "Calendar disconnected",
-      description: "Your Google Calendar has been disconnected successfully.",
-    });
-  };
-
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
@@ -189,59 +135,11 @@ export default function Calendar() {
           view={view}
           setDate={setDate}
           setView={setView}
-          hasGoogleCalendar={hasGoogleCalendar}
-          onSyncSuccess={handleSyncSuccess}
         />
 
         <div className="flex gap-6 flex-col md:flex-row">
           <div className="md:w-64 w-full">
             <CalendarSidebar date={date} setDate={setDate} />
-            
-            {/* Google Calendar Connection Status */}
-            <div className="mt-6 space-y-4 border rounded-md p-4">
-              <h3 className="font-medium">Google Calendar</h3>
-              
-              <div className="text-sm">
-                {syncInProgress ? (
-                  <div className="flex items-center text-yellow-500">
-                    <div className="mr-2 h-3 w-3 rounded-full bg-yellow-500 animate-pulse"></div>
-                    Checking connection...
-                  </div>
-                ) : hasGoogleCalendar ? (
-                  <div className="flex items-center text-green-500">
-                    <CheckCircle className="h-4 w-4 mr-1" /> Connected
-                  </div>
-                ) : (
-                  <div className="flex items-center text-red-500">
-                    <XCircle className="h-4 w-4 mr-1" /> Not connected
-                  </div>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                {hasGoogleCalendar && calendarId ? (
-                  <>
-                    <SyncGoogleCalendarButton 
-                      onSuccess={handleSyncSuccess} 
-                      variant="outline" 
-                      size="default"
-                      className="w-full"
-                    />
-                    <DisconnectGoogleCalendarButton 
-                      calendarId={calendarId} 
-                      onSuccess={handleDisconnectSuccess} 
-                    />
-                    {lastSynced && (
-                      <div className="text-xs text-gray-500 mt-2">
-                        Last synced: {lastSynced.toLocaleString()}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <GoogleCalendarButton onSuccess={handleConnectSuccess} />
-                )}
-              </div>
-            </div>
           </div>
 
           <div className="flex-1">
