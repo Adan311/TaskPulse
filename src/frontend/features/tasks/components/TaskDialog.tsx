@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { Button } from "@/frontend/components/ui/button";
 import {
@@ -20,7 +21,7 @@ import {
 import { Label } from "@/frontend/components/ui/label";
 import { Task } from "@/backend/api/services/task.service";
 import { useToast } from "@/frontend/hooks/use-toast";
-import { supabase } from "@/backend/api/client/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { FileUpload } from "@/frontend/features/files/components/FileUpload";
 import { FileList } from "@/frontend/features/files/components/FileList";

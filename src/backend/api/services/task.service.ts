@@ -44,11 +44,17 @@ export const createTask = async (task: Omit<Task, "id" | "user" | "created_at" |
     throw new Error("User must be authenticated to create tasks");
   }
   
+  // Create a new task object with a UUID and the user's actual ID
   const newTask = {
     id: uuidv4(),
     ...task,
-    user: user.id
+    user: user.id, // Use the actual user.id here
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
+
+  console.log("Creating task with user ID:", user.id);
+  console.log("Full task object:", newTask);
 
   const { data, error } = await supabase
     .from("tasks")
