@@ -89,7 +89,7 @@ export function WeekView({ events, date, onEditEvent, onEventsChange }: WeekView
   const nowTop = ((nowMinutes - CAL_START) / CAL_TOTAL) * (HOUR_HEIGHT * hours.length);
 
   return (
-    <div className="bg-background rounded-2xl border shadow p-8 w-full h-full flex flex-col">
+    <div className="bg-background rounded-2xl border shadow p-8 w-full h-full flex flex-col overflow-x-auto overflow-y-auto max-h-[calc(100vh-200px)]">
       {/* Weekday headers */}
       <div className="grid w-full" style={{ gridTemplateColumns: `44px repeat(7, 1fr)`, columnGap: '16px', rowGap: 0 }}>
         <div />

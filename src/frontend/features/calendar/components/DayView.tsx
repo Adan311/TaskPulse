@@ -80,7 +80,7 @@ export function DayView({ events, date, onEditEvent }: DayViewProps) {
   const slottedEvents = getEventLayout(dayEvents);
 
   return (
-    <div className="bg-background rounded-2xl border shadow p-0 w-full h-[calc(100vh-120px)] flex flex-col overflow-hidden">
+    <div className="bg-background rounded-2xl border shadow p-0 w-full h-full flex flex-col overflow-x-auto overflow-y-auto max-h-[calc(95vh-200px)]">
       {/* Header */}
       <div className="flex flex-col items-center py-4 border-b border-muted-foreground/10 bg-background z-10">
         <div className="text-2xl font-bold uppercase tracking-wide text-primary mb-1">{format(date, 'EEE')}</div>

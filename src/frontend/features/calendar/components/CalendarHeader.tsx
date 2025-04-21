@@ -59,14 +59,14 @@ export function CalendarHeader({
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between w-full bg-background/80 rounded-xl border shadow-sm px-0 md:ml-[-32px] md:w-[calc(100%+32px)] py-3 mb-4">
       {/* Left: Month/Year */}
-      <div className="flex items-center gap-2 ml-6">
+      <div className="flex items-center gap-2 ml-6 flex-shrink-0">
         <CalendarIcon className="h-6 w-6 text-primary" />
         <span className="text-2xl font-semibold text-primary">
           {date ? format(date, view === "month" ? "MMMM, yyyy" : "MMMM d, yyyy") : ""}
         </span>
       </div>
       {/* Center: View Switcher */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap justify-center flex-1 min-w-0">
         {[
           "month",
           "week",
@@ -91,7 +91,7 @@ export function CalendarHeader({
         ))}
       </div>
       {/* Right: Navigation & Actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-shrink-0">
         <Button
           variant="ghost"
           size="icon"
@@ -113,15 +113,11 @@ export function CalendarHeader({
         <Button
           variant="outline"
           size="sm"
-          className="rounded-full font-semibold px-4 ml-2"
+          className="rounded-full font-semibold px-6 ml-3 whitespace-nowrap"
           onClick={() => date && setDate(new Date())}
         >
           Today
         </Button>
-        {/* Optional: Google Calendar Sync Button */}
-        {hasGoogleCalendar && onSyncSuccess && (
-          <SyncGoogleCalendarButton onSuccess={onSyncSuccess} className="ml-2" />
-        )}
       </div>
     </div>
   );
