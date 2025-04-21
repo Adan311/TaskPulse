@@ -56,6 +56,7 @@ export function useTaskBoard() {
     try {
       setLoading(true);
       const data = await fetchTasks();
+      console.log("Tasks loaded:", data);
       setTasks(data);
     } catch (error) {
       console.error('Error loading tasks:', error);

@@ -21,6 +21,8 @@ export const fetchTasks = async (): Promise<Task[]> => {
     return [];
   }
 
+  console.log("Fetching tasks for user:", user.id);
+
   const { data, error } = await supabase
     .from("tasks")
     .select("*")
@@ -59,6 +61,10 @@ export const createTask = async (task: Omit<Task, "id" | "user">): Promise<Task>
   if (error) {
     console.error("Error creating task:", error);
     throw error;
+  }
+
+  if (!data || data.length === 0) {
+    throw new Error("No data returned after task creation");
   }
 
   return data[0] as Task;
