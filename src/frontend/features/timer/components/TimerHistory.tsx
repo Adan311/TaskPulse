@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React from "react";
 import { Badge } from "@/frontend/components/ui/badge";
 import { Card, CardContent } from "@/frontend/components/ui/card";
 import { Clock, Calendar, User } from "lucide-react";
@@ -12,31 +11,18 @@ interface TimerSession {
   project: string;
 }
 
-const mockTimerSessions: TimerSession[] = [
-  {
-    id: '1',
-    date: '2023-05-01',
-    duration: '1h 30m',
-    task: 'Design homepage',
-    project: 'Website Redesign',
-  },
-  {
-    id: '2',
-    date: '2023-05-01',
-    duration: '45m',
-    task: 'Team meeting',
-    project: 'Project Management',
-  },
-  {
-    id: '3',
-    date: '2023-04-30',
-    duration: '2h 15m',
-    task: 'Develop API integration',
-    project: 'Backend Development',
-  },
-];
+interface TimerHistoryProps {
+  history?: TimerSession[];
+}
 
-export default function TimerHistory() {
+const TimerHistory: React.FC<TimerHistoryProps> = ({ history }) => {
+  if (!history || history.length === 0) {
+    return (
+      <div className="text-center text-muted-foreground opacity-60 py-8">
+        No timer history yet.
+      </div>
+    );
+  }
   return (
     <div className="space-y-4 p-4 bg-background rounded-lg">
       <div className="mb-4">
@@ -45,7 +31,7 @@ export default function TimerHistory() {
       </div>
       
       <div className="space-y-3">
-        {mockTimerSessions.map((session) => (
+        {history.map((session) => (
           <Card key={session.id} className="overflow-hidden transition-all hover:shadow-md">
             <CardContent className="p-4">
               <div className="flex justify-between items-start mb-2">
@@ -71,4 +57,6 @@ export default function TimerHistory() {
       </div>
     </div>
   );
-}
+};
+
+export default TimerHistory;

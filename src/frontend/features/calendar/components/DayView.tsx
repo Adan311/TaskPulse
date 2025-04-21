@@ -6,6 +6,7 @@ interface DayViewProps {
   events: Event[];
   date: Date;
   onEditEvent: (event: Event) => void;
+  hideHeader?: boolean;
 }
 
 const HOUR_HEIGHT = 54; // px per hour
@@ -68,7 +69,7 @@ function getEventLayout(events: Event[]) {
   return layouts;
 }
 
-export function DayView({ events, date, onEditEvent }: DayViewProps) {
+export function DayView({ events, date, onEditEvent, hideHeader }: DayViewProps) {
   console.log('DayView: rendering for', date, 'events:', events.length);
   const today = new Date();
   const now = new Date();
@@ -82,10 +83,12 @@ export function DayView({ events, date, onEditEvent }: DayViewProps) {
   return (
     <div className="bg-background rounded-2xl border shadow p-0 w-full h-full flex flex-col overflow-x-auto overflow-y-auto max-h-[calc(95vh-200px)]">
       {/* Header */}
-      <div className="flex flex-col items-center py-4 border-b border-muted-foreground/10 bg-background z-10">
-        <div className="text-2xl font-bold uppercase tracking-wide text-primary mb-1">{format(date, 'EEE')}</div>
-        <div className="text-lg opacity-70 text-primary">{format(date, 'MMMM d, yyyy')}</div>
-      </div>
+      {!hideHeader && (
+        <div className="flex flex-col items-center py-4 border-b border-muted-foreground/10 bg-background z-10">
+          <div className="text-2xl font-bold uppercase tracking-wide text-primary mb-1">{format(date, 'EEE')}</div>
+          <div className="text-lg opacity-70 text-primary">{format(date, 'MMMM d, yyyy')}</div>
+        </div>
+      )}
       {/* Time grid */}
       <div className="flex-1 w-full relative flex overflow-x-auto" style={{ minHeight: `${HOUR_HEIGHT * HOURS.length}px` }}>
         {/* Hour labels */}
