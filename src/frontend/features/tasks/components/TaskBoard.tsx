@@ -43,19 +43,19 @@ export function TaskBoard() {
         <TaskBoardLoader />
       ) : (
         <TaskColumnsContainer
-          tasks={tasks as any}
+          tasks={tasks}
           columns={columns}
           onDragEnd={onDragEnd}
-          onEditTask={handleEditTask as any}
+          onEditTask={handleEditTask}
           onDeleteTask={handleDeleteTask}
         />
       )}
 
       <TaskDialog
-        task={selectedTask as any}
+        task={selectedTask}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        onSave={handleSaveTask as any}
+        onSave={handleSaveTask}
       />
     </div>
   );

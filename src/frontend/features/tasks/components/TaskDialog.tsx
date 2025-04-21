@@ -75,10 +75,10 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
       const { data, error } = await supabase
         .from("projects")
         .select("id, name")
-        .eq("user", user.id as any);
+        .eq("user", user.id);
       
       if (error) throw error;
-      setProjects(data as unknown as Project[] || []);
+      setProjects(data as Project[] || []);
     } catch (error) {
       console.error("Error fetching projects:", error);
       toast({
@@ -170,7 +170,7 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
               <Label htmlFor="priority" className="col-span-4">
                 Priority
               </Label>
-              <Select value={priority} onValueChange={(value: Task["priority"]) => setPriority(value)}>
+              <Select value={priority} onValueChange={(value: "low" | "medium" | "high") => setPriority(value)}>
                 <SelectTrigger className="col-span-4">
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { TaskBoard } from "@/frontend/features/tasks/components/TaskBoard";
-import { supabase } from "@/backend/api/client/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/frontend/components/ui/button";
 import { AppLayout } from "@/frontend/components/layout/AppLayout";
 import { useToast } from "@/frontend/hooks/use-toast";

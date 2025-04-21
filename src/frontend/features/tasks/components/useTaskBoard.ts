@@ -10,7 +10,7 @@ import {
   deleteTask, 
   updateTaskStatus 
 } from '@/backend/api/services/task.service';
-import { supabase } from '@/backend/api/client/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 export function useTaskBoard() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -27,7 +27,6 @@ export function useTaskBoard() {
   ];
 
   useEffect(() => {
-    // Check for authenticated user
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
@@ -36,7 +35,6 @@ export function useTaskBoard() {
     checkUser();
     loadTasks();
 
-    // Subscribe to realtime updates
     const channel = supabase
       .channel('tasks-changes')
       .on(
@@ -71,16 +69,10 @@ export function useTaskBoard() {
     }
   };
 
-  const handleCreateTask = async (taskData: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  const handleCreateTask = async (taskData: Omit<Task, 'id' | 'user' | 'created_at' | 'updated_at'>) => {
     try {
-      // Verify user authentication before attempting to create task
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("You must be logged in to create tasks");
-      }
-      
       await createTask(taskData);
-      loadTasks(); // Reload tasks after creating
+      await loadTasks(); // Reload tasks after creating
       toast({
         title: 'Success',
         description: 'Task created successfully',
@@ -95,7 +87,7 @@ export function useTaskBoard() {
     }
   };
 
-  const handleUpdateTask = async (taskData: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  const handleUpdateTask = async (taskData: Omit<Task, 'id' | 'user' | 'created_at' | 'updated_at'>) => {
     if (!selectedTask) return;
     
     try {
@@ -103,7 +95,7 @@ export function useTaskBoard() {
         id: selectedTask.id,
         ...taskData,
       });
-      loadTasks(); // Reload tasks after updating
+      await loadTasks(); // Reload tasks after updating
       toast({
         title: 'Success',
         description: 'Task updated successfully',
@@ -121,7 +113,7 @@ export function useTaskBoard() {
   const handleDeleteTask = async (taskId: string) => {
     try {
       await deleteTask(taskId);
-      loadTasks(); // Reload tasks after deleting
+      await loadTasks(); // Reload tasks after deleting
       toast({
         title: 'Success',
         description: 'Task deleted successfully',
@@ -147,16 +139,14 @@ export function useTaskBoard() {
       return;
     }
 
-    // If dropped in a different column, update the task status
     if (destination.droppableId !== source.droppableId) {
       try {
         const newStatus = destination.droppableId as Task['status'];
         await updateTaskStatus(draggableId, newStatus);
         
-        // Optimistically update the UI
         const updatedTasks = tasks.map(task => 
           task.id === draggableId 
-            ? { ...task, status: newStatus } 
+            ? { ...task, status: newStatus, updated_at: new Date().toISOString() } 
             : task
         );
         setTasks(updatedTasks);
@@ -172,7 +162,6 @@ export function useTaskBoard() {
           description: 'Failed to update task status',
           variant: 'destructive',
         });
-        loadTasks(); // Reload tasks if error occurs to reset UI
       }
     }
   };
@@ -187,7 +176,7 @@ export function useTaskBoard() {
     setDialogOpen(true);
   };
 
-  const handleSaveTask = (taskData: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  const handleSaveTask = (taskData: Omit<Task, 'id' | 'user' | 'created_at' | 'updated_at'>) => {
     if (selectedTask) {
       handleUpdateTask(taskData);
     } else {
