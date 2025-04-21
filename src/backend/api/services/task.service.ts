@@ -11,8 +11,6 @@ export interface Task {
   due_date?: string | null;
   priority?: "low" | "medium" | "high" | null;
   user?: string | null;
-  created_at?: string;
-  updated_at?: string;
 }
 
 export const fetchTasks = async (): Promise<Task[]> => {
@@ -36,7 +34,7 @@ export const fetchTasks = async (): Promise<Task[]> => {
   return data as Task[];
 };
 
-export const createTask = async (task: Omit<Task, "id" | "user" | "created_at" | "updated_at">): Promise<Task> => {
+export const createTask = async (task: Omit<Task, "id" | "user">): Promise<Task> => {
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
@@ -48,12 +46,9 @@ export const createTask = async (task: Omit<Task, "id" | "user" | "created_at" |
   const newTask = {
     id: uuidv4(),
     ...task,
-    user: user.id, // Use the actual user.id here
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    user: user.id
   };
 
-  console.log("Creating task with user ID:", user.id);
   console.log("Full task object:", newTask);
 
   const { data, error } = await supabase
@@ -77,14 +72,9 @@ export const updateTask = async (task: Partial<Task> & { id: string }): Promise<
     throw new Error("User must be authenticated to update tasks");
   }
 
-  const updateData = {
-    ...task,
-    updated_at: new Date().toISOString()
-  };
-
   const { error } = await supabase
     .from("tasks")
-    .update(updateData)
+    .update(task)
     .eq("id", task.id)
     .eq("user", user.id);
 

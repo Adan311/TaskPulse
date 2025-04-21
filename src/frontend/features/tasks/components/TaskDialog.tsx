@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { Button } from "@/frontend/components/ui/button";
 import {
@@ -35,7 +34,7 @@ interface TaskDialogProps {
   task?: Task;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (task: Omit<Task, "id" | "user" | "created_at" | "updated_at">) => void;
+  onSave: (task: Omit<Task, "id" | "user">) => void;
 }
 
 export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps) {

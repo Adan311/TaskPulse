@@ -69,7 +69,7 @@ export function useTaskBoard() {
     }
   };
 
-  const handleCreateTask = async (taskData: Omit<Task, 'id' | 'user' | 'created_at' | 'updated_at'>) => {
+  const handleCreateTask = async (taskData: Omit<Task, "id" | "user">) => {
     try {
       await createTask(taskData);
       await loadTasks(); // Reload tasks after creating
@@ -87,7 +87,7 @@ export function useTaskBoard() {
     }
   };
 
-  const handleUpdateTask = async (taskData: Omit<Task, 'id' | 'user' | 'created_at' | 'updated_at'>) => {
+  const handleUpdateTask = async (taskData: Omit<Task, "id" | "user">) => {
     if (!selectedTask) return;
     
     try {
@@ -146,7 +146,7 @@ export function useTaskBoard() {
         
         const updatedTasks = tasks.map(task => 
           task.id === draggableId 
-            ? { ...task, status: newStatus, updated_at: new Date().toISOString() } 
+            ? { ...task, status: newStatus } 
             : task
         );
         setTasks(updatedTasks);
@@ -176,7 +176,7 @@ export function useTaskBoard() {
     setDialogOpen(true);
   };
 
-  const handleSaveTask = (taskData: Omit<Task, 'id' | 'user' | 'created_at' | 'updated_at'>) => {
+  const handleSaveTask = (taskData: Omit<Task, "id" | "user">) => {
     if (selectedTask) {
       handleUpdateTask(taskData);
     } else {
