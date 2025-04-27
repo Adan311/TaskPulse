@@ -12,6 +12,7 @@ import Components from "./frontend/pages/Components";
 import Timer from "./frontend/pages/Timer";
 import SignIn from "./frontend/pages/auth/SignIn";
 import SignUp from "./frontend/pages/auth/SignUp";
+import NotesPage from "./frontend/pages/Notes";
 import "./index.css";
 import { ThemeProvider } from "./frontend/components/theme/theme-provider";
 import { Toaster } from "./frontend/components/ui/toaster";
@@ -55,6 +56,10 @@ const router = createBrowserRouter([
       {
         path: "settings",
         element: <Components />, // Placeholder for Settings page, using Components for now
+      },
+      {
+        path: "notes",
+        element: <NotesPage />,
       },
     ],
   },

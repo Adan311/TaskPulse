@@ -36,6 +36,11 @@ const mainItems = [
     icon: Calendar,
   },
   {
+    title: "Notes",
+    url: "/notes",
+    icon: FileText,
+  },
+  {
     title: "Timer",
     url: "/timer",
     icon: Clock,

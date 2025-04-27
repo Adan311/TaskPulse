@@ -30,7 +30,7 @@ This file tracks the status of all major features in your project, including wha
 
 ### 3. Notes
 - [✅] Notes feature folder with components
-- [❌] Dedicated Notes page in /pages
+- [✅] Dedicated Notes page in /pages
 - [❌] Rich text editing
 - [❌] Notes search/filter
 - [❌] Notes sharing/collaboration
