@@ -1,5 +1,4 @@
-
-import { DragDropContext, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { TaskColumn } from './TaskColumn';
 import { Task } from '@/backend/api/services/task.service';
 import { motion } from 'framer-motion';

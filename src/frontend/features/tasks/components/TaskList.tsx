@@ -1,8 +1,9 @@
-
-import { Draggable } from 'react-beautiful-dnd';
 import { Task } from '@/backend/api/services/task.service';
 import { TaskCard } from './TaskCard';
 import { motion } from 'framer-motion';
+import { Draggable } from '@hello-pangea/dnd';
+
+// Removed Draggable import; disabling drag functionality temporarily
 
 interface TaskListProps {
   tasks: Task[];
@@ -27,11 +28,7 @@ export function TaskList({ tasks, onEdit, onDelete }: TaskListProps) {
   return (
     <>
       {tasks.map((task, index) => (
-        <Draggable
-          key={task.id}
-          draggableId={task.id}
-          index={index}
-        >
+        <Draggable key={task.id} draggableId={task.id} index={index}>
           {(provided, snapshot) => (
             <div
               ref={provided.innerRef}
