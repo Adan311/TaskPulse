@@ -1,37 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from "@/frontend/components/ui/button";
-import { FileText, Plus } from "lucide-react";
-import { NotesSection } from "@/frontend/features/notes/components/NotesSection";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/frontend/components/ui/dialog";
-import { Textarea } from "@/frontend/components/ui/textarea";
+import React, { useState, useEffect, useCallback } from 'react';
+import { AppLayout } from "@/frontend/components/layout/AppLayout";
+import { NotesSidebar } from "@/frontend/features/notes/components/NotesSidebar";
+import { NoteViewer } from "@/frontend/features/notes/components/NoteViewer";
 import { useNotes } from "@/frontend/features/notes/hooks/useNotes";
 
 const NotesPage: React.FC = () => {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [newNote, setNewNote] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const [newNoteContent, setNewNoteContent] = useState<string>("");
   const {
     addNote,
     loading,
     fetchNotes,
-    user
+    user,
+    notes,
+    pinNote,
+    unpinNote,
+    deleteNote,
+    editingId,
+    editContent,
+    setEditContent,
+    editInputRef,
+    startEdit,
+    saveEdit,
+    cancelEdit
   } = useNotes();
-
-  const handleCreateNote = () => {
-    setDialogOpen(true);
-  };
-
-  const handleSaveNote = async () => {
-    setSaving(true);
-    const success = await addNote(newNote);
-    setSaving(false);
-    if (success && user && user.id) {
-      setDialogOpen(false);
-      setNewNote("");
-      fetchNotes(user.id);
-    }
-    // Error handling is inside addNote
-  };
 
   useEffect(() => {
     if (user && user.id) {
@@ -39,38 +31,66 @@ const NotesPage: React.FC = () => {
     }
   }, [user, fetchNotes]);
 
+  const selectedNote = notes.find(n => n.id === selectedNoteId) || null;
+
+  // Handler stubs for NoteViewer actions
+  const handlePin = (id: string) => {
+    const note = notes.find(n => n.id === id);
+    if (note?.pinned) {
+      unpinNote(id);
+    } else {
+      pinNote(id);
+    }
+  };
+  const handleDelete = (id: string) => {
+    deleteNote(id);
+    setSelectedNoteId(null);
+  };
+  const handleCopy = (content: string) => navigator.clipboard.writeText(content);
+  const handleAddToProject = (id: string) => {/* TODO: Implement add to project logic */};
+
+  // New: handle creating a new note from the main area
+  const handleCreateNewNote = () => {
+    setSelectedNoteId(null);
+    setNewNoteContent("");
+  };
+  const handleSaveNewNote = async (content: string): Promise<void> => {
+    if (!content.trim()) return;
+    await addNote(content);
+    fetchNotes(user.id); // refresh notes
+    setNewNoteContent("");
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] bg-background">
-      <div className="w-full max-w-2xl bg-card shadow-lg rounded-xl p-10 flex flex-col items-center">
-        <FileText className="w-14 h-14 text-primary mb-4" />
-        <h1 className="text-3xl font-bold mb-2">Your Notes</h1>
-        <p className="text-muted-foreground mb-6 text-center">
-          Keep your ideas organized. Create, edit, and search your notes here!
-        </p>
-        <Button size="lg" className="mb-8" onClick={handleCreateNote}>
-          <Plus className="mr-2 h-5 w-5" />Create New Note
-        </Button>
-        <NotesSection />
-      </div>
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Create a New Note</DialogTitle>
-          </DialogHeader>
-          <Textarea
-            placeholder="Write your note here..."
-            value={newNote}
-            onChange={e => setNewNote(e.target.value)}
-            className="min-h-[120px] mb-4"
-            disabled={saving}
-          />
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setDialogOpen(false)} disabled={saving}>Cancel</Button>
-            <Button onClick={handleSaveNote} disabled={!newNote.trim() || saving}>{saving ? 'Saving...' : 'Save'}</Button>
+    <AppLayout>
+      <div className="p-6 space-y-6">
+        <div className="flex gap-6 h-[calc(100vh-64px)]">
+          <NotesSidebar selectedNoteId={selectedNoteId} setSelectedNoteId={setSelectedNoteId} />
+          <div className="flex-1 bg-background rounded-2xl border shadow p-6">
+            <div className="flex justify-between mb-4">
+              <button className="btn btn-primary" onClick={handleCreateNewNote}>New Note</button>
+            </div>
+            <NoteViewer
+              note={selectedNote}
+              newNoteContent={newNoteContent}
+              onNewNoteContentChange={setNewNoteContent}
+              onSaveNewNote={handleSaveNewNote}
+              editingId={editingId}
+              editContent={editContent}
+              setEditContent={setEditContent}
+              editInputRef={editInputRef}
+              startEdit={startEdit}
+              saveEdit={saveEdit}
+              cancelEdit={cancelEdit}
+              onPin={handlePin}
+              onDelete={handleDelete}
+              onCopy={handleCopy}
+              onAddToProject={handleAddToProject}
+            />
           </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+        </div>
+      </div>
+    </AppLayout>
   );
 };
 

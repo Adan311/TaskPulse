@@ -1,65 +1,81 @@
+// src/frontend/features/notes/components/NotesSection.tsx
+import React, { useState, useEffect } from 'react';
+import { useNotes } from '../hooks/useNotes';
+import { NotesSidebar } from './NotesSidebar';
+import { NoteViewer } from './NoteViewer';
+import { Button } from '@/frontend/components/ui/button';
 
-import React from 'react';
-import { useNotes } from "../hooks/useNotes";
-import { ProjectSelect } from "./ProjectSelect";
-import { NewNoteInput } from "./NewNoteInput";
-import { NoteList } from "./NoteList";
-
-export const NotesSection = () => {
+export const NotesSection: React.FC = () => {
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const [newNoteContent, setNewNoteContent] = useState<string>('');
   const {
-    notes, projects, user, selectedProject, setSelectedProject, loading,
-    addNote, deleteNote, editingId, editContent, setEditContent, editInputRef,
-    startEdit, saveEdit, cancelEdit
+    user,
+    notes,
+    fetchNotes,
+    addNote,
+    deleteNote,
+    pinNote,
+    unpinNote,
+    editingId,
+    editContent,
+    setEditContent,
+    editInputRef,
+    startEdit,
+    saveEdit,
+    cancelEdit,
   } = useNotes();
 
-  const filteredNotes = selectedProject === 'all'
-    ? notes
-    : notes.filter(note => note.project === selectedProject);
+  // load fresh notes on login
+  useEffect(() => {
+    if (user?.id) fetchNotes(user.id);
+  }, [user, fetchNotes]);
+
+  const selectedNote = notes.find(n => n.id === selectedNoteId) || null;
+  const handlePin      = (id: string) => { const n = notes.find(x => x.id === id); n?.pinned ? unpinNote(id) : pinNote(id); };
+  const handleDelete   = (id: string) => { deleteNote(id); setSelectedNoteId(null); };
+  const handleCopy     = (c: string)   => navigator.clipboard.writeText(c);
+  const handleAddToProj= (id: string)  => { /* TODO */ };
+
+  const handleNew      = ()             => { setSelectedNoteId(null); setNewNoteContent(''); };
+  const handleSaveNew  = async (c: string) => {
+    if (!c.trim() || !user?.id) return;
+    await addNote(c);
+    fetchNotes(user.id);
+    setNewNoteContent('');
+  };
 
   if (!user) {
     return <div className="text-center p-6">Please sign in to manage your notes.</div>;
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col space-y-4">
-        <ProjectSelect
-          projects={projects}
-          value={selectedProject}
-          onChange={setSelectedProject}
-          allOption={true}
+    <div className="flex h-full gap-6">
+      <NotesSidebar
+        selectedNoteId={selectedNoteId}
+        setSelectedNoteId={setSelectedNoteId}
+      />
+
+      <div className="flex-1 flex flex-col bg-background rounded-2xl border shadow p-6">
+        <div className="flex justify-between mb-4">
+          <Button onClick={handleNew}>New Note</Button>
+        </div>
+        <NoteViewer
+          note={selectedNote}
+          newNoteContent={newNoteContent}
+          onNewNoteContentChange={setNewNoteContent}
+          onSaveNewNote={handleSaveNew}
+          editingId={editingId}
+          editContent={editContent}
+          setEditContent={setEditContent}
+          editInputRef={editInputRef}
+          startEdit={startEdit}
+          saveEdit={saveEdit}
+          cancelEdit={cancelEdit}
+          onPin={handlePin}
+          onDelete={handleDelete}
+          onCopy={handleCopy}
+          onAddToProject={handleAddToProj}
         />
-        <NewNoteInput
-          onAdd={addNote}
-          selectedProject={selectedProject}
-          projects={projects}
-          setSelectedProject={setSelectedProject}
-          loading={loading}
-        />
-      </div>
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Your Notes</h3>
-        {loading ? (
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-          </div>
-        ) : filteredNotes.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No notes found. Add your first note above!
-          </div>
-        ) : (
-          <NoteList
-            notes={filteredNotes}
-            editingId={editingId}
-            editContent={editContent}
-            setEditContent={setEditContent}
-            editInputRef={editInputRef}
-            onStartEdit={startEdit}
-            onSaveEdit={saveEdit}
-            onCancelEdit={cancelEdit}
-            onDelete={deleteNote}
-          />
-        )}
       </div>
     </div>
   );
