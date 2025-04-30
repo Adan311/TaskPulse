@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { Button } from "@/frontend/components/ui/button";
 import {
@@ -25,6 +24,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { FileUpload } from "@/frontend/features/files/components/FileUpload";
 import { FileList } from "@/frontend/features/files/components/FileList";
+import { Calendar } from '@/frontend/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/frontend/components/ui/popover';
+import { CalendarIcon, X } from 'lucide-react';
 
 interface Project {
   id: string;
@@ -49,6 +51,9 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
   const [projectId, setProjectId] = useState(task?.project || "none");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
+  const [dueDate, setDueDate] = useState(task?.due_date ? new Date(task.due_date) : undefined);
+  const [labels, setLabels] = useState<string[]>(task?.labels || []);
+  const [labelInput, setLabelInput] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -109,11 +114,23 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
       status,
       priority,
       project: projectId === "none" ? null : projectId,
-      due_date: undefined
+      due_date: dueDate ? dueDate.toISOString() : undefined,
+      labels,
     };
 
     onSave(taskData);
     onOpenChange(false);
+  };
+
+  const handleAddLabel = () => {
+    if (labelInput.trim() && !labels.includes(labelInput.trim())) {
+      setLabels([...labels, labelInput.trim()]);
+      setLabelInput("");
+    }
+  };
+
+  const handleRemoveLabel = (label: string) => {
+    setLabels(labels.filter(l => l !== label));
   };
 
   return (
@@ -199,13 +216,58 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
                 </SelectContent>
               </Select>
             </div>
+            <div className="grid grid-cols-4 items-center gap-2">
+              <Label htmlFor="due_date" className="col-span-4">Due Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={`col-span-4 w-full justify-start text-left font-normal ${!dueDate ? 'text-muted-foreground' : ''}`}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dueDate ? dueDate.toLocaleDateString() : 'Pick due date'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={setDueDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-2 mt-2">
+              <Label htmlFor="labels" className="col-span-4">Labels/Tags</Label>
+              <div className="col-span-4 flex flex-wrap gap-2 mb-2">
+                {labels.map(label => (
+                  <span key={label} className="inline-flex items-center bg-muted px-2 py-1 rounded text-xs">
+                    {label}
+                    <button type="button" className="ml-1 text-destructive" onClick={() => handleRemoveLabel(label)}>
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="col-span-3">
+                <Input
+                  value={labelInput}
+                  onChange={e => setLabelInput(e.target.value)}
+                  placeholder="Add label"
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddLabel(); } }}
+                />
+              </div>
+              <div className="col-span-1">
+                <Button type="button" onClick={handleAddLabel} className="w-full">Add</Button>
+              </div>
+            </div>
           </div>
           {task && (
             <div className="space-y-4 mt-4">
               <Label>Files</Label>
               <FileUpload
-                relatedId={task.id}
-                relatedType="task"
+                task_id={task.id}
                 onUploadComplete={() => {
                   toast({
                     title: "File uploaded",
@@ -213,7 +275,7 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
                   });
                 }}
               />
-              <FileList relatedId={task.id} relatedType="task" />
+              <FileList task_id={task.id} />
             </div>
           )}
           <DialogFooter>

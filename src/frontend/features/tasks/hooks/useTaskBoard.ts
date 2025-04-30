@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { DropResult } from 'react-beautiful-dnd';
+import { DropResult } from '@hello-pangea/dnd';
 import { useToast } from '@/frontend/hooks/use-toast';
 import { 
   Task, 
@@ -8,9 +7,13 @@ import {
   createTask, 
   updateTask, 
   deleteTask, 
-  updateTaskStatus 
+  updateTaskStatus,
+  archiveTask,
+  bulkArchiveTasks,
+  autoArchiveOldTasks
 } from '@/backend/api/services/task.service';
 import { supabase } from '@/integrations/supabase/client';
+import { TaskFilters } from '../components/TaskFilterBar';
 
 export function useTaskBoard() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -18,6 +21,7 @@ export function useTaskBoard() {
   const [selectedTask, setSelectedTask] = useState<Task | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [filters, setFilters] = useState<TaskFilters | undefined>(undefined);
   const { toast } = useToast();
 
   const columns = [
@@ -35,6 +39,22 @@ export function useTaskBoard() {
     checkUser();
     loadTasks();
 
+    // Set up auto-archiving of old tasks
+    const autoArchiveInterval = setInterval(async () => {
+      try {
+        const archivedTasks = await autoArchiveOldTasks();
+        if (archivedTasks && archivedTasks.length > 0) {
+          await loadTasks();
+          toast({
+            title: 'Tasks Auto-Archived',
+            description: `${archivedTasks.length} completed tasks have been archived`,
+          });
+        }
+      } catch (error) {
+        console.error('Error auto-archiving tasks:', error);
+      }
+    }, 24 * 60 * 60 * 1000); // Run once per day
+
     const channel = supabase
       .channel('tasks-changes')
       .on(
@@ -49,14 +69,18 @@ export function useTaskBoard() {
 
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(autoArchiveInterval);
     };
   }, []);
+
+  useEffect(() => {
+    loadTasks();
+  }, [filters]);
 
   const loadTasks = async () => {
     try {
       setLoading(true);
-      const data = await fetchTasks();
-      console.log("Tasks loaded:", data);
+      const data = await fetchTasks(filters);
       setTasks(data);
     } catch (error) {
       console.error('Error loading tasks:', error);
@@ -73,7 +97,7 @@ export function useTaskBoard() {
   const handleCreateTask = async (taskData: Omit<Task, "id" | "user">) => {
     try {
       await createTask(taskData);
-      await loadTasks(); // Reload tasks after creating
+      await loadTasks();
       toast({
         title: 'Success',
         description: 'Task created successfully',
@@ -96,7 +120,7 @@ export function useTaskBoard() {
         id: selectedTask.id,
         ...taskData,
       });
-      await loadTasks(); // Reload tasks after updating
+      await loadTasks();
       toast({
         title: 'Success',
         description: 'Task updated successfully',
@@ -114,7 +138,7 @@ export function useTaskBoard() {
   const handleDeleteTask = async (taskId: string) => {
     try {
       await deleteTask(taskId);
-      await loadTasks(); // Reload tasks after deleting
+      await loadTasks();
       toast({
         title: 'Success',
         description: 'Task deleted successfully',
@@ -124,6 +148,42 @@ export function useTaskBoard() {
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to delete task',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleArchiveTask = async (taskId: string) => {
+    try {
+      await archiveTask(taskId);
+      await loadTasks();
+      toast({
+        title: 'Success',
+        description: 'Task archived successfully',
+      });
+    } catch (error) {
+      console.error('Error archiving task:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to archive task',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleBulkArchive = async (taskIds: string[]) => {
+    try {
+      await bulkArchiveTasks(taskIds);
+      await loadTasks();
+      toast({
+        title: 'Success',
+        description: `${taskIds.length} tasks archived successfully`,
+      });
+    } catch (error) {
+      console.error('Error bulk archiving tasks:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to archive tasks',
         variant: 'destructive',
       });
     }
@@ -167,6 +227,10 @@ export function useTaskBoard() {
     }
   };
 
+  const applyFilters = (newFilters: TaskFilters) => {
+    setFilters(newFilters);
+  };
+
   const handleAddTask = () => {
     setSelectedTask(undefined);
     setDialogOpen(true);
@@ -198,6 +262,10 @@ export function useTaskBoard() {
     handleEditTask,
     handleDeleteTask,
     handleSaveTask,
-    onDragEnd
+    handleArchiveTask,
+    handleBulkArchive,
+    onDragEnd,
+    applyFilters,
+    filters
   };
 }

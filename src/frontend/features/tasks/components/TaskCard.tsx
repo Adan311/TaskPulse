@@ -1,20 +1,37 @@
-
 import { useState } from 'react';
 import { Task } from '@/backend/api/services/task.service';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Calendar } from 'lucide-react';
+import { Card, CardContent } from '@/frontend/components/ui/card';
+import { Button } from '@/frontend/components/ui/button';
+import { Badge } from '@/frontend/components/ui/badge';
+import { Checkbox } from '@/frontend/components/ui/checkbox';
+import { Edit, Trash2, Calendar, Archive } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface TaskCardProps {
   task: Task;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
+  onArchive: (taskId: string) => void;
+  isSelectionMode: boolean;
+  isSelected: boolean;
+  onSelect: () => void;
+  onRestore?: (taskId: string) => void;
+  onDeletePermanently?: (taskId: string) => void;
 }
 
-export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
+export function TaskCard({ 
+  task, 
+  onEdit, 
+  onDelete,
+  onArchive,
+  isSelectionMode,
+  isSelected,
+  onSelect,
+  onRestore,
+  onDeletePermanently
+}: TaskCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
 
   const handleDelete = async () => {
     try {
@@ -23,6 +40,23 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  const handleArchive = async () => {
+    try {
+      setIsArchiving(true);
+      await onArchive(task.id);
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (onRestore) await onRestore(task.id);
+  };
+
+  const handleDeletePermanently = async () => {
+    if (onDeletePermanently) await onDeletePermanently(task.id);
   };
 
   const getPriorityColor = (priority?: Task['priority']) => {
@@ -39,23 +73,51 @@ export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
   };
 
   return (
-    <Card className="mb-3 hover:shadow-md transition-shadow">
+    <Card className={`mb-3 hover:shadow-md transition-shadow ${isSelected ? 'ring-2 ring-primary' : ''}`}>
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-2">
-          <h3 className="font-medium text-lg">{task.title}</h3>
+          <div className="flex items-center gap-2">
+            {isSelectionMode && (
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={onSelect}
+                className="mt-1"
+              />
+            )}
+            <h3 className="font-medium text-lg">{task.title}</h3>
+          </div>
           <div className="flex space-x-1">
-            <Button variant="ghost" size="icon" onClick={() => onEdit(task)}>
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              disabled={isDeleting}
-              onClick={handleDelete}
-              className="text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {!isSelectionMode && !task.archived && (
+              <>
+                <Button variant="ghost" size="icon" onClick={() => onEdit(task)}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  disabled={isArchiving}
+                  onClick={handleArchive}
+                  className="text-muted-foreground hover:text-primary"
+                >
+                  <Archive className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  disabled={isDeleting}
+                  onClick={handleDelete}
+                  className="text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+            {!isSelectionMode && task.archived && (
+              <>
+                <Button variant="outline" size="sm" onClick={handleRestore}>Restore</Button>
+                <Button variant="destructive" size="sm" onClick={handleDeletePermanently}>Delete Permanently</Button>
+              </>
+            )}
           </div>
         </div>
         

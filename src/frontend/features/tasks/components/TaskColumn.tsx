@@ -1,4 +1,4 @@
-import { Droppable, Draggable } from '@hello-pangea/dnd';
+import { Droppable } from '@hello-pangea/dnd';
 import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/ui/card';
 import { TaskList } from './TaskList';
 import { Task } from '@/backend/api/services/task.service';
@@ -13,9 +13,23 @@ interface TaskColumnProps {
   tasks: Task[];
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
+  onArchive: (taskId: string) => void;
+  isSelectionMode: boolean;
+  selectedTasks: string[];
+  onTaskSelect: (taskId: string) => void;
 }
 
-export function TaskColumn({ id, title, tasks, onEdit, onDelete }: TaskColumnProps) {
+export function TaskColumn({ 
+  id, 
+  title, 
+  tasks, 
+  onEdit, 
+  onDelete,
+  onArchive,
+  isSelectionMode,
+  selectedTasks,
+  onTaskSelect
+}: TaskColumnProps) {
   return (
     <Card>
       <CardHeader>
@@ -33,6 +47,10 @@ export function TaskColumn({ id, title, tasks, onEdit, onDelete }: TaskColumnPro
                 tasks={tasks.filter((task) => task.status === id)} 
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onArchive={onArchive}
+                isSelectionMode={isSelectionMode}
+                selectedTasks={selectedTasks}
+                onTaskSelect={onTaskSelect}
               />
               {provided.placeholder}
             </div>

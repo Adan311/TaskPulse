@@ -9,9 +9,21 @@ interface TaskListProps {
   tasks: Task[];
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
+  onArchive: (taskId: string) => void;
+  isSelectionMode: boolean;
+  selectedTasks: string[];
+  onTaskSelect: (taskId: string) => void;
 }
 
-export function TaskList({ tasks, onEdit, onDelete }: TaskListProps) {
+export function TaskList({ 
+  tasks, 
+  onEdit, 
+  onDelete,
+  onArchive,
+  isSelectionMode,
+  selectedTasks,
+  onTaskSelect
+}: TaskListProps) {
   if (!tasks || tasks.length === 0) {
     return (
       <motion.div 
@@ -46,6 +58,10 @@ export function TaskList({ tasks, onEdit, onDelete }: TaskListProps) {
                   task={task}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onArchive={onArchive}
+                  isSelectionMode={isSelectionMode}
+                  isSelected={selectedTasks.includes(task.id)}
+                  onSelect={() => onTaskSelect(task.id)}
                 />
               </motion.div>
             </div>

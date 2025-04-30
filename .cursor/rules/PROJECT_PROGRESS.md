@@ -10,19 +10,27 @@ This file tracks the status of all major features in your project, including wha
 - [✅] Task board UI (columns, drag & drop)
 - [✅] Task CRUD operations (frontend/backend)
 - [✅] Task service (backend)
-- [❌] Task filtering/search
-- [❌] Task assignment to users
+- [✅] Task filtering/search (by status, priority, date, text)
+- [✅] Task archiving (move to archive, auto-archive after 30 days)
+- [✅] Archived tasks view (show, restore, delete permanently)
+- [✅] Task restore from archive
+- [✅] Task permanent delete from archive
+- [✅] Task due date (date picker in dialog)
+- [✅] Task labels/tags (add/remove in dialog)
+- [✅] Task file attachments (upload, list, delete)
+- [✅] Error boundary for task board
+- [✅] Error handling for all task actions
+- [✅] Table/schema updates: created_at, archived, last_updated_at, labels, due_date, activity log
 - [❌] Task notifications/reminders
-- [❌] Bulk actions (multi-select, delete)
-- [❌] Task activity log/history
-- [❌] Error boundary for task board
+- [❌] Bulk actions (multi-select, delete/restore/archive in archive view)
+- [❌] Task activity log/history (UI)
 - [❌] Unit/integration tests
 
 ### 2. Calendar
 - [✅] Calendar page & UI
 - [✅] Event CRUD (frontend/backend)
 - [✅] Event service (backend)
-- [✅] Calendar sync (Google
+- [✅] Calendar sync (Google)
 - [❌] Recurring events
 - [❌] Event notifications
 - [❌] Error handling for invalid dates
@@ -61,7 +69,6 @@ This file tracks the status of all major features in your project, including wha
 ### 6. Projects
 - [✅] Projects page
 - [❌] Project details view
-- [❌] Team management (invite, assign)
 - [❌] Project progress tracking
 - [❌] Error handling for project actions
 - [❌] Tests
@@ -93,8 +100,8 @@ This file tracks the status of all major features in your project, including wha
 ## ⚠️ Error Handling
 - [✅] Basic error handling in services
 - [✅] User-friendly error messages in UI (settings page)
-- [❌] Error boundaries in React
-- [❌] Logging for backend errors
+- [✅] Error boundaries in React
+- [✅] Logging for backend errors
 
 ---
 
@@ -105,53 +112,13 @@ This file tracks the status of all major features in your project, including wha
 
 ---
 
-## 🚩 Remaining Must-Have Requirements (from MoSCoW)
-
-- Task filtering/search
-- Task assignment to users
-- Task notifications/reminders
-- Bulk actions (multi-select, delete)
-- Task activity log/history
-- Error boundary for task board
-- Unit/integration tests (tasks)
-- Recurring events
-- Event notifications
-- Error handling for invalid dates (calendar)
-- Tests for event logic
-- Rich text editing (notes)
-- Error handling for save/load (notes)
-- Tests (notes)
-- Timer analytics/history
-- Pomodoro mode
-- Error handling for timer state
-- Tests (timer)
-- Project details view
-- Team management (invite, assign)
-- Project progress tracking
-- Error handling for project actions
-- Tests (projects)
-- Route protection (auth)
-- Error boundaries in React
-- Logging for backend errors
-- Navigation bar (all main features linked)
-- Dashboard/landing page
-- Notifications system (in-app/email)
-- Global search
-- Dark mode
-- Accessibility (ARIA, color contrast)
-- Mobile responsiveness
-- API documentation (OpenAPI/Swagger)
-- Unit/integration tests (all features)
+## Table/Schema Updates
+- [✅] Added created_at, archived, last_updated_at, labels, due_date columns to tasks table
+- [✅] Added task_activity_log table
+- [✅] Added indexes for filtering/sorting
 
 ---
 
-## How to Use This File
-- Update checkboxes as you complete features or improvements.
-- Add new sections as you add features.
-- Use this as a quick reference for what's done and what's next!
-
----
-
-_Last updated: 2025-04-30_
+_Last updated: 2025-05-01_
 
 

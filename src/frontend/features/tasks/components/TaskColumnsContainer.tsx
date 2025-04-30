@@ -9,6 +9,10 @@ interface TaskColumnsContainerProps {
   onDragEnd: (result: DropResult) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
+  onArchiveTask: (taskId: string) => void;
+  isSelectionMode: boolean;
+  selectedTasks: string[];
+  onTaskSelect: (taskId: string) => void;
 }
 
 export function TaskColumnsContainer({ 
@@ -16,7 +20,11 @@ export function TaskColumnsContainer({
   columns, 
   onDragEnd, 
   onEditTask, 
-  onDeleteTask 
+  onDeleteTask,
+  onArchiveTask,
+  isSelectionMode,
+  selectedTasks,
+  onTaskSelect
 }: TaskColumnsContainerProps) {
   return (
     <motion.div 
@@ -39,6 +47,10 @@ export function TaskColumnsContainer({
               tasks={tasks}
               onEdit={onEditTask}
               onDelete={onDeleteTask}
+              onArchive={onArchiveTask}
+              isSelectionMode={isSelectionMode}
+              selectedTasks={selectedTasks}
+              onTaskSelect={onTaskSelect}
             />
           </motion.div>
         ))}
