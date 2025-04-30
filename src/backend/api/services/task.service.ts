@@ -1,23 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { TaskFilters } from '@/frontend/features/tasks/components/TaskFilterBar';
-
-export interface Task {
-  id: string;
-  title: string;
-  description: string;
-  status: 'todo' | 'in-progress' | 'done';
-  priority: 'low' | 'medium' | 'high';
-  user: string;
-  project?: string;
-  created_at?: string;
-  due_date?: string;
-  archived?: boolean;
-  completion_date?: string;
-  labels?: string[];
-  parent_task_id?: string;
-  last_updated_at?: string;
-}
+import { Task } from '@/backend/types/supabaseSchema';
 
 export const fetchTasks = async (filters?: TaskFilters) => {
   try {
@@ -61,69 +45,105 @@ export const fetchTasks = async (filters?: TaskFilters) => {
   }
 };
 
-export const createTask = async (taskData: Omit<Task, "id" | "user" | "created_at" | "archived" | "last_updated_at">) => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
-    const now = new Date().toISOString();
-    const newTask: Task = {
-      id: uuidv4(),
-      user: user.id,
-      created_at: now,
-      archived: false,
-      last_updated_at: now,
-      ...taskData,
-    };
-    const { data, error } = await supabase
-      .from('tasks')
-      .insert([newTask])
-      .select()
-      .single();
-    if (error) throw error;
-    return data as Task;
-  } catch (error) {
-    console.error('Error creating task:', error);
+export const fetchProjectTasks = async (projectId: string): Promise<Task[]> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    console.log("No authenticated user found when fetching tasks");
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("project", projectId)
+    .eq("user", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching tasks:", error);
     throw error;
   }
+
+  return data || [];
 };
 
-export const updateTask = async (taskData: Partial<Task> & { id: string }) => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
-    const updates = {
-      ...taskData,
-      last_updated_at: new Date().toISOString(),
-    };
-    const { data, error } = await supabase
-      .from('tasks')
-      .update(updates as any)
-      .eq('id', taskData.id)
-      .eq('user', user.id)
-      .select()
-      .single();
-    if (error) throw error;
-    return data as Task;
-  } catch (error) {
-    console.error('Error updating task:', error);
+export const createTask = async (task: Omit<Task, "id" | "user" | "created_at" | "updated_at">): Promise<Task> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("User must be authenticated to create tasks");
+  }
+
+  const newTask = {
+    id: uuidv4(),
+    ...task,
+    user: user.id,
+    archived: false,
+  };
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .insert([newTask])
+    .select();
+
+  if (error) {
+    console.error("Error creating task:", error);
     throw error;
   }
+
+  if (!data || data.length === 0) {
+    throw new Error("Failed to create task");
+  }
+
+  return data[0];
 };
 
-export const deleteTask = async (taskId: string) => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
-    const { error } = await supabase
-      .from('tasks')
-      .delete()
-      .eq('id', taskId)
-      .eq('user', user.id);
-    if (error) throw error;
-  } catch (error) {
-    console.error('Error deleting task:', error);
+export const updateTask = async (taskId: string, updates: Partial<Omit<Task, "id" | "user" | "created_at">>): Promise<Task> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("User must be authenticated to update tasks");
+  }
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .update(updates)
+    .eq("id", taskId)
+    .eq("user", user.id)
+    .select();
+
+  if (error) {
+    console.error("Error updating task:", error);
     throw error;
   }
+
+  if (!data || data.length === 0) {
+    throw new Error("Failed to update task or task not found");
+  }
+
+  return data[0];
+};
+
+export const deleteTask = async (taskId: string): Promise<boolean> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("User must be authenticated to delete tasks");
+  }
+
+  const { error } = await supabase
+    .from("tasks")
+    .delete()
+    .eq("id", taskId)
+    .eq("user", user.id);
+
+  if (error) {
+    console.error("Error deleting task:", error);
+    throw error;
+  }
+
+  return true;
 };
 
 export const updateTaskStatus = async (taskId: string, status: Task['status']) => {
@@ -137,7 +157,7 @@ export const updateTaskStatus = async (taskId: string, status: Task['status']) =
     };
     const { data, error } = await supabase
       .from('tasks')
-      .update(updates as any)
+      .update(updates)
       .eq('id', taskId)
       .eq('user', user.id)
       .select()
@@ -160,7 +180,7 @@ export const archiveTask = async (taskId: string) => {
     };
     const { data, error } = await supabase
       .from('tasks')
-      .update(updates as any)
+      .update(updates)
       .eq('id', taskId)
       .eq('user', user.id)
       .select()
@@ -183,7 +203,7 @@ export const bulkArchiveTasks = async (taskIds: string[]) => {
     };
     const { data, error } = await supabase
       .from('tasks')
-      .update(updates as any)
+      .update(updates)
       .in('id', taskIds)
       .eq('user', user.id)
       .select();
@@ -205,10 +225,9 @@ export const autoArchiveOldTasks = async () => {
       archived: true,
       last_updated_at: new Date().toISOString(),
     };
-    // @ts-ignore
     const { data, error } = await supabase
       .from('tasks')
-      .update(updates as any)
+      .update(updates)
       .eq('user', user.id)
       .eq('status', 'done')
       .lt('completion_date', thirtyDaysAgo.toISOString())
@@ -232,7 +251,7 @@ export const restoreTask = async (taskId: string) => {
     };
     const { data, error } = await supabase
       .from('tasks')
-      .update(updates as any)
+      .update(updates)
       .eq('id', taskId)
       .eq('user', user.id)
       .select()

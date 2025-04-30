@@ -1,24 +1,36 @@
-
 // Define database schema types
 import { Database } from '@/integrations/supabase/types';
 
 export interface Task {
   id: string;
   title: string;
-  description?: string;
-  status: 'todo' | 'in-progress' | 'done';
-  priority: 'low' | 'medium' | 'high';
-  due_date?: string;
+  description?: string | null;
+  status: 'todo' | 'in_progress' | 'done' | null;
+  priority: 'low' | 'medium' | 'high' | null;
+  due_date?: string | null;
   project?: string | null;
-  user: string; // Changed from user_id to user to match the database
-  created_at: string;
-  updated_at: string;
+  user?: string | null;
+  archived?: boolean;
+  completion_date?: string | null;
+  labels?: string[];
+  parent_task_id?: string | null;
+  last_updated_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export interface Project {
   id: string;
   name: string;
-  color?: string;
+  description?: string | null;
+  color?: string | null;
+  status: 'active' | 'completed' | 'on-hold';
+  due_date?: string | null;
+  progress: number;
+  priority: 'low' | 'medium' | 'high';
+  user: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Make sure Event interface matches the database schema
