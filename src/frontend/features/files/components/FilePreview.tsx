@@ -3,16 +3,26 @@ import { canPreviewFile } from "@/backend/api/services/file.service";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/frontend/components/ui/tabs";
 import { Button } from "@/frontend/components/ui/button";
 import { Download, X } from "lucide-react";
+import { format } from 'date-fns';
 
 interface FilePreviewProps {
   fileUrl: string;
   fileName: string;
   fileType: string;
+  fileSize?: number;
+  uploadedAt?: string;
   onClose: () => void;
   onDownload: () => void;
 }
 
-export function FilePreview({ fileUrl, fileName, fileType, onClose, onDownload }: FilePreviewProps) {
+function formatFileSize(size?: number) {
+  if (size === undefined) return '~';
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+export function FilePreview({ fileUrl, fileName, fileType, fileSize, uploadedAt, onClose, onDownload }: FilePreviewProps) {
   const [previewMode, setPreviewMode] = useState<'preview' | 'info'>('preview');
   
   // Check if this file type is previewable
@@ -107,7 +117,10 @@ export function FilePreview({ fileUrl, fileName, fileType, onClose, onDownload }
             <dd>{fileType}</dd>
             
             <dt className="font-medium">Size:</dt>
-            <dd>Loading...</dd>
+            <dd>{formatFileSize(fileSize)}</dd>
+            
+            <dt className="font-medium">Uploaded At:</dt>
+            <dd>{uploadedAt ? format(new Date(uploadedAt), 'PPpp') : '~'}</dd>
           </dl>
         </TabsContent>
       </Tabs>

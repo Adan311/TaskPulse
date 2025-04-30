@@ -18,10 +18,10 @@ LIST:
 | FR-4 | Update Profile | Users can change their profile details | FR-1 |
 | FR-5 | Delete Account | Users can delete their account/data | FR-1 |
 | FR-6 | AI Chat Feature | Users chat with AI to break down tasks (stored in Supabase) | None |
-| FR-7 | Upload & Attach Files | Users can add files to tasks/events | FR-1 |
-| FR-8 | Preview Files | Users can view attached files | FR-1, FR-7 |
-| FR-9 | Remove Files | Users can delete files | FR-1, FR-7 |
-| FR-10 | Secure Storage | Files stored securely in Supabase/Google | FR-1, FR-7 |
+| FR-7 | Upload & Attach Files | Users can add files to tasks/events/projects. File size and upload date are visible in all views. | FR-1 |
+| FR-8 | Preview Files | Users can view attached files (with size and upload date shown). | FR-1, FR-7 |
+| FR-9 | Remove Files | Users can delete files. | FR-1, FR-7 |
+| FR-10 | Secure Storage | Files stored securely in Supabase/Google. | FR-1, FR-7 |
 | FR-11 | Display Tasks | System shows all tasks | FR-1 |
 | FR-12 | Display Events | System shows calendar events | FR-1 |
 | FR-13 | Edit Tasks/Events | Modify task/event details | FR-1, FR-11, FR-12 |
@@ -33,7 +33,7 @@ LIST:
 | FR-22 | Task Timers | Start timer for task | FR-1, FR-11 |
 | FR-24 | Create Projects | Group tasks/events into projects | FR-1 |
 | FR-25 | Assign to Projects | Assign tasks/events to projects | FR-1, FR-11, FR-12, FR-24 |
-| FR-26 | Attach Files to Projects | Add files to projects | FR-1, FR-7, FR-24 |
+| FR-26 | Attach Files to Projects | Add files to projects. File size and upload date are visible. | FR-1, FR-7, FR-24 |
 | FR-27 | Display Project Contents | Show all project info clearly | FR-1, FR-24 |
 | FR-28 | AI Suggest Tasks/Events | AI offers task/event ideas | FR-6 |
 | FR-33 | Custom Calendar View | List/Day/Week view for events | FR-1, FR-11, FR-12 |

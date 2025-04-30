@@ -44,6 +44,7 @@ export function useFiles(options?: {
       const uploadParams: fileService.FileUploadParams = {
         file,
         name: fileName,
+        size: file.size,
         project_id: options?.project_id,
         task_id: options?.task_id,
         event_id: options?.event_id,

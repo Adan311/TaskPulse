@@ -6,17 +6,19 @@ export interface FileItem {
   name: string;
   file: string;
   type: string;
+  size?: number; // in bytes
   user: string;
   project?: string | null;
   task?: string | null;
   event?: string | null;
-  created_at?: string;
+  uploaded_at?: string;
   updated_at?: string;
 }
 
 export interface FileUploadParams {
   file: File;
   name?: string;
+  size?: number; // in bytes
   project_id?: string;
   task_id?: string;
   event_id?: string;
@@ -131,10 +133,12 @@ export const uploadFile = async (params: FileUploadParams): Promise<FileItem> =>
       name: params.name || file.name,
       file: filePath,
       type: file.type,
+      size: file.size, // store file size in bytes
       user: user.id,
       project: params.project_id || null,
       task: params.task_id || null,
-      event: params.event_id || null
+      event: params.event_id || null,
+      uploaded_at: new Date().toISOString()
     };
 
     const { data, error } = await supabase

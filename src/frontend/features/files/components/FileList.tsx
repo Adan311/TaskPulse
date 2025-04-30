@@ -8,7 +8,7 @@ import {
   Dialog,
   DialogContent
 } from "@/frontend/components/ui/dialog";
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { supabase } from "@/integrations/supabase/client";
 
 interface FileListProps {
@@ -51,6 +51,8 @@ export function FileList({
     name: string;
     type: string;
     url: string;
+    size?: number;
+    uploadedAt?: string;
   } | null>(null);
 
   // Reload files if related props change
@@ -98,6 +100,14 @@ export function FileList({
     });
   }, [files, typeFilter]);
 
+  // Add a helper to format file size
+  function formatFileSize(size?: number) {
+    if (size === undefined) return '~';
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+  }
+
   // Sort files
   const sortedFiles = useMemo(() => {
     return [...filteredFiles].sort((a, b) => {
@@ -107,13 +117,15 @@ export function FileList({
         case 'name-desc':
           return b.name.localeCompare(a.name);
         case 'date-asc':
-          return new Date(a.created_at || '').getTime() - new Date(b.created_at || '').getTime();
+          return new Date(a.uploaded_at || '').getTime() - new Date(b.uploaded_at || '').getTime();
         case 'date-desc':
-          return new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime();
-        // For size, we'd need to have file size in the metadata
-        // For now, returning defaults
+          return new Date(b.uploaded_at || '').getTime() - new Date(a.uploaded_at || '').getTime();
+        case 'size-asc':
+          return (a.size || 0) - (b.size || 0);
+        case 'size-desc':
+          return (b.size || 0) - (a.size || 0);
         default:
-          return new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime();
+          return new Date(b.uploaded_at || '').getTime() - new Date(a.uploaded_at || '').getTime();
       }
     });
   }, [filteredFiles, sortBy]);
@@ -133,14 +145,16 @@ export function FileList({
     }
   };
 
-  const handlePreview = async (fileId: string, fileName: string, fileType: string) => {
+  const handlePreview = async (fileId: string, fileName: string, fileType: string, fileSize?: number, uploadedAt?: string) => {
     try {
       const url = await getDownloadUrl(fileId);
       setPreviewFile({
         id: fileId,
         name: fileName,
         type: fileType,
-        url
+        url,
+        size: fileSize,
+        uploadedAt: uploadedAt
       });
     } catch (error) {
       console.error('Error preparing preview:', error);
@@ -196,7 +210,7 @@ export function FileList({
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => handlePreview(file.id, file.name, file.type)}
+                        onClick={() => handlePreview(file.id, file.name, file.type, file.size, file.uploaded_at)}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -222,7 +236,10 @@ export function FileList({
                     {file.name}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    {file.created_at && formatDistanceToNow(new Date(file.created_at), { addSuffix: true })}
+                    {formatFileSize(file.size)}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {file.uploaded_at ? format(new Date(file.uploaded_at), 'PPpp') : '~'}
                   </div>
                 </div>
               </div>
@@ -244,6 +261,8 @@ export function FileList({
                 fileUrl={previewFile.url}
                 fileName={previewFile.name}
                 fileType={previewFile.type}
+                fileSize={previewFile.size}
+                uploadedAt={previewFile.uploadedAt}
                 onClose={() => setPreviewFile(null)}
                 onDownload={() => handleDownload(previewFile.id, previewFile.name)}
               />
@@ -260,33 +279,33 @@ export function FileList({
       {sortedFiles.length > 0 ? (
         <div className="space-y-1">
           <div className="grid grid-cols-12 px-3 py-2 text-xs font-medium text-muted-foreground border-b">
-            <div className="col-span-5">Name</div>
-            <div className="col-span-3">Type</div>
+            <div className="col-span-4">Name</div>
+            <div className="col-span-2">Type</div>
             <div className="col-span-2">Size</div>
-            <div className="col-span-2">Date</div>
+            <div className="col-span-3">Uploaded At</div>
+            <div className="col-span-1 text-center">Actions</div>
           </div>
           {sortedFiles.map((file) => (
             <div key={file.id} className="grid grid-cols-12 items-center p-2 border rounded hover:bg-accent/5 transition-colors">
-              <div className="col-span-5 flex items-center min-w-0">
+              <div className="col-span-4 flex items-center min-w-0">
                 {getFileIcon(file.type)}
-                <span className="truncate" title={file.name}>{file.name}</span>
+                <span className="truncate ml-1" title={file.name}>{file.name}</span>
               </div>
-              <div className="col-span-3 text-sm text-muted-foreground">
+              <div className="col-span-2 text-sm text-muted-foreground">
                 {file.type.split('/')[1]?.toUpperCase() || file.type}
               </div>
               <div className="col-span-2 text-sm text-muted-foreground">
-                {/* TODO: Display file size when available in metadata */}
-                ~
+                {formatFileSize(file.size)}
               </div>
-              <div className="col-span-2 text-sm text-muted-foreground">
-                {file.created_at && formatDistanceToNow(new Date(file.created_at), { addSuffix: true })}
+              <div className="col-span-3 text-xs text-muted-foreground">
+                {file.uploaded_at ? format(new Date(file.uploaded_at), 'PPpp') : '~'}
               </div>
-              <div className="col-span-12 md:col-span-12 flex justify-end space-x-1 mt-2 md:mt-0">
+              <div className="col-span-1 flex items-center justify-center space-x-1">
                 {showPreview && canPreview(file.type) && (
                   <Button
                     variant="ghost"
-                    size="sm"
-                    onClick={() => handlePreview(file.id, file.name, file.type)}
+                    size="icon"
+                    onClick={() => handlePreview(file.id, file.name, file.type, file.size, file.uploaded_at)}
                     title="Preview file"
                   >
                     <Eye className="h-4 w-4" />
@@ -294,7 +313,7 @@ export function FileList({
                 )}
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   onClick={() => handleDownload(file.id, file.name)}
                   title="Download file"
                 >
@@ -302,7 +321,7 @@ export function FileList({
                 </Button>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   onClick={() => deleteFile(file.id)}
                   title="Delete file"
                 >
@@ -329,6 +348,8 @@ export function FileList({
               fileUrl={previewFile.url}
               fileName={previewFile.name}
               fileType={previewFile.type}
+              fileSize={previewFile.size}
+              uploadedAt={previewFile.uploadedAt}
               onClose={() => setPreviewFile(null)}
               onDownload={() => handleDownload(previewFile.id, previewFile.name)}
             />
