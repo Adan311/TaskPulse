@@ -1,134 +1,161 @@
-
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from "@/frontend/components/ui/button";
-import { File, Trash2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/frontend/hooks/use-toast";
-
-interface FileItem {
-  id: string;
-  name: string;
-  file: string;
-  type: string;
-  created_at?: string;
-}
+import { File, Trash2, Download, Eye } from "lucide-react";
+import { useFiles } from "../hooks/useFiles";
+import { Skeleton } from "@/frontend/components/ui/skeleton";
+import { FilePreview } from "./FilePreview";
+import { 
+  Dialog,
+  DialogContent
+} from "@/frontend/components/ui/dialog";
 
 interface FileListProps {
-  relatedId?: string;
-  relatedType?: 'task' | 'event' | 'project';
+  project_id?: string;
+  task_id?: string;
+  event_id?: string;
+  showPreview?: boolean;
 }
 
-export function FileList({ relatedId, relatedType }: FileListProps) {
-  const [files, setFiles] = useState<FileItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+export function FileList({ project_id, task_id, event_id, showPreview = true }: FileListProps) {
+  const { 
+    files, 
+    loading, 
+    error, 
+    loadFiles, 
+    deleteFile, 
+    getDownloadUrl,
+    canPreview
+  } = useFiles({
+    project_id,
+    task_id,
+    event_id,
+    autoLoad: true
+  });
 
+  // Preview state
+  const [previewFile, setPreviewFile] = useState<{
+    id: string;
+    name: string;
+    type: string;
+    url: string;
+  } | null>(null);
+
+  // Reload files if related props change
   useEffect(() => {
     loadFiles();
-  }, [relatedId, relatedType]);
+  }, [project_id, task_id, event_id, loadFiles]);
 
-  const loadFiles = async () => {
+  const handleDownload = async (fileId: string, fileName: string) => {
     try {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        console.error('No authenticated user found');
-        return;
-      }
-
-      let query = supabase
-        .from('files')
-        .select('*')
-        .eq('user', user.id);
-
-      if (relatedId && relatedType) {
-        query = query.eq(relatedType, relatedId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      setFiles(data || []);
+      const url = await getDownloadUrl(fileId);
+      // Create a temporary anchor element for downloading
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     } catch (error) {
-      console.error('Error loading files:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load files",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      console.error('Error downloading file:', error);
     }
   };
 
-  const handleDelete = async (fileId: string, filePath: string) => {
+  const handlePreview = async (fileId: string, fileName: string, fileType: string) => {
     try {
-      // Delete from storage
-      const { error: storageError } = await supabase.storage
-        .from('files')
-        .remove([filePath]);
-
-      if (storageError) throw storageError;
-
-      // Delete from database
-      const { error: dbError } = await supabase
-        .from('files')
-        .delete()
-        .eq('id', fileId);
-
-      if (dbError) throw dbError;
-
-      setFiles(files.filter(f => f.id !== fileId));
-      
-      toast({
-        title: "File deleted",
-        description: "The file has been deleted successfully",
+      const url = await getDownloadUrl(fileId);
+      setPreviewFile({
+        id: fileId,
+        name: fileName,
+        type: fileType,
+        url
       });
     } catch (error) {
-      console.error('Error deleting file:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete file",
-        variant: "destructive",
-      });
+      console.error('Error preparing preview:', error);
     }
   };
 
   if (loading) {
-    return <div>Loading files...</div>;
+    return (
+      <div className="space-y-2">
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 text-sm text-red-500 bg-red-50 rounded-md">
+        Error loading files. Please try again.
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-2">
-      {files.length > 0 ? (
-        files.map((file) => (
-          <div key={file.id} className="flex items-center justify-between p-2 border rounded">
-            <div className="flex items-center">
-              <File className="h-4 w-4 mr-2" />
-              <a
-                href={supabase.storage.from('files').getPublicUrl(file.file).data.publicUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:underline"
-              >
-                {file.name}
-              </a>
+    <>
+      <div className="space-y-2">
+        {files.length > 0 ? (
+          files.map((file) => (
+            <div key={file.id} className="flex items-center justify-between p-2 border rounded">
+              <div className="flex items-center overflow-hidden">
+                <File className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate" title={file.name}>{file.name}</span>
+              </div>
+              <div className="flex space-x-1">
+                {showPreview && canPreview(file.type) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handlePreview(file.id, file.name, file.type)}
+                    title="Preview file"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDownload(file.id, file.name)}
+                  title="Download file"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => deleteFile(file.id)}
+                  title="Delete file"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleDelete(file.id, file.file)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+          ))
+        ) : (
+          <div className="text-sm text-muted-foreground text-center py-4">
+            No files uploaded yet
           </div>
-        ))
-      ) : (
-        <div className="text-sm text-muted-foreground text-center py-4">
-          No files uploaded yet
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+
+      {/* File Preview Dialog */}
+      <Dialog 
+        open={previewFile !== null} 
+        onOpenChange={(open) => !open && setPreviewFile(null)}
+      >
+        <DialogContent className="max-w-4xl w-[90vw]">
+          {previewFile && (
+            <FilePreview
+              fileUrl={previewFile.url}
+              fileName={previewFile.name}
+              fileType={previewFile.type}
+              onClose={() => setPreviewFile(null)}
+              onDownload={() => handleDownload(previewFile.id, previewFile.name)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

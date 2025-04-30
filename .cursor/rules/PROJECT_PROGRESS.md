@@ -34,16 +34,15 @@ This file tracks the status of all major features in your project, including wha
 - [✅] Notes CRUD (including sidebar copy/delete actions)
 - [❌] Rich text editing
 - [✅] Notes search/filter
-- [❌] Notes sharing/collaboration
 - [❌] Error handling for save/load
 - [❌] Tests
 
 ### 4. Files
 - [✅] File feature folder with components
 - [✅] File upload/download
-- [❌] File preview (inline)
-- [❌] File sharing/permissions
-- [❌] Error handling for upload/download
+- [✅] File preview (inline)
+- [✅] File sharing/permissions
+- [✅] Error handling for upload/download
 - [❌] Tests
 
 ### 5. Timer

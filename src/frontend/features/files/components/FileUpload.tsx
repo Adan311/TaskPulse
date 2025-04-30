@@ -1,28 +1,34 @@
-
 import { useState, useCallback } from 'react';
 import { Button } from "@/frontend/components/ui/button";
 import { Upload } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useFiles } from "../hooks/useFiles";
 import { useToast } from "@/frontend/hooks/use-toast";
-import { v4 as uuidv4 } from 'uuid';
 
 interface FileUploadProps {
   onUploadComplete?: (fileUrl: string, fileName: string) => void;
-  relatedId?: string;
-  relatedType?: 'task' | 'event' | 'project';
+  project_id?: string;
+  task_id?: string;
+  event_id?: string;
   allowedTypes?: string[];
   maxFileSize?: number;
 }
 
 export function FileUpload({ 
   onUploadComplete, 
-  relatedId, 
-  relatedType, 
+  project_id, 
+  task_id, 
+  event_id, 
   allowedTypes,
   maxFileSize = 10 * 1024 * 1024 // 10MB default
 }: FileUploadProps) {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
+  const { uploadFile, getDownloadUrl } = useFiles({
+    project_id,
+    task_id,
+    event_id,
+    autoLoad: false // Don't load files automatically, we just need the upload function
+  });
 
   const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -54,59 +60,15 @@ export function FileUpload({
 
       setUploading(true);
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to upload files",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('files')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      const fileId = uuidv4();
-
-      const { error: dbError } = await supabase
-        .from('files')
-        .insert({
-          id: fileId,
-          name: file.name,
-          file: filePath,
-          user: user.id,
-          type: file.type,
-          ...(relatedId && relatedType && {
-            [relatedType]: relatedId
-          })
-        });
-
-      if (dbError) {
-        throw dbError;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('files')
-        .getPublicUrl(filePath);
+      // Upload using our hook
+      const uploadedFile = await uploadFile(file);
+      
+      // Get download URL for the uploaded file
+      const downloadUrl = await getDownloadUrl(uploadedFile.id);
 
       if (onUploadComplete) {
-        onUploadComplete(publicUrl, file.name);
+        onUploadComplete(downloadUrl, file.name);
       }
-
-      toast({
-        title: "File uploaded",
-        description: "Your file has been uploaded successfully",
-      });
 
       // Reset the input value to allow re-uploading the same file
       if (event.target.form) {
@@ -116,15 +78,11 @@ export function FileUpload({
       }
     } catch (error) {
       console.error('Error uploading file:', error);
-      toast({
-        title: "Upload failed",
-        description: "There was an error uploading your file",
-        variant: "destructive",
-      });
+      // Error is already handled in the hook with toast
     } finally {
       setUploading(false);
     }
-  }, [onUploadComplete, relatedId, relatedType, toast, allowedTypes, maxFileSize]);
+  }, [onUploadComplete, toast, uploadFile, getDownloadUrl, allowedTypes, maxFileSize]);
 
   return (
     <div>

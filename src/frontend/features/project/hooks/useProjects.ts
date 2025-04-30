@@ -1,0 +1,194 @@
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/frontend/hooks/use-toast";
+import { v4 as uuidv4 } from "uuid";
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  user: string;
+  created_at?: string;
+}
+
+export function useProjects() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const { toast } = useToast();
+
+  const fetchProjects = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        setProjects([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user', user.id);
+
+      if (error) throw error;
+      
+      setProjects(data || []);
+    } catch (err: any) {
+      console.error("Error fetching projects:", err);
+      setError(err);
+      toast({
+        title: "Error loading projects",
+        description: err.message || "Failed to load projects. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
+
+  const createProject = useCallback(async (name: string, description: string = "") => {
+    try {
+      setLoading(true);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const newProject = {
+        id: uuidv4(),
+        name,
+        description,
+        user: user.id,
+      };
+
+      const { data, error } = await supabase
+        .from('projects')
+        .insert(newProject)
+        .select();
+
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setProjects(prev => [...prev, data[0]]);
+        toast({
+          title: "Project created",
+          description: "Your new project has been created successfully.",
+        });
+        return data[0];
+      }
+    } catch (err: any) {
+      console.error("Error creating project:", err);
+      toast({
+        title: "Error creating project",
+        description: err.message || "Failed to create project. Please try again.",
+        variant: "destructive",
+      });
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  const deleteProject = useCallback(async (projectId: string) => {
+    try {
+      setLoading(true);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', projectId)
+        .eq('user', user.id);
+
+      if (error) throw error;
+      
+      setProjects(prev => prev.filter(project => project.id !== projectId));
+      
+      toast({
+        title: "Project deleted",
+        description: "The project has been deleted successfully.",
+      });
+      
+      return true;
+    } catch (err: any) {
+      console.error("Error deleting project:", err);
+      toast({
+        title: "Error deleting project",
+        description: err.message || "Failed to delete project. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  const updateProject = useCallback(async (projectId: string, updates: Partial<Omit<Project, 'id' | 'user'>>) => {
+    try {
+      setLoading(true);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const { data, error } = await supabase
+        .from('projects')
+        .update(updates)
+        .eq('id', projectId)
+        .eq('user', user.id)
+        .select();
+
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setProjects(prev => prev.map(project => 
+          project.id === projectId ? data[0] : project
+        ));
+        
+        toast({
+          title: "Project updated",
+          description: "Your project has been updated successfully.",
+        });
+        
+        return data[0];
+      }
+    } catch (err: any) {
+      console.error("Error updating project:", err);
+      toast({
+        title: "Error updating project",
+        description: err.message || "Failed to update project. Please try again.",
+        variant: "destructive",
+      });
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  return {
+    projects,
+    loading,
+    error,
+    fetchProjects,
+    createProject,
+    deleteProject,
+    updateProject
+  };
+} 
