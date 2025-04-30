@@ -64,10 +64,10 @@ This file tracks the status of all major features in your project, including wha
 ### 7. Auth
 - [✅] Auth feature scaffolded
 - [✅] Login/signup pages
-- [❌] Password reset
-- [❌] Route protection
-- [❌] User profile/settings page
-- [❌] Error handling for auth
+- [✅] Password reset
+- [⏳] Route protection (most have we will do later after all musts are done)
+- [✅] User profile/settings page
+- [✅] Error handling for auth (settings page)
 - [❌] Tests
 
 ---
@@ -87,7 +87,7 @@ This file tracks the status of all major features in your project, including wha
 
 ## ⚠️ Error Handling
 - [✅] Basic error handling in services
-- [❌] User-friendly error messages in UI
+- [✅] User-friendly error messages in UI (settings page)
 - [❌] Error boundaries in React
 - [❌] Logging for backend errors
 
