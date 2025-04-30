@@ -73,6 +73,17 @@ interface NotePreviewItemProps {
 
 const NotePreviewItem: React.FC<NotePreviewItemProps> = ({ note, selected, setSelectedNoteId, pinAction, isPinned }) => {
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const { deleteNote } = useNotes();
+  // Copy logic
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(note.content);
+    setMenuOpen(false);
+  };
+  // Delete logic
+  const handleDelete = async () => {
+    await deleteNote(note.id);
+    setMenuOpen(false);
+  };
   return (
     <div
       className={`flex items-center px-4 py-2 cursor-pointer rounded-lg mb-1 hover:bg-accent ${selected ? "bg-accent/60 font-bold" : ""}`}
@@ -92,9 +103,9 @@ const NotePreviewItem: React.FC<NotePreviewItemProps> = ({ note, selected, setSe
         {menuOpen && (
           <div className="absolute right-0 mt-2 z-10 bg-card border rounded shadow-lg p-1 min-w-[120px]">
             <button className="w-full px-3 py-1 text-left hover:bg-accent rounded text-sm" onClick={e => { e.stopPropagation(); pinAction(note.id); setMenuOpen(false); }}>{isPinned ? "Unpin" : "Pin"}</button>
-            <button className="w-full px-3 py-1 text-left hover:bg-accent rounded text-sm" onClick={e => { e.stopPropagation(); /* TODO: Copy logic */ setMenuOpen(false); }}>Copy</button>
+            <button className="w-full px-3 py-1 text-left hover:bg-accent rounded text-sm" onClick={e => { e.stopPropagation(); handleCopy(); }}>Copy</button>
             <button className="w-full px-3 py-1 text-left hover:bg-accent rounded text-sm" onClick={e => { e.stopPropagation(); /* TODO: Add to project */ setMenuOpen(false); }}>Add to Project</button>
-            <button className="w-full px-3 py-1 text-left hover:bg-destructive/20 text-destructive rounded text-sm" onClick={e => { e.stopPropagation(); /* TODO: Delete logic */ setMenuOpen(false); }}>Delete</button>
+            <button className="w-full px-3 py-1 text-left hover:bg-destructive/20 text-destructive rounded text-sm" onClick={e => { e.stopPropagation(); handleDelete(); }}>Delete</button>
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 # Project Progress & TODOs
 
-This file tracks the status of all major features in your project, including what’s done, what’s left, and suggestions for improvement. Use ✅ for completed and ❌ for pending/incomplete items.
+This file tracks the status of all major features in your project, including what's done, what's left, and suggestions for improvement. Use ✅ for completed and ❌ for pending/incomplete items.
 
 ---
 
@@ -31,8 +31,9 @@ This file tracks the status of all major features in your project, including wha
 ### 3. Notes
 - [✅] Notes feature folder with components
 - [✅] Dedicated Notes page in /pages
+- [✅] Notes CRUD (including sidebar copy/delete actions)
 - [❌] Rich text editing
-- [❌] Notes search/filter
+- [✅] Notes search/filter
 - [❌] Notes sharing/collaboration
 - [❌] Error handling for save/load
 - [❌] Tests
@@ -102,8 +103,10 @@ This file tracks the status of all major features in your project, including wha
 ## How to Use This File
 - Update checkboxes as you complete features or improvements.
 - Add new sections as you add features.
-- Use this as a quick reference for what’s done and what’s next!
+- Use this as a quick reference for what's done and what's next!
 
 ---
 
-_Last updated: 2025-04-27_
+_Last updated: 2025-04-30_
+
+
