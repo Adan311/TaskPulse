@@ -18,6 +18,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/frontend/components/ui/avatar";
 import { useTheme } from "@/frontend/components/theme/theme-provider";
 import { ModeToggle } from "@/frontend/components/theme/mode-toggle";
+import { useUser } from "@/frontend/components/ui/user-context";
 
 const mainItems = [
   {
@@ -65,35 +66,9 @@ const mainItems = [
 export function AppSidebar() {
   const { state, toggleSidebar } = useSidebar();
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user } = useUser();
   const isCollapsed = state === "collapsed";
   const { theme, setTheme } = useTheme();
-
-  useEffect(() => {
-    async function getUserProfile() {
-      try {
-        const { data } = await supabase.auth.getUser();
-        setUser(data.user);
-      } catch (error) {
-        console.error("Error fetching user:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    getUserProfile();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user || null);
-      }
-    );
-
-    return () => {
-      authListener?.subscription?.unsubscribe();
-    };
-  }, []);
 
   const handleLogout = async () => {
     try {
@@ -171,10 +146,10 @@ export function AppSidebar() {
               <div className={`flex items-center p-2 rounded-md ${isCollapsed ? 'justify-center' : 'gap-2'}`}>
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="" alt={user.email} />
-                  <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
+                  <AvatarFallback>{user.user_metadata?.first_name ? user.user_metadata.first_name.substring(0,2).toUpperCase() : getInitials(user.email)}</AvatarFallback>
                 </Avatar>
                 <div className={`flex flex-col ${isCollapsed ? 'hidden' : 'block'}`}>
-                  <span className="text-sm font-medium">{user.email?.split('@')[0]}</span>
+                  <span className="text-sm font-medium">{user.user_metadata?.first_name || user.email?.split('@')[0]}</span>
                   <span className="text-xs text-muted-foreground">{user.email}</span>
                 </div>
               </div>
@@ -186,14 +161,6 @@ export function AppSidebar() {
                 <LogOut className="h-4 w-4" />
                 {!isCollapsed && <span>Logout</span>}
               </SidebarMenuButton>
-            </div>
-          ) : loading ? (
-            <div className="flex items-center gap-2 p-2">
-              <div className="h-8 w-8 rounded-full bg-muted animate-pulse"></div>
-              <div className={`space-y-1 ${isCollapsed ? "hidden" : "block"}`}>
-                <div className="h-3 w-20 bg-muted rounded animate-pulse"></div>
-                <div className="h-2 w-24 bg-muted rounded animate-pulse"></div>
-              </div>
             </div>
           ) : (
             <SidebarMenuButton 
