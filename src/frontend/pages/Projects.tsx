@@ -1,10 +1,15 @@
-import { AppLayout } from "@/frontend/components/layout/AppLayout";
-import { Projects as ProjectsFeature } from "@/frontend/features/project/components/Projects";
+import React from 'react';
+import { Outlet, useParams } from 'react-router-dom';
+import { Projects as ProjectsList } from '@/frontend/features/project/components/Projects';
 
 export default function Projects() {
-  return (
-    <AppLayout>
-      <ProjectsFeature />
-    </AppLayout>
-  );
+  const { id } = useParams();
+  
+  // If there's no project ID, show the projects list
+  if (!id) {
+    return <ProjectsList />;
+  }
+  
+  // If there is a project ID, show the detail view via outlet
+  return <Outlet />;
 }

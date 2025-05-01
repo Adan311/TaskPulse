@@ -22,6 +22,8 @@ import {
 import { format } from 'date-fns';
 import { Project } from '@/backend/types/supabaseSchema';
 import { ProjectTasks } from './ProjectTasks';
+import { ProjectEvents } from './ProjectEvents';
+import { ProjectFiles } from './ProjectFiles';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -166,13 +168,11 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
           </TabPanel>
 
           <TabPanel value={tabValue} index={1}>
-            {/* Events Component */}
-            <Typography>Events will be displayed here</Typography>
+            <ProjectEvents projectId={project.id} />
           </TabPanel>
 
           <TabPanel value={tabValue} index={2}>
-            {/* Files Component */}
-            <Typography>Files will be displayed here</Typography>
+            <ProjectFiles projectId={project.id} />
           </TabPanel>
 
           <TabPanel value={tabValue} index={3}>

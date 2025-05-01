@@ -14,6 +14,7 @@ import SignIn from "./frontend/pages/auth/SignIn";
 import SignUp from "./frontend/pages/auth/SignUp";
 import NotesPage from "./frontend/pages/Notes";
 import Settings from "./frontend/pages/Settings";
+import ProjectDetailPage from "./frontend/pages/ProjectDetailPage";
 import "./index.css";
 import { ThemeProvider } from "./frontend/components/theme/theme-provider";
 import { Toaster } from "./frontend/components/ui/toaster";
@@ -41,6 +42,12 @@ const router = createBrowserRouter([
       {
         path: "projects",
         element: <Projects />,
+        children: [
+          {
+            path: ":id",
+            element: <ProjectDetailPage />,
+          },
+        ],
       },
       {
         path: "files",
