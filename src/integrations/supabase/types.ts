@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
       ai_metadata: {
@@ -231,44 +231,56 @@ export type Database = {
       }
       tasks: {
         Row: {
-          description: string | null
-          due_date: string | null
-          id: string
-          priority: string | null
-          project: string | null
-          status: string | null
-          title: string
-          user: string | null
-        }
+          id: string;
+          title: string;
+          description: string | null;
+          status: string | null;
+          priority: string | null;
+          due_date: string | null;
+          user: string | null;
+          project: string | null;
+          archived: boolean | null;
+          completion_date: string | null;
+          labels: string[] | null;
+          parent_task_id: string | null;
+          last_updated_at: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
         Insert: {
-          description?: string | null
-          due_date?: string | null
-          id: string
-          priority?: string | null
-          project?: string | null
-          status?: string | null
-          title: string
-          user?: string | null
-        }
+          id?: string;
+          title: string;
+          description?: string | null;
+          status?: string | null;
+          priority?: string | null;
+          due_date?: string | null;
+          user?: string | null;
+          project?: string | null;
+          archived?: boolean | null;
+          completion_date?: string | null;
+          labels?: string[] | null;
+          parent_task_id?: string | null;
+          last_updated_at?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
         Update: {
-          description?: string | null
-          due_date?: string | null
-          id?: string
-          priority?: string | null
-          project?: string | null
-          status?: string | null
-          title?: string
-          user?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tasks_project_fkey"
-            columns: ["project"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
+          id?: string;
+          title?: string;
+          description?: string | null;
+          status?: string | null;
+          priority?: string | null;
+          due_date?: string | null;
+          user?: string | null;
+          project?: string | null;
+          archived?: boolean | null;
+          completion_date?: string | null;
+          labels?: string[] | null;
+          parent_task_id?: string | null;
+          last_updated_at?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
       }
     }
     Views: {

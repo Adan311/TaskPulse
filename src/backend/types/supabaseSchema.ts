@@ -10,9 +10,9 @@ export interface Task {
   due_date?: string | null;
   project?: string | null;
   user?: string | null;
-  archived?: boolean;
+  archived?: boolean | null;
   completion_date?: string | null;
-  labels?: string[];
+  labels?: string[] | null;
   parent_task_id?: string | null;
   last_updated_at?: string | null;
   created_at?: string | null;

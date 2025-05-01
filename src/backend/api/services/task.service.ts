@@ -2,8 +2,29 @@ import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { TaskFilters } from '@/frontend/features/tasks/components/TaskFilterBar';
 import { Task } from '@/backend/types/supabaseSchema';
+import { Database } from '@/integrations/supabase/types';
 
-export const fetchTasks = async (filters?: TaskFilters) => {
+type DbTask = Database['public']['Tables']['tasks']['Row'];
+
+const mapDbTaskToTask = (dbTask: DbTask): Task => ({
+  id: dbTask.id,
+  title: dbTask.title,
+  description: dbTask.description,
+  status: dbTask.status as Task['status'],
+  priority: dbTask.priority as Task['priority'],
+  due_date: dbTask.due_date,
+  project: dbTask.project,
+  user: dbTask.user,
+  archived: dbTask.archived || false,
+  completion_date: dbTask.completion_date,
+  labels: dbTask.labels || [],
+  parent_task_id: dbTask.parent_task_id,
+  last_updated_at: dbTask.last_updated_at,
+  created_at: dbTask.created_at,
+  updated_at: dbTask.updated_at,
+});
+
+export const fetchTasks = async (filters?: TaskFilters): Promise<Task[]> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
@@ -38,7 +59,7 @@ export const fetchTasks = async (filters?: TaskFilters) => {
 
     const { data, error } = await query.order('created_at', { ascending: false });
     if (error) throw error;
-    return data as Task[];
+    return (data || []).map(mapDbTaskToTask);
   } catch (error) {
     console.error('Error fetching tasks:', error);
     throw error;
@@ -65,7 +86,7 @@ export const fetchProjectTasks = async (projectId: string): Promise<Task[]> => {
     throw error;
   }
 
-  return data || [];
+  return (data || []).map(mapDbTaskToTask);
 };
 
 export const createTask = async (task: Omit<Task, "id" | "user" | "created_at" | "updated_at">): Promise<Task> => {
@@ -85,18 +106,19 @@ export const createTask = async (task: Omit<Task, "id" | "user" | "created_at" |
   const { data, error } = await supabase
     .from("tasks")
     .insert([newTask])
-    .select();
+    .select()
+    .single();
 
   if (error) {
     console.error("Error creating task:", error);
     throw error;
   }
 
-  if (!data || data.length === 0) {
+  if (!data) {
     throw new Error("Failed to create task");
   }
 
-  return data[0];
+  return mapDbTaskToTask(data);
 };
 
 export const updateTask = async (taskId: string, updates: Partial<Omit<Task, "id" | "user" | "created_at">>): Promise<Task> => {
@@ -111,18 +133,19 @@ export const updateTask = async (taskId: string, updates: Partial<Omit<Task, "id
     .update(updates)
     .eq("id", taskId)
     .eq("user", user.id)
-    .select();
+    .select()
+    .single();
 
   if (error) {
     console.error("Error updating task:", error);
     throw error;
   }
 
-  if (!data || data.length === 0) {
+  if (!data) {
     throw new Error("Failed to update task or task not found");
   }
 
-  return data[0];
+  return mapDbTaskToTask(data);
 };
 
 export const deleteTask = async (taskId: string): Promise<boolean> => {
@@ -150,11 +173,13 @@ export const updateTaskStatus = async (taskId: string, status: Task['status']) =
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
-    const updates: Partial<Task> = {
+    
+    const updates: Partial<DbTask> = {
       status,
       completion_date: status === 'done' ? new Date().toISOString() : null,
       last_updated_at: new Date().toISOString(),
     };
+
     const { data, error } = await supabase
       .from('tasks')
       .update(updates)
@@ -162,8 +187,11 @@ export const updateTaskStatus = async (taskId: string, status: Task['status']) =
       .eq('user', user.id)
       .select()
       .single();
+
     if (error) throw error;
-    return data as Task;
+    if (!data) throw new Error("Task not found");
+    
+    return mapDbTaskToTask(data);
   } catch (error) {
     console.error('Error updating task status:', error);
     throw error;
@@ -174,10 +202,12 @@ export const archiveTask = async (taskId: string) => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
-    const updates = {
+    
+    const updates: Partial<DbTask> = {
       archived: true,
       last_updated_at: new Date().toISOString(),
     };
+
     const { data, error } = await supabase
       .from('tasks')
       .update(updates)
@@ -185,8 +215,11 @@ export const archiveTask = async (taskId: string) => {
       .eq('user', user.id)
       .select()
       .single();
+
     if (error) throw error;
-    return data as Task;
+    if (!data) throw new Error("Task not found");
+    
+    return mapDbTaskToTask(data);
   } catch (error) {
     console.error('Error archiving task:', error);
     throw error;
@@ -197,18 +230,23 @@ export const bulkArchiveTasks = async (taskIds: string[]) => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
-    const updates = {
+    
+    const updates: Partial<DbTask> = {
       archived: true,
       last_updated_at: new Date().toISOString(),
     };
+
     const { data, error } = await supabase
       .from('tasks')
       .update(updates)
       .in('id', taskIds)
       .eq('user', user.id)
       .select();
+
     if (error) throw error;
-    return data as Task[];
+    if (!data) throw new Error("No tasks found");
+    
+    return data.map(mapDbTaskToTask);
   } catch (error) {
     console.error('Error bulk archiving tasks:', error);
     throw error;
@@ -219,12 +257,15 @@ export const autoArchiveOldTasks = async () => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
+    
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const updates = {
+    
+    const updates: Partial<DbTask> = {
       archived: true,
       last_updated_at: new Date().toISOString(),
     };
+
     const { data, error } = await supabase
       .from('tasks')
       .update(updates)
@@ -233,8 +274,11 @@ export const autoArchiveOldTasks = async () => {
       .lt('completion_date', thirtyDaysAgo.toISOString())
       .eq('archived', false)
       .select();
+
     if (error) throw error;
-    return data as Task[];
+    if (!data) return [];
+    
+    return data.map(mapDbTaskToTask);
   } catch (error) {
     console.error('Error auto-archiving old tasks:', error);
     throw error;
@@ -245,10 +289,12 @@ export const restoreTask = async (taskId: string) => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
-    const updates = {
+    
+    const updates: Partial<DbTask> = {
       archived: false,
       last_updated_at: new Date().toISOString(),
     };
+
     const { data, error } = await supabase
       .from('tasks')
       .update(updates)
@@ -256,8 +302,11 @@ export const restoreTask = async (taskId: string) => {
       .eq('user', user.id)
       .select()
       .single();
+
     if (error) throw error;
-    return data as Task;
+    if (!data) throw new Error("Task not found");
+    
+    return mapDbTaskToTask(data);
   } catch (error) {
     console.error('Error restoring task:', error);
     throw error;
@@ -268,11 +317,13 @@ export const deleteTaskPermanently = async (taskId: string) => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
+    
     const { error } = await supabase
       .from('tasks')
       .delete()
       .eq('id', taskId)
       .eq('user', user.id);
+
     if (error) throw error;
   } catch (error) {
     console.error('Error permanently deleting task:', error);
