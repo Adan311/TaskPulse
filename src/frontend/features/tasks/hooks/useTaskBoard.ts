@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { DropResult } from '@hello-pangea/dnd';
 import { useToast } from '@/frontend/hooks/use-toast';
-import { 
-  Task, 
-  fetchTasks, 
-  createTask, 
-  updateTask, 
-  deleteTask, 
+import { Task } from '@/backend/types/supabaseSchema';
+import {
+  fetchTasks,
+  createTask,
+  updateTask,
+  deleteTask,
   updateTaskStatus,
   archiveTask,
   bulkArchiveTasks,
@@ -94,9 +94,9 @@ export function useTaskBoard() {
     }
   };
 
-  const handleCreateTask = async (taskData: Omit<Task, "id" | "user">) => {
+  const handleCreateTask = async (taskData: Partial<Omit<Task, "id" | "user" | "created_at" | "updated_at">>) => {
     try {
-      await createTask(taskData);
+      await createTask(taskData as any);
       await loadTasks();
       toast({
         title: 'Success',
@@ -112,14 +112,11 @@ export function useTaskBoard() {
     }
   };
 
-  const handleUpdateTask = async (taskData: Omit<Task, "id" | "user">) => {
+  const handleUpdateTask = async (taskData: Partial<Omit<Task, "id" | "user" | "created_at" | "updated_at">>) => {
     if (!selectedTask) return;
     
     try {
-      await updateTask({
-        id: selectedTask.id,
-        ...taskData,
-      });
+      await updateTask(selectedTask.id, taskData);
       await loadTasks();
       toast({
         title: 'Success',
@@ -241,7 +238,7 @@ export function useTaskBoard() {
     setDialogOpen(true);
   };
 
-  const handleSaveTask = (taskData: Omit<Task, "id" | "user">) => {
+  const handleSaveTask = (taskData: Partial<Omit<Task, "id" | "user" | "created_at" | "updated_at">>) => {
     if (selectedTask) {
       handleUpdateTask(taskData);
     } else {

@@ -1,7 +1,7 @@
 import { Droppable } from '@hello-pangea/dnd';
 import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/ui/card';
 import { TaskList } from './TaskList';
-import { Task } from '@/backend/api/services/task.service';
+import { Task } from '@/backend/types/supabaseSchema';
 
 // Removed ScrollArea; use native div with overflow-auto for proper DnD behavior
 

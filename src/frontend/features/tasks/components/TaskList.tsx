@@ -1,4 +1,4 @@
-import { Task } from '@/backend/api/services/task.service';
+import { Task } from '@/backend/types/supabaseSchema';
 import { TaskCard } from './TaskCard';
 import { motion } from 'framer-motion';
 import { Draggable } from '@hello-pangea/dnd';

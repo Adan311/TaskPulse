@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/frontend/components/ui/select";
 import { Label } from "@/frontend/components/ui/label";
-import { Task } from "@/backend/api/services/task.service";
+import { Task } from '@/backend/types/supabaseSchema';
 import { useToast } from "@/frontend/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";

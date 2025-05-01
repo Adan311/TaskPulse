@@ -4,7 +4,7 @@ import { TaskColumnsContainer } from './TaskColumnsContainer';
 import { TaskBoardLoader } from './TaskBoardLoader';
 import { TaskFilterBar, TaskFilters } from './TaskFilterBar';
 import { useTaskBoard } from '../hooks/useTaskBoard';
-import { Task, restoreTask, deleteTaskPermanently } from '@/backend/api/services/task.service';
+import { restoreTask, deleteTaskPermanently } from '@/backend/api/services/task.service';
 import { ErrorBoundary } from '@/frontend/components/ErrorBoundary';
 import { Button } from '@/frontend/components/ui/button';
 import { Archive } from 'lucide-react';

@@ -1,6 +1,6 @@
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { TaskColumn } from './TaskColumn';
-import { Task } from '@/backend/api/services/task.service';
+import { Task } from '@/backend/types/supabaseSchema';
 import { motion } from 'framer-motion';
 
 interface TaskColumnsContainerProps {
