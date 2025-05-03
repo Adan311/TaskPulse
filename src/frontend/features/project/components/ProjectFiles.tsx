@@ -1,28 +1,27 @@
 import React, { useState, useCallback } from 'react';
-import {
-  Box,
-  Button,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-  IconButton,
-} from '@mui/material';
-import {
-  InsertDriveFile as FileIcon,
-  Delete as DeleteIcon,
-  CloudUpload as UploadIcon,
-} from '@mui/icons-material';
 import { useToast } from '@/frontend/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Upload as UploadIcon, File as FileIcon, Trash2 as TrashIcon, FileText, Image as ImageIcon, Archive as ArchiveIcon } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { cn } from '@/frontend/lib/utils';
 
 interface ProjectFilesProps {
   projectId: string;
 }
 
+interface FileItem {
+  id: string;
+  name: string;
+  path: string;
+  size: number;
+  type: string;
+  created_at: string;
+}
+
 export const ProjectFiles: React.FC<ProjectFilesProps> = ({ projectId }) => {
-  const [files, setFiles] = useState<any[]>([]);
+  const [files, setFiles] = useState<FileItem[]>([]);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
@@ -136,60 +135,98 @@ export const ProjectFiles: React.FC<ProjectFilesProps> = ({ projectId }) => {
     }
   };
 
+  const getFileIcon = (fileType: string) => {
+    if (fileType.includes('pdf')) {
+      return <FileText className="h-8 w-8 text-red-500" />;
+    } else if (fileType.includes('image')) {
+      return <ImageIcon className="h-8 w-8 text-blue-500" />;
+    } else if (fileType.includes('text') || fileType.includes('document')) {
+      return <FileText className="h-8 w-8 text-yellow-500" />;
+    } else if (fileType.includes('zip') || fileType.includes('compressed')) {
+      return <ArchiveIcon className="h-8 w-8 text-purple-500" />;
+    } else {
+      return <FileIcon className="h-8 w-8 text-gray-500" />;
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) {
+      return bytes + ' B';
+    } else if (bytes < 1024 * 1024) {
+      return (bytes / 1024).toFixed(1) + ' KB';
+    } else {
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+  };
+
   React.useEffect(() => {
     fetchFiles();
   }, [fetchFiles]);
 
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h6">Project Files</Typography>
-        <Button
-          variant="contained"
-          component="label"
-          startIcon={<UploadIcon />}
-          disabled={uploading}
-        >
-          Upload File
-          <input
-            type="file"
-            hidden
-            onChange={handleFileUpload}
-            accept="*/*"
-          />
-        </Button>
-      </Box>
-
+    <div className="space-y-4">
       {files.length === 0 ? (
-        <Typography color="textSecondary" align="center">
-          No files uploaded yet
-        </Typography>
+        <div className="text-center py-8">
+          <p className="text-muted-foreground mb-4">No files uploaded yet</p>
+          <Button className="relative" disabled={uploading}>
+            <input
+              type="file"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              onChange={handleFileUpload}
+              accept="*/*"
+            />
+            <UploadIcon className="h-4 w-4 mr-2" />
+            Upload File
+          </Button>
+        </div>
       ) : (
-        <List>
-          {files.map((file) => (
-            <ListItem
-              key={file.id}
-              secondaryAction={
-                <IconButton
-                  edge="end"
-                  aria-label="delete"
-                  onClick={() => handleDelete(file.id, file.path)}
-                >
-                  <DeleteIcon />
-                </IconButton>
-              }
-            >
-              <ListItemIcon>
-                <FileIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary={file.name}
-                secondary={`${(file.size / 1024).toFixed(2)} KB`}
+        <>
+          <div className="flex justify-end mb-4">
+            <Button className="relative" disabled={uploading}>
+              <input
+                type="file"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                onChange={handleFileUpload}
+                accept="*/*"
               />
-            </ListItem>
-          ))}
-        </List>
+              <UploadIcon className="h-4 w-4 mr-2" />
+              Upload File
+            </Button>
+          </div>
+          
+          <div className="grid gap-4">
+            {files.map((file) => (
+              <Card key={file.id} className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="flex items-center p-4">
+                    <div className="mr-4">
+                      {getFileIcon(file.type)}
+                    </div>
+                    <div className="flex-grow min-w-0">
+                      <h3 className="font-medium truncate">{file.name}</h3>
+                      <div className="flex text-xs text-muted-foreground mt-1 space-x-4">
+                        <span>{formatFileSize(file.size)}</span>
+                        {file.created_at && (
+                          <span>Uploaded {formatDistanceToNow(new Date(file.created_at), { addSuffix: true })}</span>
+                        )}
+                      </div>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-destructive" 
+                      onClick={() => handleDelete(file.id, file.path)}
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                      <span className="sr-only">Delete</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </>
       )}
-    </Box>
+    </div>
   );
 }; 
