@@ -1,14 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { format, differenceInDays } from 'date-fns';
-import { Project } from '@/backend/types/supabaseSchema';
+import { Project, Task } from '@/backend/types/supabaseSchema';
 import { ProjectTasks } from './ProjectTasks';
 import { ProjectEvents } from './ProjectEvents';
 import { ProjectFiles } from './ProjectFiles';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/frontend/components/ui/card';
+import { Button } from '@/frontend/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/frontend/components/ui/tabs';
 import { PencilIcon, TrashIcon, Share2Icon } from 'lucide-react';
 import { cn } from '@/frontend/lib/utils';
+import { useNotes } from '@/frontend/features/notes/hooks/useNotes';
+import { NoteViewer } from '@/frontend/features/notes/components/NoteViewer';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/frontend/components/ui/dialog';
+import { EventForm } from '@/frontend/features/calendar/components/EventForm';
+import { Label } from '@/frontend/components/ui/label';
+import { Input } from '@/frontend/components/ui/input';
+import { Textarea } from '@/frontend/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/frontend/components/ui/select';
+import { createTask } from '@/backend/api/services/task.service';
+import { useToast } from '@/frontend/hooks/use-toast';
+import { useFiles } from '@/frontend/features/files/hooks/useFiles';
 
 interface ProjectDetailProps {
   project: Project;
@@ -25,6 +36,128 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
   const daysRemaining = project.due_date 
     ? differenceInDays(new Date(project.due_date), new Date())
     : null;
+  
+  // Refs for child components
+  const projectNotesRef = useRef<{ handleNew: () => void }>(null);
+  const projectEventsRef = useRef<{ refreshEvents: () => void }>(null);
+  const projectFilesRef = useRef<{ refreshFiles: () => void }>(null);
+  const projectTasksRef = useRef<{ refreshTasks: () => void }>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // State for dialogs
+  const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  
+  // Event handlers
+  const handleAddNote = () => {
+    projectNotesRef.current?.handleNew();
+    setActiveTab("notes");
+  };
+  
+  const [taskTitle, setTaskTitle] = useState('');
+  const [taskDescription, setTaskDescription] = useState('');
+  const [taskStatus, setTaskStatus] = useState<Task['status']>('todo');
+  const [taskPriority, setTaskPriority] = useState<Task['priority']>('medium');
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
+  
+  const { toast } = useToast();
+  
+  const { uploadFile } = useFiles({ project_id: project.id });
+  const [isUploading, setIsUploading] = useState(false);
+  
+  const handleAddTask = () => {
+    setTaskTitle('');
+    setTaskDescription('');
+    setTaskStatus('todo');
+    setTaskPriority('medium');
+    setIsTaskDialogOpen(true);
+    setActiveTab("tasks");
+  };
+  
+  const handleAddEvent = () => {
+    setIsEventDialogOpen(true);
+    setActiveTab("events");
+  };
+  
+  const handleUploadFile = () => {
+    fileInputRef.current?.click();
+    setActiveTab("files");
+  };
+  
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setIsUploading(true);
+      
+      try {
+        await uploadFile(file);
+        toast({
+          title: "Success",
+          description: "File uploaded successfully",
+        });
+        // Refresh files list
+        projectFilesRef.current?.refreshFiles();
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        toast({
+          title: "Error",
+          description: "Failed to upload file. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsUploading(false);
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+    }
+  };
+  
+  const handleEventSuccess = () => {
+    setIsEventDialogOpen(false);
+    // Refresh events list
+    projectEventsRef.current?.refreshEvents();
+  };
+
+  const handleTaskSuccess = () => {
+    setIsTaskDialogOpen(false);
+    // Refresh tasks list
+    projectTasksRef.current?.refreshTasks();
+  };
+
+  const handleCreateTask = async () => {
+    if (!taskTitle.trim()) return;
+    
+    setIsCreatingTask(true);
+    try {
+      await createTask({
+        title: taskTitle,
+        description: taskDescription,
+        status: taskStatus,
+        priority: taskPriority,
+        project: project.id
+      });
+      
+      toast({
+        title: "Success",
+        description: "Task created successfully",
+      });
+      
+      setIsTaskDialogOpen(false);
+      setTaskTitle('');
+      setTaskDescription('');
+    } catch (error) {
+      console.error("Error creating task:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create task. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingTask(false);
+    }
+  };
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -118,60 +251,42 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
             <TabsContent value="tasks" className="space-y-4">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Tasks</h2>
-                <Button size="sm">Add Task</Button>
+                <Button size="sm" onClick={handleAddTask}>Add Task</Button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="col-span-1">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">To Do</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ProjectTasks projectId={project.id} />
-                  </CardContent>
-                </Card>
-                <Card className="col-span-1">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">In Progress</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {/* In Progress Tasks */}
-                  </CardContent>
-                </Card>
-                <Card className="col-span-1">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Done</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Done Tasks */}
-                  </CardContent>
-                </Card>
-              </div>
+              <ProjectTasks ref={projectTasksRef} projectId={project.id} />
             </TabsContent>
             
             <TabsContent value="events">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Events</h2>
-                <Button size="sm">Add Event</Button>
+                <Button size="sm" onClick={handleAddEvent}>Add Event</Button>
               </div>
-              <ProjectEvents projectId={project.id} />
+              <ProjectEvents ref={projectEventsRef} projectId={project.id} />
             </TabsContent>
             
             <TabsContent value="files">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Files</h2>
-                <Button size="sm">Upload</Button>
+                <Button size="sm" onClick={handleUploadFile}>Upload</Button>
               </div>
-              <ProjectFiles projectId={project.id} />
+              <ProjectFiles ref={projectFilesRef} projectId={project.id} />
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                onChange={handleFileSelected}
+              />
             </TabsContent>
             
             <TabsContent value="notes">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Notes</h2>
-                <Button size="sm">Add Note</Button>
+                <Button size="sm" onClick={handleAddNote}>Add Note</Button>
               </div>
               <Card>
                 <CardContent className="pt-6">
-                  <p>Notes will be displayed here</p>
+                  {/* Project-specific notes */}
+                  <ProjectNotes ref={projectNotesRef} projectId={project.id} />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -184,7 +299,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-lg font-medium">Upcoming Events</CardTitle>
-              <Button size="sm" variant="outline">Add Event</Button>
+              <Button size="sm" variant="outline" onClick={handleAddEvent}>Add Event</Button>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -215,7 +330,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-lg font-medium">Notes</CardTitle>
-              <Button size="sm" variant="outline">Add Note</Button>
+              <Button size="sm" variant="outline" onClick={handleAddNote}>Add Note</Button>
             </CardHeader>
             <CardContent>
               <div className="border rounded-lg p-3">
@@ -227,6 +342,176 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
           </Card>
         </div>
       </div>
+      
+      {/* Event Dialog */}
+      <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <EventForm 
+            onSuccess={handleEventSuccess}
+            onCancel={() => setIsEventDialogOpen(false)}
+            event={{ 
+              id: '', 
+              title: '', 
+              startTime: new Date().toISOString(), 
+              endTime: new Date(Date.now() + 3600000).toISOString(),
+              project: project.id,
+              participants: []
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Task Dialog */}
+      <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create Task</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="task-title">Title</Label>
+              <Input 
+                id="task-title" 
+                placeholder="Task title" 
+                value={taskTitle}
+                onChange={(e) => setTaskTitle(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="task-description">Description</Label>
+              <Textarea 
+                id="task-description" 
+                placeholder="Task description"
+                value={taskDescription}
+                onChange={(e) => setTaskDescription(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="task-status">Status</Label>
+                <Select 
+                  value={taskStatus}
+                  onValueChange={(value: Task['status']) => setTaskStatus(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todo">To Do</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="done">Done</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="task-priority">Priority</Label>
+                <Select 
+                  value={taskPriority}
+                  onValueChange={(value: Task['priority']) => setTaskPriority(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsTaskDialogOpen(false)}>Cancel</Button>
+            <Button 
+              onClick={handleCreateTask} 
+              disabled={!taskTitle.trim() || isCreatingTask}
+            >
+              {isCreatingTask ? 'Creating...' : 'Create Task'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
-}; 
+};
+
+interface ProjectNotesProps {
+  projectId: string;
+}
+
+const ProjectNotes = React.forwardRef<{ handleNew: () => void }, ProjectNotesProps>(({ projectId }, ref) => {
+  const {
+    user,
+    notes,
+    fetchNotes,
+    addNote,
+    deleteNote,
+    pinNote,
+    unpinNote,
+    editingId,
+    editContent,
+    setEditContent,
+    editInputRef,
+    startEdit,
+    saveEdit,
+    cancelEdit,
+  } = useNotes();
+  const [selectedNoteId, setSelectedNoteId] = React.useState<string | null>(null);
+  const [newNoteContent, setNewNoteContent] = React.useState<string>('');
+
+  React.useEffect(() => {
+    if (user?.id) fetchNotes(user.id);
+  }, [user, fetchNotes]);
+
+  // Filter notes for this project
+  const projectNotes = notes.filter(note => note.project === projectId);
+  const selectedNote = projectNotes.find(n => n.id === selectedNoteId) || null;
+  const handlePin      = (id: string) => { const n = projectNotes.find(x => x.id === id); n?.pinned ? unpinNote(id) : pinNote(id); };
+  const handleDelete   = (id: string) => { deleteNote(id); setSelectedNoteId(null); };
+  const handleCopy     = (c: string)   => navigator.clipboard.writeText(c);
+  const handleAddToProj= (id: string)  => { /* Already in project */ };
+
+  const handleNew      = ()             => { setSelectedNoteId(null); setNewNoteContent(''); };
+  const handleSaveNew  = async (c: string) => {
+    if (!c.trim() || !user?.id) return;
+    await addNote(c);
+    fetchNotes(user.id);
+    setNewNoteContent('');
+  };
+
+  React.useImperativeHandle(ref, () => ({
+    handleNew,
+  }));
+
+  if (!user) {
+    return <div className="text-center p-6">Please sign in to manage your notes.</div>;
+  }
+
+  return (
+    <div className="flex h-full gap-6">
+      <div className="flex-1 flex flex-col bg-background rounded-2xl border shadow p-6">
+        <div className="flex justify-between mb-4">
+          <Button onClick={handleNew}>New Note</Button>
+        </div>
+        <NoteViewer
+          note={selectedNote}
+          newNoteContent={newNoteContent}
+          onNewNoteContentChange={setNewNoteContent}
+          onSaveNewNote={handleSaveNew}
+          editingId={editingId}
+          editContent={editContent}
+          setEditContent={setEditContent}
+          editInputRef={editInputRef}
+          startEdit={startEdit}
+          saveEdit={saveEdit}
+          cancelEdit={cancelEdit}
+          onPin={handlePin}
+          onDelete={handleDelete}
+          onCopy={handleCopy}
+          onAddToProject={handleAddToProj}
+        />
+      </div>
+    </div>
+  );
+}); 

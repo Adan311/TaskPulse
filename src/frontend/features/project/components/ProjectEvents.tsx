@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { Event } from '@/frontend/types/calendar';
 import { EventList } from '@/frontend/features/calendar/components/EventList';
 import { getEvents } from '@/backend/api/services/eventService';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/frontend/components/ui/card';
 import { format } from 'date-fns';
 import { CalendarIcon, ClockIcon } from 'lucide-react';
 import { cn } from '@/frontend/lib/utils';
@@ -11,26 +11,32 @@ interface ProjectEventsProps {
   projectId: string;
 }
 
-export const ProjectEvents: React.FC<ProjectEventsProps> = ({ projectId }) => {
+export const ProjectEvents = forwardRef<{ refreshEvents: () => void }, ProjectEventsProps>(({ projectId }, ref) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchEvents() {
-      setLoading(true);
-      setError(null);
-      try {
-        const allEvents = await getEvents();
-        setEvents(allEvents.filter(e => e.project === projectId));
-      } catch (err: any) {
-        setError(err.message || 'Failed to load events');
-      } finally {
-        setLoading(false);
-      }
+  const fetchEvents = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const allEvents = await getEvents();
+      setEvents(allEvents.filter(e => e.project === projectId));
+    } catch (err: any) {
+      setError(err.message || 'Failed to load events');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchEvents();
   }, [projectId]);
+  
+  // Expose the refreshEvents method through the ref
+  useImperativeHandle(ref, () => ({
+    refreshEvents: fetchEvents
+  }));
 
   if (loading) {
     return <div className="py-8 text-center">
@@ -53,7 +59,7 @@ export const ProjectEvents: React.FC<ProjectEventsProps> = ({ projectId }) => {
       ))}
     </div>
   );
-};
+});
 
 interface EventCardProps {
   event: Event;

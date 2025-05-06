@@ -176,6 +176,42 @@ export function useNotes() {
   };
 
   const cancelEdit = () => setEditingId(null);
+  
+  const addNoteToProject = async (noteId: string, projectId: string) => {
+    try {
+      const { error } = await supabase
+        .from('notes')
+        .update({ 
+          project: projectId,
+          last_updated: new Date().toISOString() 
+        })
+        .eq('id', noteId);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setNotes(notes.map(note => 
+        note.id === noteId 
+          ? { ...note, project: projectId, last_updated: new Date().toISOString() }
+          : note
+      ));
+      
+      toast({
+        title: "Success!",
+        description: "Note added to project.",
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error adding note to project:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add note to project. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
 
   return {
     notes,
@@ -197,5 +233,6 @@ export function useNotes() {
     setNotes,
     pinNote,
     unpinNote,
+    addNoteToProject,
   };
 }

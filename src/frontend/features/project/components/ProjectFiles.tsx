@@ -1,31 +1,43 @@
-import React, { useState, useCallback } from 'react';
-import { useToast } from '@/frontend/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Upload as UploadIcon, File as FileIcon, Trash2 as TrashIcon, FileText, Image as ImageIcon, Archive as ArchiveIcon } from 'lucide-react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useFiles } from '@/frontend/features/files/hooks/useFiles';
+import { Button } from '@/frontend/components/ui/button';
+import { Card, CardContent } from '@/frontend/components/ui/card';
+import { 
+  Upload as UploadIcon, 
+  File as FileIcon, 
+  Trash2 as TrashIcon, 
+  FileText, 
+  Image as ImageIcon, 
+  Archive as ArchiveIcon,
+  ExternalLink
+} from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/frontend/lib/utils';
+import { useToast } from '@/frontend/hooks/use-toast';
 
 interface ProjectFilesProps {
   projectId: string;
 }
 
-interface FileItem {
-  id: string;
-  name: string;
-  path: string;
-  size: number;
-  type: string;
-  created_at: string;
-}
-
-export const ProjectFiles: React.FC<ProjectFilesProps> = ({ projectId }) => {
-  const [files, setFiles] = useState<FileItem[]>([]);
+export const ProjectFiles = forwardRef<{ refreshFiles: () => void }, ProjectFilesProps>(({ projectId }, ref) => {
+  const { 
+    files, 
+    loading, 
+    uploadFile, 
+    deleteFile, 
+    getDownloadUrl,
+    loadFiles
+  } = useFiles({ project_id: projectId, autoLoad: true });
+  
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
-  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Expose the refresh method through the ref
+  useImperativeHandle(ref, () => ({
+    refreshFiles: loadFiles
+  }));
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       if (!event.target.files || event.target.files.length === 0) {
         return;
@@ -33,39 +45,16 @@ export const ProjectFiles: React.FC<ProjectFilesProps> = ({ projectId }) => {
 
       setUploading(true);
       const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${projectId}/${Math.random()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('project-files')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      // Add file metadata to the files table
-      const { error: dbError } = await supabase
-        .from('project_files')
-        .insert({
-          project_id: projectId,
-          name: file.name,
-          path: filePath,
-          size: file.size,
-          type: file.type,
-        });
-
-      if (dbError) {
-        throw dbError;
-      }
-
+      
+      await uploadFile(file);
+      
       toast({
         title: 'File uploaded',
         description: 'Your file has been uploaded successfully.',
       });
-
-      // Refresh files list
-      fetchFiles();
+      
+      // Reset the file input
+      event.target.value = '';
     } catch (error: any) {
       toast({
         title: 'Upload failed',
@@ -75,61 +64,40 @@ export const ProjectFiles: React.FC<ProjectFilesProps> = ({ projectId }) => {
     } finally {
       setUploading(false);
     }
-  }, [projectId, toast]);
+  };
 
-  const fetchFiles = useCallback(async () => {
+  const handleDelete = async (fileId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('project_files')
-        .select('*')
-        .eq('project_id', projectId);
-
-      if (error) {
-        throw error;
-      }
-
-      setFiles(data || []);
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: 'Failed to load files. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  }, [projectId, toast]);
-
-  const handleDelete = async (fileId: string, filePath: string) => {
-    try {
-      // Delete from storage
-      const { error: storageError } = await supabase.storage
-        .from('project-files')
-        .remove([filePath]);
-
-      if (storageError) {
-        throw storageError;
-      }
-
-      // Delete from database
-      const { error: dbError } = await supabase
-        .from('project_files')
-        .delete()
-        .eq('id', fileId);
-
-      if (dbError) {
-        throw dbError;
-      }
-
+      await deleteFile(fileId);
+      
       toast({
         title: 'File deleted',
         description: 'The file has been deleted successfully.',
       });
-
-      // Refresh files list
-      fetchFiles();
     } catch (error: any) {
       toast({
         title: 'Error',
         description: 'Failed to delete file. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  const handleDownload = async (fileId: string, fileName: string) => {
+    try {
+      const url = await getDownloadUrl(fileId);
+      
+      // Create an anchor element and trigger the download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: 'Failed to download file. Please try again.',
         variant: 'destructive',
       });
     }
@@ -149,7 +117,8 @@ export const ProjectFiles: React.FC<ProjectFilesProps> = ({ projectId }) => {
     }
   };
 
-  const formatFileSize = (bytes: number) => {
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return 'Unknown size';
     if (bytes < 1024) {
       return bytes + ' B';
     } else if (bytes < 1024 * 1024) {
@@ -159,9 +128,13 @@ export const ProjectFiles: React.FC<ProjectFilesProps> = ({ projectId }) => {
     }
   };
 
-  React.useEffect(() => {
-    fetchFiles();
-  }, [fetchFiles]);
+  if (loading) {
+    return (
+      <div className="py-8 text-center">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -176,7 +149,7 @@ export const ProjectFiles: React.FC<ProjectFilesProps> = ({ projectId }) => {
               accept="*/*"
             />
             <UploadIcon className="h-4 w-4 mr-2" />
-            Upload File
+            {uploading ? 'Uploading...' : 'Upload File'}
           </Button>
         </div>
       ) : (
@@ -190,7 +163,7 @@ export const ProjectFiles: React.FC<ProjectFilesProps> = ({ projectId }) => {
                 accept="*/*"
               />
               <UploadIcon className="h-4 w-4 mr-2" />
-              Upload File
+              {uploading ? 'Uploading...' : 'Upload File'}
             </Button>
           </div>
           
@@ -206,20 +179,30 @@ export const ProjectFiles: React.FC<ProjectFilesProps> = ({ projectId }) => {
                       <h3 className="font-medium truncate">{file.name}</h3>
                       <div className="flex text-xs text-muted-foreground mt-1 space-x-4">
                         <span>{formatFileSize(file.size)}</span>
-                        {file.created_at && (
-                          <span>Uploaded {formatDistanceToNow(new Date(file.created_at), { addSuffix: true })}</span>
+                        {file.uploaded_at && (
+                          <span>Uploaded {formatDistanceToNow(new Date(file.uploaded_at), { addSuffix: true })}</span>
                         )}
                       </div>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="text-destructive" 
-                      onClick={() => handleDelete(file.id, file.path)}
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                      <span className="sr-only">Delete</span>
-                    </Button>
+                    <div className="flex">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handleDownload(file.id, file.name)}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        <span className="sr-only">Download</span>
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-destructive" 
+                        onClick={() => handleDelete(file.id)}
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                        <span className="sr-only">Delete</span>
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -229,4 +212,4 @@ export const ProjectFiles: React.FC<ProjectFilesProps> = ({ projectId }) => {
       )}
     </div>
   );
-}; 
+}); 
