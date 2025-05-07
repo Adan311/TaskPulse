@@ -4,7 +4,8 @@ import { Button } from '@/frontend/components/ui/button';
 import { ScrollArea } from '@/frontend/components/ui/scroll-area';
 import { Textarea } from '@/frontend/components/ui/textarea';
 import { Card } from '@/frontend/components/ui/card';
-import { Pin, Trash, Copy, Edit2 } from 'lucide-react';
+import { Pin, Trash, Copy, Edit2, Search } from 'lucide-react';
+import { Input } from '@/frontend/components/ui/input';
 
 interface ProjectNotesProps {
   projectId: string;
@@ -33,6 +34,7 @@ export const ProjectNotes = forwardRef<{ handleNew: () => void }, ProjectNotesPr
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [newNoteContent, setNewNoteContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   
   useEffect(() => {
     if (user?.id) {
@@ -40,8 +42,10 @@ export const ProjectNotes = forwardRef<{ handleNew: () => void }, ProjectNotesPr
     }
   }, [user, fetchNotes]);
   
-  // Filter notes for this project
-  const projectNotes = notes.filter(note => note.project === projectId);
+  // Filter notes for this project and by search term if provided
+  const projectNotes = notes
+    .filter(note => note.project === projectId)
+    .filter(note => searchTerm === '' || note.content.toLowerCase().includes(searchTerm.toLowerCase()));
   
   const handleNew = () => {
     setIsCreatingNote(true);
@@ -53,18 +57,22 @@ export const ProjectNotes = forwardRef<{ handleNew: () => void }, ProjectNotesPr
     
     setIsSubmitting(true);
     try {
-      // Temporarily set the selectedProject to ensure the note is associated with this project
-      const currentSelectedProject = selectedProject;
+      // Store current selected project
+      const originalProject = selectedProject;
+      
+      // Temporarily set the selected project to ensure proper association
       setSelectedProject(projectId);
       
-      // Add note with project association
+      // Add the note with project association
       await addNote(newNoteContent);
       
-      // Restore the original selected project
-      setSelectedProject(currentSelectedProject);
+      // Restore original selection
+      setSelectedProject(originalProject);
       
-      // Refresh notes
+      // Refresh the notes list
       fetchNotes(user.id);
+      
+      // Reset the form
       setIsCreatingNote(false);
       setNewNoteContent('');
     } catch (error) {
@@ -90,6 +98,21 @@ export const ProjectNotes = forwardRef<{ handleNew: () => void }, ProjectNotesPr
   
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center gap-4">
+        {!isCreatingNote && (
+          <Button onClick={handleNew}>New Note</Button>
+        )}
+        <div className="relative flex-1">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search notes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-8"
+          />
+        </div>
+      </div>
+      
       {isCreatingNote ? (
         <Card className="p-4">
           <Textarea
@@ -111,14 +134,12 @@ export const ProjectNotes = forwardRef<{ handleNew: () => void }, ProjectNotesPr
             </Button>
           </div>
         </Card>
-      ) : (
-        <Button onClick={handleNew}>New Note</Button>
-      )}
+      ) : null}
       
       <ScrollArea className="h-[500px] pr-4">
         {projectNotes.length === 0 ? (
           <div className="text-center p-8 text-muted-foreground">
-            No notes yet. Create your first note!
+            {searchTerm ? 'No notes match your search.' : 'No notes yet. Create your first note!'}
           </div>
         ) : (
           <div className="space-y-4">

@@ -2,14 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
+import { Project as SchemaProject } from "@/backend/types/supabaseSchema";
 
-export interface Project {
-  id: string;
-  name: string;
-  description: string;
-  user: string;
-  created_at?: string;
-}
+// Export the Project type from supabaseSchema to ensure consistency
+export type Project = SchemaProject;
 
 export function useProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -36,7 +32,15 @@ export function useProjects() {
 
       if (error) throw error;
       
-      setProjects(data || []);
+      // Ensure each project has the required fields
+      const projectsWithDefaults = (data || []).map(p => ({
+        ...p,
+        status: p.status || 'active',
+        progress: p.progress || 0,
+        priority: p.priority || 'medium',
+      })) as Project[];
+      
+      setProjects(projectsWithDefaults);
     } catch (err: any) {
       console.error("Error fetching projects:", err);
       setError(err);
@@ -64,11 +68,14 @@ export function useProjects() {
         throw new Error("User not authenticated");
       }
 
-      const newProject = {
+      const newProject: Omit<Project, 'created_at' | 'updated_at'> = {
         id: uuidv4(),
         name,
         description,
         user: user.id,
+        status: 'active',
+        progress: 0,
+        priority: 'medium'
       };
 
       const { data, error } = await supabase
@@ -79,12 +86,12 @@ export function useProjects() {
       if (error) throw error;
       
       if (data && data.length > 0) {
-        setProjects(prev => [...prev, data[0]]);
+        setProjects(prev => [...prev, data[0] as Project]);
         toast({
           title: "Project created",
           description: "Your new project has been created successfully.",
         });
-        return data[0];
+        return data[0] as Project;
       }
     } catch (err: any) {
       console.error("Error creating project:", err);
@@ -159,7 +166,7 @@ export function useProjects() {
       
       if (data && data.length > 0) {
         setProjects(prev => prev.map(project => 
-          project.id === projectId ? data[0] : project
+          project.id === projectId ? data[0] as Project : project
         ));
         
         toast({
@@ -167,7 +174,7 @@ export function useProjects() {
           description: "Your project has been updated successfully.",
         });
         
-        return data[0];
+        return data[0] as Project;
       }
     } catch (err: any) {
       console.error("Error updating project:", err);

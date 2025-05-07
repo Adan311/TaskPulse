@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { saveEventToGoogleCalendar, deleteEventFromGoogleCalendar } from "./googleCalendarService";
@@ -173,48 +172,55 @@ export async function updateEvent(id: string, event: Partial<FrontendEvent>): Pr
   // Format the event for the database update
   const dbEvent = formatEventForDatabase(event);
   
-  // TypeScript doesn't know about updated_at in the type definition
-  // We'll use type assertion to handle this
+  // Ensure the project is properly set (handles undefined vs null)
+  if (event.project === undefined) {
+    dbEvent.project = null;
+  }
+  
+  // Remove the updated_at field as it doesn't exist in the schema
   const updateData = {
-    ...dbEvent,
-    // Custom field not in the type definition, using type assertion
-  } as any;
-  updateData.updated_at = new Date().toISOString();
+    ...dbEvent
+  };
 
   console.log("Updating event:", id, updateData);
 
-  const { data, error } = await supabase
-    .from("events")
-    .update(updateData)
-    .eq('id', id as any)
-    .eq('user', user.id as any)
-    .select();
+  try {
+    const { data, error } = await supabase
+      .from("events")
+      .update(updateData)
+      .eq('id', id)
+      .eq('user', user.id)
+      .select();
 
-  if (error) {
-    console.error("Error updating event:", error);
+    if (error) {
+      console.error("Error updating event:", error);
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      throw new Error(`Event with id ${id} not found or you don't have permission to update it`);
+    }
+
+    // Sync to Google Calendar if connected
+    try {
+      console.log("Attempting to sync updated event to Google Calendar");
+      // Convert to DbEvent format for Google Calendar sync
+      const formattedData = data[0] as unknown as DatabaseEvent;
+      if (formattedData) {
+        const syncResult = await saveEventToGoogleCalendar(formattedData);
+        console.log("Google Calendar sync result:", syncResult);
+      }
+    } catch (syncError) {
+      console.error("Error syncing to Google Calendar:", syncError);
+      // Continue even if sync fails
+    }
+
+    const updatedEvent = data[0] as unknown as DatabaseEvent;
+    return formatEventForFrontend(updatedEvent);
+  } catch (error) {
+    console.error("Exception in updateEvent:", error);
     throw error;
   }
-
-  if (!data || data.length === 0) {
-    throw new Error(`Event with id ${id} not found or you don't have permission to update it`);
-  }
-
-  // Sync to Google Calendar if connected
-  try {
-    console.log("Attempting to sync updated event to Google Calendar");
-    // Convert to DbEvent format for Google Calendar sync
-    const formattedData = data[0] as unknown as DatabaseEvent;
-    if (formattedData) {
-      const syncResult = await saveEventToGoogleCalendar(formattedData);
-      console.log("Google Calendar sync result:", syncResult);
-    }
-  } catch (syncError) {
-    console.error("Error syncing to Google Calendar:", syncError);
-    // Continue even if sync fails
-  }
-
-  const updatedEvent = data[0] as unknown as DatabaseEvent;
-  return formatEventForFrontend(updatedEvent);
 }
 
 export async function deleteEvent(id: string): Promise<boolean> {

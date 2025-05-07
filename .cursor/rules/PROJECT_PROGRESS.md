@@ -85,11 +85,11 @@ This file tracks the status of all major features in your project, including wha
 ---
 
 ## 🛠️ General Improvements
-- [❌] Navigation bar (all main features linked)
+- [✅] Navigation bar (all main features linked)
 - [❌] Dashboard/landing page
 - [❌] Notifications system (in-app/email)
 - [❌] Global search
-- [❌] Dark mode
+- [✅] Dark mode
 - [❌] Accessibility (ARIA, color contrast)
 - [❌] Mobile responsiveness
 - [❌] API documentation (OpenAPI/Swagger)

@@ -15,6 +15,17 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { TaskFilters } from '../components/TaskFilterBar';
 
+// Status mapping functions to handle UI vs database format differences
+const mapUiStatusToDb = (status: string): Task['status'] => {
+  if (status === 'in-progress') return 'in_progress';
+  return status as Task['status'];
+};
+
+const mapDbStatusToUi = (status: string): string => {
+  if (status === 'in_progress') return 'in-progress';
+  return status;
+};
+
 export function useTaskBoard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -24,6 +35,7 @@ export function useTaskBoard() {
   const [filters, setFilters] = useState<TaskFilters | undefined>(undefined);
   const { toast } = useToast();
 
+  // These IDs are for UI display only - they match the UI column names
   const columns = [
     { id: 'todo', title: 'To Do' },
     { id: 'in-progress', title: 'In Progress' },
@@ -96,6 +108,11 @@ export function useTaskBoard() {
 
   const handleCreateTask = async (taskData: Partial<Omit<Task, "id" | "user" | "created_at" | "updated_at">>) => {
     try {
+      // Convert UI status to DB status if needed
+      if (taskData.status) {
+        taskData.status = mapUiStatusToDb(taskData.status);
+      }
+      
       await createTask(taskData as any);
       await loadTasks();
       toast({
@@ -116,6 +133,11 @@ export function useTaskBoard() {
     if (!selectedTask) return;
     
     try {
+      // Convert UI status to DB status if needed
+      if (taskData.status) {
+        taskData.status = mapUiStatusToDb(taskData.status);
+      }
+      
       await updateTask(selectedTask.id, taskData);
       await loadTasks();
       toast({
@@ -199,7 +221,8 @@ export function useTaskBoard() {
 
     if (destination.droppableId !== source.droppableId) {
       try {
-        const newStatus = destination.droppableId as Task['status'];
+        // Convert UI status (with dash) to DB status (with underscore)
+        const newStatus = mapUiStatusToDb(destination.droppableId);
         await updateTaskStatus(draggableId, newStatus);
         
         const updatedTasks = tasks.map(task => 
@@ -247,6 +270,15 @@ export function useTaskBoard() {
     setDialogOpen(false);
   };
 
+  // Get tasks for a specific column, handling the status format difference
+  const getColumnTasks = (columnId: string) => {
+    return tasks.filter(task => {
+      // Map DB status to UI status for comparison
+      const uiStatus = mapDbStatusToUi(task.status);
+      return uiStatus === columnId;
+    });
+  };
+
   return {
     tasks,
     loading,
@@ -263,6 +295,7 @@ export function useTaskBoard() {
     handleBulkArchive,
     onDragEnd,
     applyFilters,
-    filters
+    filters,
+    getColumnTasks // Export the new helper method
   };
 }

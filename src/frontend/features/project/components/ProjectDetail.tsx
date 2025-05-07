@@ -4,6 +4,7 @@ import { Project, Task } from '@/backend/types/supabaseSchema';
 import { ProjectTasks } from './ProjectTasks';
 import { ProjectEvents } from './ProjectEvents';
 import { ProjectFiles } from './ProjectFiles';
+import { ProjectNotes } from './ProjectNotes';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/frontend/components/ui/card';
 import { Button } from '@/frontend/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/frontend/components/ui/tabs';
@@ -346,17 +347,13 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
       {/* Event Dialog */}
       <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Create Event</DialogTitle>
+          </DialogHeader>
           <EventForm 
             onSuccess={handleEventSuccess}
             onCancel={() => setIsEventDialogOpen(false)}
-            event={{ 
-              id: '', 
-              title: '', 
-              startTime: new Date().toISOString(), 
-              endTime: new Date(Date.now() + 3600000).toISOString(),
-              project: project.id,
-              participants: []
-            }}
+            initialProjectId={project.id}
           />
         </DialogContent>
       </Dialog>
@@ -434,84 +431,4 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
       </Dialog>
     </div>
   );
-};
-
-interface ProjectNotesProps {
-  projectId: string;
-}
-
-const ProjectNotes = React.forwardRef<{ handleNew: () => void }, ProjectNotesProps>(({ projectId }, ref) => {
-  const {
-    user,
-    notes,
-    fetchNotes,
-    addNote,
-    deleteNote,
-    pinNote,
-    unpinNote,
-    editingId,
-    editContent,
-    setEditContent,
-    editInputRef,
-    startEdit,
-    saveEdit,
-    cancelEdit,
-  } = useNotes();
-  const [selectedNoteId, setSelectedNoteId] = React.useState<string | null>(null);
-  const [newNoteContent, setNewNoteContent] = React.useState<string>('');
-
-  React.useEffect(() => {
-    if (user?.id) fetchNotes(user.id);
-  }, [user, fetchNotes]);
-
-  // Filter notes for this project
-  const projectNotes = notes.filter(note => note.project === projectId);
-  const selectedNote = projectNotes.find(n => n.id === selectedNoteId) || null;
-  const handlePin      = (id: string) => { const n = projectNotes.find(x => x.id === id); n?.pinned ? unpinNote(id) : pinNote(id); };
-  const handleDelete   = (id: string) => { deleteNote(id); setSelectedNoteId(null); };
-  const handleCopy     = (c: string)   => navigator.clipboard.writeText(c);
-  const handleAddToProj= (id: string)  => { /* Already in project */ };
-
-  const handleNew      = ()             => { setSelectedNoteId(null); setNewNoteContent(''); };
-  const handleSaveNew  = async (c: string) => {
-    if (!c.trim() || !user?.id) return;
-    await addNote(c);
-    fetchNotes(user.id);
-    setNewNoteContent('');
-  };
-
-  React.useImperativeHandle(ref, () => ({
-    handleNew,
-  }));
-
-  if (!user) {
-    return <div className="text-center p-6">Please sign in to manage your notes.</div>;
-  }
-
-  return (
-    <div className="flex h-full gap-6">
-      <div className="flex-1 flex flex-col bg-background rounded-2xl border shadow p-6">
-        <div className="flex justify-between mb-4">
-          <Button onClick={handleNew}>New Note</Button>
-        </div>
-        <NoteViewer
-          note={selectedNote}
-          newNoteContent={newNoteContent}
-          onNewNoteContentChange={setNewNoteContent}
-          onSaveNewNote={handleSaveNew}
-          editingId={editingId}
-          editContent={editContent}
-          setEditContent={setEditContent}
-          editInputRef={editInputRef}
-          startEdit={startEdit}
-          saveEdit={saveEdit}
-          cancelEdit={cancelEdit}
-          onPin={handlePin}
-          onDelete={handleDelete}
-          onCopy={handleCopy}
-          onAddToProject={handleAddToProj}
-        />
-      </div>
-    </div>
-  );
-}); 
+}; 

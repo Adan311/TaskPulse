@@ -3,6 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/
 import { TaskList } from './TaskList';
 import { Task } from '@/backend/types/supabaseSchema';
 
+// Map DB status to UI status for comparison
+const mapDbStatusToUi = (status: string): string => {
+  if (status === 'in_progress') return 'in-progress';
+  return status;
+};
+
 // Removed ScrollArea; use native div with overflow-auto for proper DnD behavior
 
 // Draggable is used in TaskList for drag-and-drop
@@ -30,6 +36,9 @@ export function TaskColumn({
   selectedTasks,
   onTaskSelect
 }: TaskColumnProps) {
+  // Filter tasks for this column, handling the status format difference
+  const columnTasks = tasks.filter(task => mapDbStatusToUi(task.status) === id);
+  
   return (
     <Card>
       <CardHeader>
@@ -44,7 +53,7 @@ export function TaskColumn({
               {...provided.droppableProps}
             >
               <TaskList 
-                tasks={tasks.filter((task) => task.status === id)} 
+                tasks={columnTasks} 
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onArchive={onArchive}

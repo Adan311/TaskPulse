@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -22,9 +21,10 @@ interface EventFormProps {
   onSuccess: () => void;
   onCancel: () => void;
   event?: Event;
+  initialProjectId?: string;
 }
 
-export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
+export function EventForm({ onSuccess, onCancel, event, initialProjectId }: EventFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasGoogleCalendar, setHasGoogleCalendar] = useState(false);
@@ -62,7 +62,7 @@ export function EventForm({ onSuccess, onCancel, event }: EventFormProps) {
         startTime: "09:00",
         endTime: "10:00",
         color: "#3b82f6",
-        project: "none",
+        project: initialProjectId || "none",
       };
 
   const form = useForm<FormValues>({

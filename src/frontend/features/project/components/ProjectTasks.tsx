@@ -1,7 +1,7 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { format } from 'date-fns';
 import { Task } from '@/backend/types/supabaseSchema';
-import { fetchProjectTasks, createTask, updateTask, deleteTask } from '@/backend/api/services/task.service';
+import { fetchProjectTasks, createTask, updateTask, deleteTask, updateTaskStatus } from '@/backend/api/services/task.service';
 import { Card, CardContent } from '@/frontend/components/ui/card';
 import { Button } from '@/frontend/components/ui/button';
 import { Checkbox } from '@/frontend/components/ui/checkbox';
@@ -13,6 +13,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/frontend/lib/utils';
 import { PencilIcon, Trash2Icon, PlusIcon, CheckCircleIcon, CircleIcon, ArrowRightIcon, ArrowLeftIcon } from 'lucide-react';
 import { useToast } from '@/frontend/hooks/use-toast';
+
+// Status mapping functions to handle UI vs database format differences
+const mapUiStatusToDb = (status: string): Task['status'] => {
+  if (status === 'in-progress') return 'in_progress';
+  return status as Task['status'];
+};
+
+const mapDbStatusToUi = (status: string): string => {
+  if (status === 'in_progress') return 'in-progress';
+  return status;
+};
 
 interface ProjectTasksProps {
   projectId: string;
@@ -101,9 +112,13 @@ export const ProjectTasks = forwardRef<{ refreshTasks: () => void }, ProjectTask
     
     setIsSubmitting(true);
     try {
+      // Make sure the status is in the correct format for the database
+      const statusForDb = mapUiStatusToDb(formData.status);
+      
       if (selectedTask) {
         await updateTask(selectedTask.id, {
           ...formData,
+          status: statusForDb,
           due_date: formData.due_date?.toISOString(),
           project: projectId,
         });
@@ -114,6 +129,7 @@ export const ProjectTasks = forwardRef<{ refreshTasks: () => void }, ProjectTask
       } else {
         await createTask({
           ...formData,
+          status: statusForDb,
           due_date: formData.due_date?.toISOString(),
           project: projectId,
         });
@@ -138,11 +154,14 @@ export const ProjectTasks = forwardRef<{ refreshTasks: () => void }, ProjectTask
 
   const handleMoveTask = async (task: Task, newStatus: Task['status']) => {
     try {
-      await updateTask(task.id, { status: newStatus });
-      loadTasks();
+      // Ensure the status is in the correct DB format
+      const dbStatus = mapUiStatusToDb(newStatus);
+      
+      await updateTaskStatus(task.id, dbStatus);
+      await loadTasks();
       toast({
         title: "Status Updated",
-        description: `Task moved to ${newStatus.replace('-', ' ')}`,
+        description: `Task moved to ${newStatus.replace('_', ' ')}`,
       });
     } catch (err) {
       console.error('Error updating task status:', err);
@@ -157,8 +176,8 @@ export const ProjectTasks = forwardRef<{ refreshTasks: () => void }, ProjectTask
   const handleToggleStatus = async (task: Task) => {
     try {
       const newStatus = task.status === 'done' ? 'todo' : 'done';
-      await updateTask(task.id, { status: newStatus });
-      loadTasks();
+      await updateTaskStatus(task.id, newStatus);
+      await loadTasks();
       toast({
         title: "Status Updated",
         description: `Task marked as ${newStatus === 'done' ? 'complete' : 'incomplete'}`,
@@ -191,7 +210,7 @@ export const ProjectTasks = forwardRef<{ refreshTasks: () => void }, ProjectTask
     }
   };
 
-  // Filter tasks by status
+  // Ensure tasks are correctly filtered by status
   const todoTasks = tasks.filter(task => task.status === 'todo');
   const inProgressTasks = tasks.filter(task => task.status === 'in_progress');
   const doneTasks = tasks.filter(task => task.status === 'done');

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Button } from "@/frontend/components/ui/button";
-import { File, Trash2, Download, Eye, FileText, FileImage, FileIcon } from "lucide-react";
+import { File, Trash2, Download, Eye, FileText, FileImage, FileIcon, FolderPlus } from "lucide-react";
 import { useFiles } from "../hooks/useFiles";
 import { Skeleton } from "@/frontend/components/ui/skeleton";
 import { FilePreview } from "./FilePreview";
@@ -10,6 +10,13 @@ import {
 } from "@/frontend/components/ui/dialog";
 import { formatDistanceToNow, format } from 'date-fns';
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/frontend/components/ui/dropdown-menu";
+import { useProjects } from "@/frontend/features/project/hooks/useProjects";
 
 interface FileListProps {
   project_id?: string;
@@ -19,6 +26,7 @@ interface FileListProps {
   viewMode?: 'list' | 'grid';
   sortBy?: 'name-asc' | 'name-desc' | 'date-asc' | 'date-desc' | 'size-asc' | 'size-desc';
   typeFilter?: 'all' | 'documents' | 'images' | 'pdf';
+  hideProjectActions?: boolean;
 }
 
 export function FileList({ 
@@ -28,7 +36,8 @@ export function FileList({
   showPreview = true,
   viewMode = 'list',
   sortBy = 'date-desc',
-  typeFilter = 'all'
+  typeFilter = 'all',
+  hideProjectActions = false
 }: FileListProps) {
   const { 
     files, 
@@ -37,13 +46,17 @@ export function FileList({
     loadFiles, 
     deleteFile, 
     getDownloadUrl,
-    canPreview
+    canPreview,
+    attachFile
   } = useFiles({
     project_id,
     task_id,
     event_id,
     autoLoad: true
   });
+
+  // For project selection
+  const { projects, loading: projectsLoading } = useProjects();
 
   // Preview state
   const [previewFile, setPreviewFile] = useState<{
@@ -130,34 +143,50 @@ export function FileList({
     });
   }, [filteredFiles, sortBy]);
 
-  const handleDownload = async (fileId: string, fileName: string) => {
+  // Determine if a file can be previewed
+  const canPreviewFile = (fileType: string) => {
+    return canPreview(fileType);
+  };
+
+  // Open file preview
+  const openPreview = async (file: any) => {
     try {
-      const url = await getDownloadUrl(fileId);
-      // Create a temporary anchor element for downloading
+      const url = await getDownloadUrl(file.id);
+      setPreviewFile({
+        id: file.id,
+        name: file.name,
+        type: file.type,
+        url,
+        size: file.size,
+        uploadedAt: file.uploaded_at
+      });
+    } catch (error) {
+      console.error("Error getting file URL for preview:", error);
+    }
+  };
+
+  // Handle download
+  const handleDownload = async (file: any) => {
+    try {
+      const url = await getDownloadUrl(file.id);
       const a = document.createElement('a');
       a.href = url;
-      a.download = fileName;
+      a.download = file.name;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
     } catch (error) {
-      console.error('Error downloading file:', error);
+      console.error("Error downloading file:", error);
     }
   };
 
-  const handlePreview = async (fileId: string, fileName: string, fileType: string, fileSize?: number, uploadedAt?: string) => {
+  // Handle adding file to project
+  const handleAddToProject = async (fileId: string, projectId: string) => {
     try {
-      const url = await getDownloadUrl(fileId);
-      setPreviewFile({
-        id: fileId,
-        name: fileName,
-        type: fileType,
-        url,
-        size: fileSize,
-        uploadedAt: uploadedAt
-      });
+      await attachFile(fileId, 'project', projectId);
+      loadFiles(); // Refresh files list after attachment
     } catch (error) {
-      console.error('Error preparing preview:', error);
+      console.error("Error attaching file to project:", error);
     }
   };
 
@@ -210,7 +239,7 @@ export function FileList({
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => handlePreview(file.id, file.name, file.type, file.size, file.uploaded_at)}
+                        onClick={() => openPreview(file)}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -218,7 +247,7 @@ export function FileList({
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => handleDownload(file.id, file.name)}
+                      onClick={() => handleDownload(file)}
                     >
                       <Download className="h-4 w-4" />
                     </Button>
@@ -264,7 +293,7 @@ export function FileList({
                 fileSize={previewFile.size}
                 uploadedAt={previewFile.uploadedAt}
                 onClose={() => setPreviewFile(null)}
-                onDownload={() => handleDownload(previewFile.id, previewFile.name)}
+                onDownload={() => handleDownload(previewFile)}
               />
             )}
           </DialogContent>
@@ -275,87 +304,100 @@ export function FileList({
 
   // Default list view
   return (
-    <>
-      {sortedFiles.length > 0 ? (
-        <div className="space-y-1">
-          <div className="grid grid-cols-12 px-3 py-2 text-xs font-medium text-muted-foreground border-b">
-            <div className="col-span-4">Name</div>
-            <div className="col-span-2">Type</div>
-            <div className="col-span-2">Size</div>
-            <div className="col-span-3">Uploaded At</div>
-            <div className="col-span-1 text-center">Actions</div>
-          </div>
-          {sortedFiles.map((file) => (
-            <div key={file.id} className="grid grid-cols-12 items-center p-2 border rounded hover:bg-accent/5 transition-colors">
-              <div className="col-span-4 flex items-center min-w-0">
+    <div>
+      <div className="space-y-2">
+        {files.map((file) => (
+          <div 
+            key={file.id} 
+            className="flex items-center justify-between p-3 bg-card border rounded-md shadow-sm hover:bg-accent/10 transition-colors"
+          >
+            <div className="flex items-center flex-1 min-w-0">
+              <div className="mr-3">
                 {getFileIcon(file.type)}
-                <span className="truncate ml-1" title={file.name}>{file.name}</span>
               </div>
-              <div className="col-span-2 text-sm text-muted-foreground">
-                {file.type.split('/')[1]?.toUpperCase() || file.type}
-              </div>
-              <div className="col-span-2 text-sm text-muted-foreground">
-                {formatFileSize(file.size)}
-              </div>
-              <div className="col-span-3 text-xs text-muted-foreground">
-                {file.uploaded_at ? format(new Date(file.uploaded_at), 'PPpp') : '~'}
-              </div>
-              <div className="col-span-1 flex items-center justify-center space-x-1">
-                {showPreview && canPreview(file.type) && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handlePreview(file.id, file.name, file.type, file.size, file.uploaded_at)}
-                    title="Preview file"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDownload(file.id, file.name)}
-                  title="Download file"
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => deleteFile(file.id)}
-                  title="Delete file"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+              <div className="truncate">
+                <h3 className="font-medium truncate">{file.name}</h3>
+                <div className="flex text-xs text-muted-foreground">
+                  <span className="mr-2">{formatFileSize(file.size)}</span>
+                  {file.uploaded_at && (
+                    <span>{formatDistanceToNow(new Date(file.uploaded_at), { addSuffix: true })}</span>
+                  )}
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-sm text-muted-foreground text-center py-8">
-          No files uploaded yet
-        </div>
-      )}
-
-      {/* File Preview Dialog */}
-      <Dialog 
-        open={previewFile !== null} 
-        onOpenChange={(open) => !open && setPreviewFile(null)}
-      >
-        <DialogContent className="max-w-4xl w-[90vw]">
-          {previewFile && (
-            <FilePreview
+            
+            <div className="flex items-center space-x-1">
+              {/* Project association indicator */}
+              {file.project && (
+                <span className="text-xs bg-primary/20 text-primary rounded px-2 py-0.5 mr-2">
+                  Project
+                </span>
+              )}
+              
+              {canPreviewFile(file.type) && showPreview && (
+                <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => openPreview(file)}>
+                  <Eye className="h-4 w-4" />
+                  <span className="sr-only">Preview</span>
+                </Button>
+              )}
+              
+              <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => handleDownload(file)}>
+                <Download className="h-4 w-4" />
+                <span className="sr-only">Download</span>
+              </Button>
+              
+              {!hideProjectActions && !file.project && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 px-2">
+                      <FolderPlus className="h-4 w-4" />
+                      <span className="sr-only">Add to project</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {projectsLoading ? (
+                      <div className="px-2 py-1.5 text-sm">Loading projects...</div>
+                    ) : projects.length === 0 ? (
+                      <div className="px-2 py-1.5 text-sm">No projects available</div>
+                    ) : (
+                      projects.map(project => (
+                        <DropdownMenuItem 
+                          key={project.id} 
+                          onClick={() => handleAddToProject(file.id, project.id)}
+                        >
+                          {project.name}
+                        </DropdownMenuItem>
+                      ))
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+              
+              <Button variant="ghost" size="sm" className="h-8 px-2 text-destructive" onClick={() => deleteFile(file.id)}>
+                <Trash2 className="h-4 w-4" />
+                <span className="sr-only">Delete</span>
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {/* Preview Dialog */}
+      {previewFile && (
+        <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
+          <DialogContent className="max-w-3xl">
+            <FilePreview 
               fileUrl={previewFile.url}
               fileName={previewFile.name}
               fileType={previewFile.type}
               fileSize={previewFile.size}
               uploadedAt={previewFile.uploadedAt}
               onClose={() => setPreviewFile(null)}
-              onDownload={() => handleDownload(previewFile.id, previewFile.name)}
+              onDownload={() => handleDownload(previewFile)}
             />
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
   );
 }
