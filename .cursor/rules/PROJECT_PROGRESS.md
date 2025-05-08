@@ -112,13 +112,60 @@ This file tracks the status of all major features in your project, including wha
 
 ---
 
-## Table/Schema Updates
-- [✅] Added created_at, archived, last_updated_at, labels, due_date columns to tasks table
-- [✅] Added task_activity_log table
-- [✅] Added indexes for filtering/sorting
+## ✅ Must-Have Functional Requirements (Done)
+[✅] FR-1: Create Account  
+[✅] FR-2: Log In and Log Out  
+[✅] FR-3: Reset Password  
+[✅] FR-4: Update Profile  
+[✅] FR-5: Delete Account  
+[✅] FR-7: Upload & Attach Files  
+[✅] FR-8: Preview Files  
+[✅] FR-9: Remove Files  
+[✅] FR-10: Secure Storage  
+[✅] FR-11: Display Tasks  
+[✅] FR-12: Display Events  
+[✅] FR-13: Edit Tasks/Events  
+[✅] FR-14: Delete Tasks/Events  
+[✅] FR-15: Link Google Calendar  
+[✅] FR-18: Set Task Priority  
+[✅] FR-19: Sort by Priority  
+[✅] FR-22: Task Timers  
+[✅] FR-24: Create Projects  
+[✅] FR-25: Assign to Projects (Project details view)  
+[✅] FR-27: Display Project Contents  
+
+## ❌ Must-Have Requirements Left to Do
+[❌] FR-6: AI Chat Feature 🔴 (High Effort/Dependencies)  
+[❌] FR-17: Real-Time Sync 🔴 (High Effort)  
+[❌] FR-28: AI Suggest Tasks/Events 🔴 (Depends on FR-6)  
+[❌] NFR-4: GDPR Compliance 🟠 (Medium Effort)  
+
+## 🟡 Should-Have Functional Requirements
+[❌] FR-16: Auto-Generate Events 🟠 (Medium Effort)  
+[❌] FR-20: Task Reminders 🟢 (Low Effort/High Impact)  
+[❌] FR-21: Event Reminders 🟢 (Low Effort/High Impact)  
+[❌] FR-23: Log Time Spent 🟢 (Low Effort)  
+[✅] FR-31: Track Task Completion  
+[❌] FR-29: Accept/Reject Suggestions 🔴 (Depends on FR-6)  
+[❌] FR-30: Natural Language Creation 🔴 (Depends on FR-6)  
+
+## 🟡 Should-Have Non-Functional Requirements
+[❌] NFR-1: Real-Time Sync 🔴 (High Effort)  
+[❌] NFR-5: Fast Load 🟠 (Medium Effort)  
+[❌] NFR-6: Help & Support 🟢 (Low Effort/High Impact)  
+[❌] NFR-7: Cross-Platform 🟠 (Medium Effort)  
+[❌] NFR-9: Testability 🟠 (Medium Effort)  
+[❌] NFR-13: Accessibility 🟢 (Low Effort)  
+
+## 🔵 Could-Have Functional Requirements
+[❌] FR-32: Recurring Tasks 🟢 (Low Effort)  
+
+## 🔵 Could-Have Non-Functional Requirements
+[❌] NFR-10: Multi-Language 🟠 (Medium Effort)  
+[❌] NFR-12: Performance Monitoring 🟠 (Medium Effort)  
 
 ---
 
-_Last updated: 2025-05-01_
+_Last updated: 2025-05-09_
 
 
