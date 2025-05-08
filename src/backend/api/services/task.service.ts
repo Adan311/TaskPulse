@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { TaskFilters } from '@/frontend/features/tasks/components/TaskFilterBar';
 import { Task } from '@/backend/types/supabaseSchema';
 import { Database } from '@/integrations/supabase/types';
+import { updateProjectProgressOnTaskChange } from "./project.service";
 
 type DbTask = Database['public']['Tables']['tasks']['Row'];
 
@@ -23,6 +24,18 @@ const mapDbTaskToTask = (dbTask: DbTask): Task => ({
   created_at: dbTask.created_at,
   updated_at: dbTask.updated_at,
 });
+
+// Utility function to update project progress when a task changes
+const updateProjectProgress = async (projectId: string | null | undefined) => {
+  if (projectId) {
+    try {
+      await updateProjectProgressOnTaskChange(projectId);
+    } catch (error) {
+      console.error("Error updating project progress:", error);
+      // Don't throw the error - we don't want progress updates to fail task operations
+    }
+  }
+};
 
 export const fetchTasks = async (filters?: TaskFilters): Promise<Task[]> => {
   try {
@@ -118,6 +131,11 @@ export const createTask = async (task: Omit<Task, "id" | "user" | "created_at" |
     throw new Error("Failed to create task");
   }
 
+  // Update project progress if task is associated with a project
+  if (task.project) {
+    await updateProjectProgress(task.project);
+  }
+
   return mapDbTaskToTask(data);
 };
 
@@ -127,6 +145,14 @@ export const updateTask = async (taskId: string, updates: Partial<Omit<Task, "id
   if (!user) {
     throw new Error("User must be authenticated to update tasks");
   }
+
+  // Get the current task to check if project association changed
+  const { data: existingTask } = await supabase
+    .from("tasks")
+    .select("project")
+    .eq("id", taskId)
+    .eq("user", user.id)
+    .single();
 
   const { data, error } = await supabase
     .from("tasks")
@@ -145,6 +171,15 @@ export const updateTask = async (taskId: string, updates: Partial<Omit<Task, "id
     throw new Error("Failed to update task or task not found");
   }
 
+  // Update progress for both the old and new project if changed
+  if (existingTask && existingTask.project) {
+    await updateProjectProgress(existingTask.project);
+  }
+  
+  if (updates.project && updates.project !== existingTask?.project) {
+    await updateProjectProgress(updates.project);
+  }
+
   return mapDbTaskToTask(data);
 };
 
@@ -155,6 +190,14 @@ export const deleteTask = async (taskId: string): Promise<boolean> => {
     throw new Error("User must be authenticated to delete tasks");
   }
 
+  // Get the task's project before deleting
+  const { data: task } = await supabase
+    .from("tasks")
+    .select("project")
+    .eq("id", taskId)
+    .eq("user", user.id)
+    .single();
+
   const { error } = await supabase
     .from("tasks")
     .delete()
@@ -164,6 +207,11 @@ export const deleteTask = async (taskId: string): Promise<boolean> => {
   if (error) {
     console.error("Error deleting task:", error);
     throw error;
+  }
+
+  // Update progress for the project if task was associated with one
+  if (task && task.project) {
+    await updateProjectProgress(task.project);
   }
 
   return true;
@@ -180,6 +228,14 @@ export const updateTaskStatus = async (taskId: string, status: Task['status']) =
       last_updated_at: new Date().toISOString(),
     };
 
+    // Get the task's project before updating
+    const { data: task } = await supabase
+      .from("tasks")
+      .select("project")
+      .eq("id", taskId)
+      .eq("user", user.id)
+      .single();
+
     const { data, error } = await supabase
       .from('tasks')
       .update(updates)
@@ -190,6 +246,11 @@ export const updateTaskStatus = async (taskId: string, status: Task['status']) =
 
     if (error) throw error;
     if (!data) throw new Error("Task not found");
+    
+    // Update project progress if task has a project
+    if (task && task.project) {
+      await updateProjectProgress(task.project);
+    }
     
     return mapDbTaskToTask(data);
   } catch (error) {

@@ -38,6 +38,7 @@ export const createProject = async (project: Omit<Project, "id" | "user" | "crea
     progress: 0,
     status: project.status || 'active',
     priority: project.priority || 'medium',
+    auto_progress: true
   };
 
   const { data, error } = await supabase
@@ -104,11 +105,40 @@ export const deleteProject = async (projectId: string): Promise<boolean> => {
   return true;
 };
 
-export const calculateProjectProgress = async (projectId: string): Promise<number> => {
+/**
+ * Calculate project progress based on the completion status of its tasks.
+ * If auto_progress is false, it will return the manual_progress value.
+ * 
+ * @param projectId - The ID of the project
+ * @param updateProjectProgress - Whether to update the project progress in the database
+ * @returns The calculated progress percentage (0-100)
+ */
+export const calculateProjectProgress = async (
+  projectId: string, 
+  updateProjectProgress: boolean = true
+): Promise<number> => {
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
     throw new Error("User must be authenticated");
+  }
+
+  // First, check if the project uses auto or manual progress
+  const { data: projectData, error: projectError } = await supabase
+    .from("projects")
+    .select("auto_progress, manual_progress")
+    .eq("id", projectId)
+    .eq("user", user.id)
+    .single();
+
+  if (projectError) {
+    console.error("Error fetching project for progress calculation:", projectError);
+    throw projectError;
+  }
+
+  // If not using auto progress, return the manual progress value
+  if (projectData && projectData.auto_progress === false && projectData.manual_progress !== null) {
+    return projectData.manual_progress;
   }
 
   // Get all tasks for the project
@@ -124,6 +154,10 @@ export const calculateProjectProgress = async (projectId: string): Promise<numbe
   }
 
   if (!tasks || tasks.length === 0) {
+    // No tasks means 0% progress
+    if (updateProjectProgress) {
+      await updateProject(projectId, { progress: 0 });
+    }
     return 0;
   }
 
@@ -131,8 +165,95 @@ export const calculateProjectProgress = async (projectId: string): Promise<numbe
   const completedTasks = tasks.filter(task => task.status === 'done').length;
   const progress = Math.round((completedTasks / tasks.length) * 100);
 
-  // Update project progress
-  await updateProject(projectId, { progress });
+  // Update project progress if requested
+  if (updateProjectProgress) {
+    await updateProject(projectId, { progress });
+  }
 
   return progress;
+};
+
+/**
+ * Set the project to use automatically calculated progress based on task completion.
+ * 
+ * @param projectId - The ID of the project
+ * @returns The updated project
+ */
+export const setAutoProgress = async (projectId: string): Promise<Project> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("User must be authenticated");
+  }
+
+  // Calculate the current progress
+  const progress = await calculateProjectProgress(projectId, false);
+
+  // Update the project
+  return await updateProject(projectId, { 
+    auto_progress: true,
+    progress 
+  });
+};
+
+/**
+ * Set the project to use manually defined progress.
+ * 
+ * @param projectId - The ID of the project
+ * @param manualProgress - The manually set progress value (0-100)
+ * @returns The updated project
+ */
+export const setManualProgress = async (projectId: string, manualProgress: number): Promise<Project> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("User must be authenticated");
+  }
+
+  // Validate the progress value
+  if (manualProgress < 0 || manualProgress > 100) {
+    throw new Error("Progress must be between 0 and 100");
+  }
+
+  // Update the project
+  return await updateProject(projectId, { 
+    auto_progress: false,
+    manual_progress: manualProgress,
+    progress: manualProgress 
+  });
+};
+
+/**
+ * Update project progress when tasks are created, updated or deleted.
+ * This should be called from task service after tasks are modified.
+ * 
+ * @param projectId - The ID of the project
+ * @returns The new progress percentage
+ */
+export const updateProjectProgressOnTaskChange = async (projectId: string): Promise<number> => {
+  // Check if the project exists and uses auto progress
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("User must be authenticated");
+  }
+
+  const { data: project, error } = await supabase
+    .from("projects")
+    .select("auto_progress")
+    .eq("id", projectId)
+    .eq("user", user.id)
+    .single();
+
+  if (error) {
+    console.error("Error fetching project:", error);
+    throw error;
+  }
+
+  // Only update progress if auto_progress is enabled
+  if (project && project.auto_progress) {
+    return await calculateProjectProgress(projectId, true);
+  }
+
+  return -1; // Indicates that auto-progress is disabled
 };

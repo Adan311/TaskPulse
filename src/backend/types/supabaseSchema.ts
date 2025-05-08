@@ -31,6 +31,8 @@ export interface Project {
   user: string;
   created_at?: string;
   updated_at?: string;
+  auto_progress?: boolean;
+  manual_progress?: number | null;
 }
 
 // Make sure Event interface matches the database schema

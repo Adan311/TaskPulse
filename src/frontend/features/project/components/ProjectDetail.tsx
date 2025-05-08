@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { format, differenceInDays } from 'date-fns';
 import { Project, Task } from '@/backend/types/supabaseSchema';
 import { ProjectTasks } from './ProjectTasks';
 import { ProjectEvents } from './ProjectEvents';
 import { ProjectFiles } from './ProjectFiles';
 import { ProjectNotes } from './ProjectNotes';
+import { ProjectProgressControl } from './ProjectProgressControl';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/frontend/components/ui/card';
 import { Button } from '@/frontend/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/frontend/components/ui/tabs';
@@ -65,6 +66,17 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
   
   const { uploadFile } = useFiles({ project_id: project.id });
   const [isUploading, setIsUploading] = useState(false);
+  
+  const [currentProject, setCurrentProject] = useState<Project>(project);
+  
+  // Update local state when project prop changes
+  useEffect(() => {
+    setCurrentProject(project);
+  }, [project]);
+
+  const handleProgressUpdate = (updatedProject: Project) => {
+    setCurrentProject(updatedProject);
+  };
   
   const handleAddTask = () => {
     setTaskTitle('');
@@ -164,8 +176,8 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
     <div className="container mx-auto p-4 space-y-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold">{project.name}</h1>
-          <p className="text-muted-foreground">{project.description}</p>
+          <h1 className="text-3xl font-bold">{currentProject.name}</h1>
+          <p className="text-muted-foreground">{currentProject.description}</p>
         </div>
         <div className="flex space-x-2">
           <Button variant="outline" size="sm" onClick={onEdit}>
@@ -191,24 +203,24 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
               <p className="text-sm text-muted-foreground mb-1">Status:</p>
               <div className={cn(
                 "text-sm font-medium rounded-full px-2 py-1 inline-block",
-                project.status === 'active' ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" :
-                project.status === 'on-hold' ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200" :
+                currentProject.status === 'active' ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" :
+                currentProject.status === 'on-hold' ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200" :
                 "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
               )}>
-                {project.status === 'active' ? 'In Progress' : 
-                 project.status === 'on-hold' ? 'On Hold' : 'Completed'}
+                {currentProject.status === 'active' ? 'In Progress' : 
+                 currentProject.status === 'on-hold' ? 'On Hold' : 'Completed'}
               </div>
             </div>
             <div>
               <p className="text-sm text-muted-foreground mb-1">Priority:</p>
               <div className={cn(
                 "text-sm font-medium rounded-full px-2 py-1 inline-block",
-                project.priority === 'high' ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" :
-                project.priority === 'medium' ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200" :
+                currentProject.priority === 'high' ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" :
+                currentProject.priority === 'medium' ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200" :
                 "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
               )}>
-                {project.priority === 'high' ? 'High' : 
-                 project.priority === 'medium' ? 'Medium' : 'Low'}
+                {currentProject.priority === 'high' ? 'High' : 
+                 currentProject.priority === 'medium' ? 'Medium' : 'Low'}
               </div>
             </div>
             <div>
@@ -217,21 +229,33 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                 "text-sm",
                 daysRemaining && daysRemaining < 3 ? "text-red-600 dark:text-red-400" : ""
               )}>
-                {project.due_date ? format(new Date(project.due_date), 'MMM d, yyyy') : 'No due date'}
+                {currentProject.due_date ? format(new Date(currentProject.due_date), 'MMM d, yyyy') : 'No due date'}
               </div>
             </div>
           </div>
 
-          <div className="mt-4">
-            <div className="flex justify-between mb-1">
-              <span className="text-sm text-muted-foreground">Progress</span>
-              <span className="text-sm font-medium">{project.progress}%</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="mt-4">
+              <div className="flex justify-between mb-1">
+                <span className="text-sm text-muted-foreground">Progress</span>
+                <span className="text-sm font-medium">
+                  {currentProject.progress}% 
+                  {currentProject.auto_progress === false && <span className="text-xs ml-1 text-muted-foreground">(Manual)</span>}
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                <div 
+                  className="bg-blue-600 h-2.5 rounded-full" 
+                  style={{ width: `${currentProject.progress}%` }}
+                ></div>
+              </div>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-              <div 
-                className="bg-blue-600 h-2.5 rounded-full" 
-                style={{ width: `${project.progress}%` }}
-              ></div>
+            
+            <div className="mt-4">
+              <ProjectProgressControl 
+                project={currentProject} 
+                onProgressUpdate={handleProgressUpdate} 
+              />
             </div>
           </div>
         </CardContent>
@@ -254,7 +278,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                 <h2 className="text-xl font-semibold">Tasks</h2>
                 <Button size="sm" onClick={handleAddTask}>Add Task</Button>
               </div>
-              <ProjectTasks ref={projectTasksRef} projectId={project.id} />
+              <ProjectTasks ref={projectTasksRef} projectId={currentProject.id} />
             </TabsContent>
             
             <TabsContent value="events">
@@ -262,7 +286,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                 <h2 className="text-xl font-semibold">Events</h2>
                 <Button size="sm" onClick={handleAddEvent}>Add Event</Button>
               </div>
-              <ProjectEvents ref={projectEventsRef} projectId={project.id} />
+              <ProjectEvents ref={projectEventsRef} projectId={currentProject.id} />
             </TabsContent>
             
             <TabsContent value="files">
@@ -270,7 +294,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
                 <h2 className="text-xl font-semibold">Files</h2>
                 <Button size="sm" onClick={handleUploadFile}>Upload</Button>
               </div>
-              <ProjectFiles ref={projectFilesRef} projectId={project.id} />
+              <ProjectFiles ref={projectFilesRef} projectId={currentProject.id} />
               <input 
                 type="file" 
                 ref={fileInputRef} 
@@ -287,7 +311,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
               <Card>
                 <CardContent className="pt-6">
                   {/* Project-specific notes */}
-                  <ProjectNotes ref={projectNotesRef} projectId={project.id} />
+                  <ProjectNotes ref={projectNotesRef} projectId={currentProject.id} />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -353,7 +377,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
           <EventForm 
             onSuccess={handleEventSuccess}
             onCancel={() => setIsEventDialogOpen(false)}
-            initialProjectId={project.id}
+            initialProjectId={currentProject.id}
           />
         </DialogContent>
       </Dialog>

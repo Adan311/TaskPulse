@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
@@ -12,6 +12,11 @@ export function useProjects() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
+  const subscriptionRef = useRef<{
+    subscription: {
+      unsubscribe: () => void;
+    } | null;
+  }>({ subscription: null });
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -54,9 +59,57 @@ export function useProjects() {
     }
   }, [toast]);
 
+  // Subscribe to real-time updates for projects
+  const subscribeToProjectUpdates = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Unsubscribe from any existing subscription
+      if (subscriptionRef.current.subscription) {
+        subscriptionRef.current.subscription.unsubscribe();
+      }
+
+      // Subscribe to project changes
+      const subscription = supabase
+        .channel('projects-updates')
+        .on('postgres_changes', 
+          { 
+            event: 'UPDATE', 
+            schema: 'public', 
+            table: 'projects', 
+            filter: `user=eq.${user.id}` 
+          }, 
+          (payload) => {
+            // Update the corresponding project in the state
+            setProjects(prev => 
+              prev.map(project => 
+                project.id === payload.new.id 
+                  ? { ...project, ...payload.new as Project } 
+                  : project
+              )
+            );
+          }
+        )
+        .subscribe();
+
+      subscriptionRef.current.subscription = subscription;
+    } catch (err) {
+      console.error("Error setting up real-time subscription:", err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchProjects();
-  }, [fetchProjects]);
+    subscribeToProjectUpdates();
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (subscriptionRef.current.subscription) {
+        subscriptionRef.current.subscription.unsubscribe();
+      }
+    };
+  }, [fetchProjects, subscribeToProjectUpdates]);
 
   const createProject = useCallback(async (name: string, description: string = "") => {
     try {
@@ -75,7 +128,8 @@ export function useProjects() {
         user: user.id,
         status: 'active',
         progress: 0,
-        priority: 'medium'
+        priority: 'medium',
+        auto_progress: true
       };
 
       const { data, error } = await supabase
