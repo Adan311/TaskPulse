@@ -68,9 +68,16 @@ This file tracks the status of all major features in your project, including wha
 
 ### 6. Projects
 - [✅] Projects page
-- [❌] Project details view
-- [❌] Project progress tracking
-- [❌] Error handling for project actions
+- [✅] Project details view
+- [✅] Project progress tracking
+- [✅] Project UI improvements:
+  - [✅] Removed duplicate upload buttons
+  - [✅] Improved event filtering (hide/show past events)
+  - [✅] Enhanced title/description layout
+  - [✅] Removed unnecessary share button
+  - [✅] Consistent tab styling across project views
+  - [✅] Simplified sidebar with only upcoming events
+- [✅] Error handling for project actions
 - [❌] Tests
 
 ### 7. Auth
@@ -166,6 +173,6 @@ This file tracks the status of all major features in your project, including wha
 
 ---
 
-_Last updated: 2025-05-09_
+_Last updated: 2025-05-10_
 
 

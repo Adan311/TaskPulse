@@ -183,12 +183,14 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
   return (
     <div className="container mx-auto p-4 space-y-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">{currentProject.name}</h1>
-          <p className="text-muted-foreground">{currentProject.description}</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div className="w-full sm:w-auto">
+          <h1 className="text-3xl font-bold mb-2 break-words">{currentProject.name}</h1>
+          {currentProject.description && (
+            <p className="text-muted-foreground break-words max-w-2xl">{currentProject.description}</p>
+          )}
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-shrink-0 space-x-2 self-end sm:self-auto">
           <ViewModeToggle 
             isDashboardView={isDashboardView} 
             onToggle={handleToggleViewMode} 
@@ -196,10 +198,6 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
           <Button variant="outline" size="sm" onClick={onEdit}>
             <PencilIcon className="h-4 w-4 mr-2" />
             Edit Project
-          </Button>
-          <Button variant="outline" size="sm">
-            <Share2Icon className="h-4 w-4 mr-2" />
-            Share
           </Button>
         </div>
       </div>

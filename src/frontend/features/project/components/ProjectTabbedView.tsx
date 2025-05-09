@@ -38,19 +38,23 @@ export const ProjectTabbedView: React.FC<ProjectTabbedViewProps> = ({
       {/* Tasks and Content Section */}
       <div className="lg:col-span-3">
         <Tabs defaultValue="tasks" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-4 mb-4">
-            <TabsTrigger value="tasks">Tasks</TabsTrigger>
-            <TabsTrigger value="events">Events</TabsTrigger>
-            <TabsTrigger value="files">Files</TabsTrigger>
-            <TabsTrigger value="notes">Notes</TabsTrigger>
+          <TabsList className="grid grid-cols-4 mb-6">
+            <TabsTrigger value="tasks" className="font-medium">Tasks</TabsTrigger>
+            <TabsTrigger value="events" className="font-medium">Events</TabsTrigger>
+            <TabsTrigger value="files" className="font-medium">Files</TabsTrigger>
+            <TabsTrigger value="notes" className="font-medium">Notes</TabsTrigger>
           </TabsList>
           
           <TabsContent value="tasks" className="space-y-4">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Tasks</h2>
               <Button size="sm" onClick={onAddTask}>Add Task</Button>
             </div>
-            <ProjectTasks ref={projectTasksRef} projectId={project.id} />
+            <Card>
+              <CardContent className="pt-6">
+                <ProjectTasks ref={projectTasksRef} projectId={project.id} />
+              </CardContent>
+            </Card>
           </TabsContent>
           
           <TabsContent value="events">
@@ -58,7 +62,11 @@ export const ProjectTabbedView: React.FC<ProjectTabbedViewProps> = ({
               <h2 className="text-xl font-semibold">Events</h2>
               <Button size="sm" onClick={onAddEvent}>Add Event</Button>
             </div>
-            <ProjectEvents ref={projectEventsRef} projectId={project.id} />
+            <Card>
+              <CardContent className="pt-6">
+                <ProjectEvents ref={projectEventsRef} projectId={project.id} showAllEvents={true} />
+              </CardContent>
+            </Card>
           </TabsContent>
           
           <TabsContent value="files">
@@ -66,7 +74,11 @@ export const ProjectTabbedView: React.FC<ProjectTabbedViewProps> = ({
               <h2 className="text-xl font-semibold">Files</h2>
               <Button size="sm" onClick={onUploadFile}>Upload</Button>
             </div>
-            <ProjectFiles ref={projectFilesRef} projectId={project.id} />
+            <Card>
+              <CardContent className="pt-6">
+                <ProjectFiles ref={projectFilesRef} projectId={project.id} />
+              </CardContent>
+            </Card>
           </TabsContent>
           
           <TabsContent value="notes">
@@ -95,23 +107,8 @@ export const ProjectTabbedView: React.FC<ProjectTabbedViewProps> = ({
             <div className="space-y-3">
               <ProjectEvents 
                 ref={projectEventsRef} 
-                projectId={project.id} 
-              />
-            </div>
-          </div>
-        </Card>
-        
-        {/* Recent Notes Card */}
-        <Card>
-          <div className="p-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Recent Notes</h3>
-              <Button size="sm" variant="outline" onClick={onAddNote}>Add</Button>
-            </div>
-            <div>
-              <ProjectNotes
-                ref={projectNotesRef}
                 projectId={project.id}
+                limit={4} 
               />
             </div>
           </div>

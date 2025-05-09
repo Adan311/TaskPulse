@@ -1,4 +1,4 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
 import { useFiles } from '@/frontend/features/files/hooks/useFiles';
 import { Button } from '@/frontend/components/ui/button';
 import { Card, CardContent } from '@/frontend/components/ui/card';
@@ -31,11 +31,16 @@ export const ProjectFiles = forwardRef<{ refreshFiles: () => void }, ProjectFile
   
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Expose the refresh method through the ref
   useImperativeHandle(ref, () => ({
     refreshFiles: loadFiles
   }));
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -138,77 +143,82 @@ export const ProjectFiles = forwardRef<{ refreshFiles: () => void }, ProjectFile
 
   return (
     <div className="space-y-4">
-      {files.length === 0 ? (
+      <div className="flex justify-end mb-4">
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+        <Button 
+          onClick={handleUploadClick} 
+          disabled={uploading}
+          className="flex items-center gap-2"
+        >
+          {uploading ? (
+            <>
+              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent"></span>
+              Uploading...
+            </>
+          ) : (
+            <>
+              <UploadIcon className="h-4 w-4" />
+              Upload File
+            </>
+          )}
+        </Button>
+      </div>
+
+      {loading && !files.length ? (
         <div className="text-center py-8">
-          <p className="text-muted-foreground mb-4">No files uploaded yet</p>
-          <Button className="relative" disabled={uploading}>
-            <input
-              type="file"
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              onChange={handleFileUpload}
-              accept="*/*"
-            />
-            <UploadIcon className="h-4 w-4 mr-2" />
-            {uploading ? 'Uploading...' : 'Upload File'}
-          </Button>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+        </div>
+      ) : files.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          No files uploaded yet.
         </div>
       ) : (
-        <>
-          <div className="flex justify-end mb-4">
-            <Button className="relative" disabled={uploading}>
-              <input
-                type="file"
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                onChange={handleFileUpload}
-                accept="*/*"
-              />
-              <UploadIcon className="h-4 w-4 mr-2" />
-              {uploading ? 'Uploading...' : 'Upload File'}
-            </Button>
-          </div>
-          
-          <div className="grid gap-4">
-            {files.map((file) => (
-              <Card key={file.id} className="overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="flex items-center p-4">
-                    <div className="mr-4">
-                      {getFileIcon(file.type)}
-                    </div>
-                    <div className="flex-grow min-w-0">
-                      <h3 className="font-medium truncate">{file.name}</h3>
-                      <div className="flex text-xs text-muted-foreground mt-1 space-x-4">
-                        <span>{formatFileSize(file.size)}</span>
-                        {file.uploaded_at && (
-                          <span>Uploaded {formatDistanceToNow(new Date(file.uploaded_at), { addSuffix: true })}</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => handleDownload(file.id, file.name)}
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        <span className="sr-only">Download</span>
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="text-destructive" 
-                        onClick={() => handleDelete(file.id)}
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                        <span className="sr-only">Delete</span>
-                      </Button>
+        <div className="space-y-2">
+          {files.map((file) => (
+            <Card key={file.id} className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className="flex items-center p-4">
+                  <div className="mr-4">
+                    {getFileIcon(file.type)}
+                  </div>
+                  <div className="flex-grow min-w-0">
+                    <h3 className="font-medium truncate">{file.name}</h3>
+                    <div className="flex text-xs text-muted-foreground mt-1 space-x-4">
+                      <span>{formatFileSize(file.size)}</span>
+                      {file.uploaded_at && (
+                        <span>Uploaded {formatDistanceToNow(new Date(file.uploaded_at), { addSuffix: true })}</span>
+                      )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </>
+                  <div className="flex">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleDownload(file.id, file.name)}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      <span className="sr-only">Download</span>
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-destructive" 
+                      onClick={() => handleDelete(file.id)}
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                      <span className="sr-only">Delete</span>
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   );

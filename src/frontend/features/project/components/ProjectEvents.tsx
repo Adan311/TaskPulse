@@ -3,8 +3,8 @@ import { Event } from '@/frontend/types/calendar';
 import { EventList } from '@/frontend/features/calendar/components/EventList';
 import { getEvents } from '@/backend/api/services/eventService';
 import { Card, CardContent } from '@/frontend/components/ui/card';
-import { format } from 'date-fns';
-import { CalendarIcon, ClockIcon, PencilIcon } from 'lucide-react';
+import { format, isPast } from 'date-fns';
+import { CalendarIcon, ClockIcon, PencilIcon, EyeIcon, EyeOffIcon } from 'lucide-react';
 import { cn } from '@/frontend/lib/utils';
 import { Button } from '@/frontend/components/ui/button';
 import { 
@@ -14,17 +14,22 @@ import {
   DialogTitle
 } from '@/frontend/components/ui/dialog';
 import { EventForm } from '@/frontend/features/calendar/components/EventForm';
+import { Badge } from '@/frontend/components/ui/badge';
 
 interface ProjectEventsProps {
   projectId: string;
+  limit?: number;
+  showAllEvents?: boolean;
 }
 
-export const ProjectEvents = forwardRef<{ refreshEvents: () => void }, ProjectEventsProps>(({ projectId }, ref) => {
+export const ProjectEvents = forwardRef<{ refreshEvents: () => void }, ProjectEventsProps>(
+  ({ projectId, limit = 4, showAllEvents = false }, ref) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [showPastEvents, setShowPastEvents] = useState(false);
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -58,33 +63,117 @@ export const ProjectEvents = forwardRef<{ refreshEvents: () => void }, ProjectEv
     fetchEvents();
   };
 
+  // Filter events based on whether they're past events and the showPastEvents state
+  const filteredEvents = events.filter(event => {
+    const eventEnd = new Date(event.endTime);
+    const isPastEvent = isPast(eventEnd);
+    
+    if (showAllEvents) {
+      return true;
+    }
+    
+    if (showPastEvents) {
+      return true;
+    } else {
+      return !isPastEvent;
+    }
+  });
+
+  // Limit the number of events shown
+  const displayEvents = filteredEvents.slice(0, limit);
+  const hasMoreEvents = filteredEvents.length > limit;
+
   if (loading) {
-    return <div className="py-8 text-center">
-      <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+    return <div className="py-4 text-center">
+      <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
     </div>;
   }
   
   if (error) {
-    return <div className="py-8 text-center text-destructive">{error}</div>;
+    return <div className="py-4 text-center text-destructive">{error}</div>;
   }
   
   if (events.length === 0) {
-    return <div className="py-8 text-center text-muted-foreground">No events scheduled for this project.</div>;
+    return <div className="py-4 text-center text-muted-foreground">No events scheduled for this project.</div>;
   }
   
+  if (filteredEvents.length === 0) {
+    return (
+      <div>
+        <div className="py-4 text-center text-muted-foreground">
+          {showPastEvents ? "No past events." : "No upcoming events."}
+        </div>
+        <div className="flex justify-center">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowPastEvents(!showPastEvents)}
+            className="mt-2"
+          >
+            {showPastEvents ? (
+              <>
+                <EyeOffIcon className="h-4 w-4 mr-2" />
+                Hide Past Events
+              </>
+            ) : (
+              <>
+                <EyeIcon className="h-4 w-4 mr-2" />
+                Show Past Events
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <>
-      <div className="space-y-4">
-        {events.map((event) => (
+    <div className="space-y-4">
+      {!showAllEvents && (
+        <div className="flex justify-between items-center mb-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setShowPastEvents(!showPastEvents)}
+            className="text-xs h-8 px-2"
+          >
+            {showPastEvents ? (
+              <>
+                <EyeOffIcon className="h-3 w-3 mr-1" />
+                Hide Past
+              </>
+            ) : (
+              <>
+                <EyeIcon className="h-3 w-3 mr-1" />
+                Show Past
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+      
+      <div className="space-y-3">
+        {displayEvents.map((event) => (
           <EventCard 
             key={event.id} 
             event={event} 
-            onEdit={() => handleEditEvent(event)}
+            onEdit={() => handleEditEvent(event)} 
           />
         ))}
+        
+        {hasMoreEvents && (
+          <div className="text-center mt-2">
+            <Button 
+              variant="link" 
+              className="text-xs"
+              onClick={() => window.location.href = `/calendar?project=${projectId}`}
+            >
+              See all {filteredEvents.length} events
+            </Button>
+          </div>
+        )}
       </div>
-
-      {/* Edit Event Dialog */}
+      
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
@@ -92,14 +181,14 @@ export const ProjectEvents = forwardRef<{ refreshEvents: () => void }, ProjectEv
           </DialogHeader>
           {selectedEvent && (
             <EventForm 
+              event={selectedEvent}
               onSuccess={handleEditSuccess}
               onCancel={() => setIsEditDialogOpen(false)}
-              event={selectedEvent}
             />
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 });
 
@@ -109,60 +198,41 @@ interface EventCardProps {
 }
 
 const EventCard: React.FC<EventCardProps> = ({ event, onEdit }) => {
-  const startTime = new Date(event.startTime);
-  const endTime = new Date(event.endTime);
-  
-  const formattedDate = format(startTime, 'EEEE, MMMM d, yyyy');
-  const formattedStartTime = format(startTime, 'h:mm a');
-  const formattedEndTime = format(endTime, 'h:mm a');
-  
-  // Calculate if the event is today, upcoming, or past
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const eventDate = new Date(startTime);
-  eventDate.setHours(0, 0, 0, 0);
-  
-  const isToday = eventDate.getTime() === today.getTime();
-  const isPast = eventDate.getTime() < today.getTime();
-  const isUpcoming = eventDate.getTime() > today.getTime();
+  const start = new Date(event.startTime);
+  const end = new Date(event.endTime);
+  const isPastEvent = isPast(end);
   
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="font-medium text-lg">{event.title}</h3>
-          <div className="flex items-center gap-2">
-            <span className={cn(
-              "text-xs px-2 py-0.5 rounded-full",
-              isToday ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" :
-              isUpcoming ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" :
-              "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
-            )}>
-              {isToday ? "Today" : isUpcoming ? "Upcoming" : "Past"}
-            </span>
-            <Button variant="ghost" size="sm" onClick={onEdit}>
-              <PencilIcon className="h-4 w-4" />
-              <span className="sr-only">Edit</span>
-            </Button>
-          </div>
+    <div className={cn(
+      "rounded-lg border p-3",
+      "hover:border-primary transition-colors",
+      isPastEvent ? "opacity-60" : ""
+    )}>
+      <div className="flex justify-between">
+        <h3 className="font-medium text-sm">{event.title}</h3>
+        <div className="flex items-center">
+          {isPastEvent && (
+            <Badge variant="outline" className="text-xs px-1.5 py-0 h-5 mr-1.5">
+              Past
+            </Badge>
+          )}
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit}>
+            <PencilIcon className="h-3.5 w-3.5" />
+          </Button>
         </div>
-        
-        <div className="text-sm text-muted-foreground">
-          <div className="flex items-center mb-1">
-            <CalendarIcon className="h-4 w-4 mr-2" />
-            {formattedDate}
-          </div>
-          <div className="flex items-center">
-            <ClockIcon className="h-4 w-4 mr-2" />
-            {formattedStartTime} - {formattedEndTime}
-          </div>
-        </div>
-        
-        {event.description && (
-          <p className="mt-2 text-sm">{event.description}</p>
-        )}
-      </CardContent>
-    </Card>
+      </div>
+      <div className="text-xs text-muted-foreground mt-2 flex items-center">
+        <CalendarIcon className="h-3.5 w-3.5 mr-1.5" />
+        <span>
+          {format(start, 'EEEE, MMM d, yyyy')}
+        </span>
+      </div>
+      <div className="text-xs text-muted-foreground mt-1 flex items-center">
+        <ClockIcon className="h-3.5 w-3.5 mr-1.5" />
+        <span>
+          {format(start, 'h:mm a')} - {format(end, 'h:mm a')}
+        </span>
+      </div>
+    </div>
   );
 }; 
