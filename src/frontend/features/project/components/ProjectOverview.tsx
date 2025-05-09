@@ -21,7 +21,7 @@ export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   return (
     <Card className="mb-6">
       <CardHeader className="pb-2">
-        <CardTitle>{project.name}</CardTitle>
+        <CardTitle>Overview</CardTitle>
         <p className="text-muted-foreground">{project.description}</p>
       </CardHeader>
       <CardContent>

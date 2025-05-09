@@ -186,9 +186,6 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="w-full sm:w-auto">
           <h1 className="text-3xl font-bold mb-2 break-words">{currentProject.name}</h1>
-          {currentProject.description && (
-            <p className="text-muted-foreground break-words max-w-2xl">{currentProject.description}</p>
-          )}
         </div>
         <div className="flex flex-shrink-0 space-x-2 self-end sm:self-auto">
           <ViewModeToggle 
