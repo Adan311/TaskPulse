@@ -391,3 +391,46 @@ export const deleteTaskPermanently = async (taskId: string) => {
     throw error;
   }
 };
+
+export const unlinkTaskFromProject = async (taskId: string): Promise<Task> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error("User must be authenticated to unlink tasks");
+  }
+
+  // Get the task's project before unlinking
+  const { data: task } = await supabase
+    .from("tasks")
+    .select("project")
+    .eq("id", taskId)
+    .eq("user", user.id)
+    .single();
+
+  const projectId = task?.project;
+
+  // Update the task to remove the project association
+  const { data, error } = await supabase
+    .from("tasks")
+    .update({ project: null })
+    .eq("id", taskId)
+    .eq("user", user.id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error unlinking task from project:", error);
+    throw error;
+  }
+
+  if (!data) {
+    throw new Error("Failed to unlink task or task not found");
+  }
+
+  // Update project progress after removing the task
+  if (projectId) {
+    await updateProjectProgress(projectId);
+  }
+
+  return mapDbTaskToTask(data);
+};

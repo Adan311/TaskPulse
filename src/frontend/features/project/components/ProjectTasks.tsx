@@ -1,7 +1,7 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { format } from 'date-fns';
 import { Task } from '@/backend/types/supabaseSchema';
-import { fetchProjectTasks, createTask, updateTask, deleteTask, updateTaskStatus } from '@/backend/api/services/task.service';
+import { fetchProjectTasks, createTask, updateTask, deleteTask, updateTaskStatus, unlinkTaskFromProject } from '@/backend/api/services/task.service';
 import { Card, CardContent } from '@/frontend/components/ui/card';
 import { Button } from '@/frontend/components/ui/button';
 import { Checkbox } from '@/frontend/components/ui/checkbox';
@@ -11,7 +11,7 @@ import { Textarea } from '@/frontend/components/ui/textarea';
 import { Label } from '@/frontend/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/frontend/components/ui/select';
 import { cn } from '@/frontend/lib/utils';
-import { PencilIcon, Trash2Icon, PlusIcon, CheckCircleIcon, CircleIcon, ArrowRightIcon, ArrowLeftIcon } from 'lucide-react';
+import { PencilIcon, Trash2Icon, PlusIcon, CheckCircleIcon, CircleIcon, ArrowRightIcon, ArrowLeftIcon, Unlink } from 'lucide-react';
 import { useToast } from '@/frontend/hooks/use-toast';
 
 // Status mapping functions to handle UI vs database format differences
@@ -210,6 +210,24 @@ export const ProjectTasks = forwardRef<{ refreshTasks: () => void }, ProjectTask
     }
   };
 
+  const handleUnlinkTask = async (taskId: string) => {
+    try {
+      await unlinkTaskFromProject(taskId);
+      toast({
+        title: "Success",
+        description: "Task unlinked from project successfully",
+      });
+      loadTasks();
+    } catch (err) {
+      console.error('Error unlinking task:', err);
+      toast({
+        title: "Error",
+        description: "Failed to unlink task. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Ensure tasks are correctly filtered by status
   const todoTasks = tasks.filter(task => task.status === 'todo');
   const inProgressTasks = tasks.filter(task => task.status === 'in_progress');
@@ -241,6 +259,7 @@ export const ProjectTasks = forwardRef<{ refreshTasks: () => void }, ProjectTask
             onMoveTask={(newStatus) => handleMoveTask(task, newStatus)}
             onEdit={handleEditTask}
             onDelete={handleDeleteTask}
+            onUnlink={handleUnlinkTask}
             currentStatus={status}
           />
         ))
@@ -365,6 +384,7 @@ interface TaskItemProps {
   onMoveTask: (newStatus: Task['status']) => void;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
+  onUnlink: (taskId: string) => void;
   currentStatus: Task['status'];
 }
 
@@ -374,6 +394,7 @@ const TaskItem: React.FC<TaskItemProps> = ({
   onMoveTask,
   onEdit, 
   onDelete,
+  onUnlink,
   currentStatus
 }) => {
   const getPriorityColor = (priority: string) => {
@@ -473,6 +494,9 @@ const TaskItem: React.FC<TaskItemProps> = ({
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(task)}>
               <PencilIcon className="h-3 w-3" />
             </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onUnlink(task.id)} title="Unlink from project">
+              <Unlink className="h-3 w-3 text-muted-foreground" />
+            </Button>
             <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(task.id)}>
               <Trash2Icon className="h-3 w-3" />
             </Button>
@@ -481,4 +505,4 @@ const TaskItem: React.FC<TaskItemProps> = ({
       </CardContent>
     </Card>
   );
-}; 
+};

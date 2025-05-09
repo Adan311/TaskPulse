@@ -72,7 +72,7 @@ export const ProjectTabbedView: React.FC<ProjectTabbedViewProps> = ({
           <TabsContent value="files">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Files</h2>
-              <Button size="sm" onClick={onUploadFile}>Upload</Button>
+              <Button size="sm" onClick={onUploadFile}>Upload File</Button>
             </div>
             <Card>
               <CardContent className="pt-6">
@@ -116,4 +116,4 @@ export const ProjectTabbedView: React.FC<ProjectTabbedViewProps> = ({
       </div>
     </div>
   );
-}; 
+};

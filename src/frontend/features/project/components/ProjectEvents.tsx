@@ -1,10 +1,10 @@
 import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { Event } from '@/frontend/types/calendar';
 import { EventList } from '@/frontend/features/calendar/components/EventList';
-import { getEvents } from '@/backend/api/services/eventService';
+import { getEvents, updateEvent, deleteEvent } from '@/backend/api/services/eventService';
 import { Card, CardContent } from '@/frontend/components/ui/card';
 import { format, isPast } from 'date-fns';
-import { CalendarIcon, ClockIcon, PencilIcon, EyeIcon, EyeOffIcon } from 'lucide-react';
+import { CalendarIcon, ClockIcon, PencilIcon, EyeIcon, EyeOffIcon, Trash2, Unlink } from 'lucide-react';
 import { cn } from '@/frontend/lib/utils';
 import { Button } from '@/frontend/components/ui/button';
 import { 
@@ -15,6 +15,7 @@ import {
 } from '@/frontend/components/ui/dialog';
 import { EventForm } from '@/frontend/features/calendar/components/EventForm';
 import { Badge } from '@/frontend/components/ui/badge';
+import { useToast } from '@/frontend/hooks/use-toast';
 
 interface ProjectEventsProps {
   projectId: string;
@@ -30,6 +31,7 @@ export const ProjectEvents = forwardRef<{ refreshEvents: () => void }, ProjectEv
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [showPastEvents, setShowPastEvents] = useState(false);
+  const { toast } = useToast();
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -61,6 +63,40 @@ export const ProjectEvents = forwardRef<{ refreshEvents: () => void }, ProjectEv
   const handleEditSuccess = () => {
     setIsEditDialogOpen(false);
     fetchEvents();
+  };
+
+  const handleUnlinkEvent = async (event: Event) => {
+    try {
+      await updateEvent(event.id, { ...event, project: undefined });
+      toast({ 
+        title: 'Event unlinked successfully',
+        description: 'The event has been removed from this project.'
+      });
+      fetchEvents();
+    } catch (err: any) {
+      toast({ 
+        title: 'Failed to unlink event', 
+        description: err.message || 'An error occurred',
+        variant: 'destructive'
+      });
+    }
+  };
+  
+  const handleDeleteEvent = async (id: string) => {
+    try {
+      await deleteEvent(id);
+      toast({ 
+        title: 'Event deleted successfully',
+        description: 'The event has been permanently deleted.'
+      });
+      fetchEvents();
+    } catch (err: any) {
+      toast({ 
+        title: 'Failed to delete event', 
+        description: err.message || 'An error occurred',
+        variant: 'destructive'
+      });
+    }
   };
 
   // Filter events based on whether they're past events and the showPastEvents state
@@ -158,6 +194,8 @@ export const ProjectEvents = forwardRef<{ refreshEvents: () => void }, ProjectEv
             key={event.id} 
             event={event} 
             onEdit={() => handleEditEvent(event)} 
+            onUnlink={() => handleUnlinkEvent(event)}
+            onDelete={() => handleDeleteEvent(event.id)}
           />
         ))}
         
@@ -195,9 +233,11 @@ export const ProjectEvents = forwardRef<{ refreshEvents: () => void }, ProjectEv
 interface EventCardProps {
   event: Event;
   onEdit: () => void;
+  onUnlink: () => void;
+  onDelete: () => void;
 }
 
-const EventCard: React.FC<EventCardProps> = ({ event, onEdit }) => {
+const EventCard: React.FC<EventCardProps> = ({ event, onEdit, onUnlink, onDelete }) => {
   const start = new Date(event.startTime);
   const end = new Date(event.endTime);
   const isPastEvent = isPast(end);
@@ -219,6 +259,12 @@ const EventCard: React.FC<EventCardProps> = ({ event, onEdit }) => {
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit}>
             <PencilIcon className="h-3.5 w-3.5" />
           </Button>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onUnlink}>
+            <Unlink className="h-3.5 w-3.5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onDelete}>
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
         </div>
       </div>
       <div className="text-xs text-muted-foreground mt-2 flex items-center">
@@ -235,4 +281,4 @@ const EventCard: React.FC<EventCardProps> = ({ event, onEdit }) => {
       </div>
     </div>
   );
-}; 
+};

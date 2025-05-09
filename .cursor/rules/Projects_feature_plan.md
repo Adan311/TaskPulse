@@ -76,18 +76,18 @@
   4. ✅ Remove unused share button
   5. ✅ Create consistent styling across all tabs
 
-### 4. Dual View Modes (MEDIUM PRIORITY)
-- **Requirement:** Provide both dashboard and tabbed views for project content
-- **Implementation Plan:**
+### 4. ~~Dual View Modes (MEDIUM PRIORITY)~~ ✅ COMPLETED
+- ~~**Requirement:** Provide both dashboard and tabbed views for project content~~
+- ~~**Implementation Plan:**~~
   1. ✅ Create toggle mechanism between views
   2. ✅ Implement unified dashboard view showing all content types together
   3. ✅ Maintain existing tabbed view for separate content viewing
   4. ✅ Ensure view preference persists across sessions
   5. ✅ Preserve filter settings across view mode changes
 
-### 5. Project Progress & Timing Enhancements (MEDIUM PRIORITY)
-- **Requirement:** Improve progress tracking and deadline visualization
-- **Implementation Plan:**
+### 5. ~~Project Progress & Timing Enhancements (MEDIUM PRIORITY)~~ ✅ COMPLETED
+- ~~**Requirement:** Improve progress tracking and deadline visualization~~
+- ~~**Implementation Plan:**~~
   1. ✅ Enhance progress bar to accurately reflect task completion percentage
   2. ✅ Add real-time days remaining counter until project deadline
   3. ✅ Implement sub-task expansion/collapse functionality
@@ -106,6 +106,15 @@
   3. ✅ Fix note saving mechanism - DONE
   4. ✅ Add loading and success states for all operations - DONE
 
+### 7. Project Item Unlinking (HIGH PRIORITY) ✅ COMPLETED
+- ~~**Requirement:** Allow users to unlink items from projects without deleting them~~
+- ~~**Implementation Plan:**~~
+  1. ✅ Add "Unlink from project" button to notes in project view
+  2. ✅ Add "Unlink from project" button to files in project view
+  3. ✅ Add both "Unlink from project" and "Delete" buttons to events in project view
+  4. ✅ Add "Unlink from project" button to tasks in project view
+  5. ✅ Ensure unlinking updates project progress accordingly
+
 ## Detailed Implementation Plan
 
 ### Phase 1: Fix Core Functionality ✅ COMPLETED
@@ -114,18 +123,21 @@
    - ✅ Implemented "Add to Project" functionality for notes
    - ✅ Created UI for linking existing files to projects
    - ✅ Completed task creation and editing in project view
+   - ✅ Added unlinking functionality for all item types (notes, files, events, tasks)
 
 2. **Implement Global ↔ Project Synchronization** ✅
    - ✅ Updated all services (task, event, file, note) to use consistent project_id field
    - ✅ Modified frontend hooks to properly filter by project_id when appropriate
    - ✅ Ensured all CRUD operations update both global and project-specific views
    - ✅ Added refresh mechanisms for updates across views
+   - ✅ Fixed automatic linking when items are created in project context
 
 3. **Fix Data Persistence Issues** ✅
    - ✅ Debugged file upload and storage process
    - ✅ Implemented proper error handling for all operations
    - ✅ Fixed note saving mechanism
    - ✅ Added loading and success states for all operations
+   - ✅ Ensured task status changes properly persist and propagate
 
 ### Phase 2: Enhance User Experience ✅ COMPLETED
 1. **Implement Dual View Modes** ✅
@@ -133,12 +145,15 @@
    - ✅ Implemented dashboard (unified) view layout
    - ✅ Ensured smooth transitions between views
    - ✅ Persist view preferences
+   - ✅ Maintained filter settings across view mode changes
 
 2. **Improve Project Progress & Timing** ✅
    - ✅ Enhanced progress calculation based on task completion
    - ✅ Implemented real-time deadline countdown
    - ✅ Added expand/collapse functionality for sub-tasks
    - ✅ Save expanded state per project
+   - ✅ Added toggle between auto/manual progress modes
+   - ✅ Created manual progress slider with save functionality
 
 3. **UI Consistency Improvements** ✅
    - ✅ Consolidated file upload buttons
@@ -147,19 +162,22 @@
    - ✅ Removed unused share button
    - ✅ Created consistent styling across all tabs
    - ✅ Made card styles consistent across content types
+   - ✅ Simplified sidebar to show only upcoming events
 
 ### Phase 3: Polish and Validation (Current Phase)
-1. **UI/UX Improvements**
-   - ✅ Add confirmation dialogs for critical actions
-   - ✅ Improve loading states and transitions
-   - ✅ Enhance error messaging
-   - ✅ Add tooltips and helper text
+1. **UI/UX Improvements** ✅
+   - ✅ Added confirmation dialogs for critical actions
+   - ✅ Improved loading states and transitions
+   - ✅ Enhanced error messaging
+   - ✅ Added tooltips and helper text
+   - ✅ Standardized button positioning and behavior across project views
 
 2. **Comprehensive Testing**
    - ⏳ Test all CRUD operations in both global and project views
    - ⏳ Verify synchronization works bidirectionally
    - ⏳ Confirm view toggling preserves context and filters
    - ⏳ Validate project progress calculation accuracy
+   - ⏳ Test unlinking functionality for all item types
 
 3. **Performance Optimization**
    - ⏳ Implement data caching where appropriate

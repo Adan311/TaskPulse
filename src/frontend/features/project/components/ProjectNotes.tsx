@@ -4,8 +4,9 @@ import { Button } from '@/frontend/components/ui/button';
 import { ScrollArea } from '@/frontend/components/ui/scroll-area';
 import { Textarea } from '@/frontend/components/ui/textarea';
 import { Card } from '@/frontend/components/ui/card';
-import { Pin, Trash, Copy, Edit2, Search } from 'lucide-react';
+import { Pin, Trash, Copy, Edit2, Search, Save, X, Unlink } from 'lucide-react';
 import { Input } from '@/frontend/components/ui/input';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProjectNotesProps {
   projectId: string;
@@ -29,6 +30,7 @@ export const ProjectNotes = forwardRef<{ handleNew: () => void }, ProjectNotesPr
     cancelEdit,
     selectedProject,
     setSelectedProject,
+    unlinkNoteFromProject,
   } = useNotes();
   
   const [isCreatingNote, setIsCreatingNote] = useState(false);
@@ -57,17 +59,19 @@ export const ProjectNotes = forwardRef<{ handleNew: () => void }, ProjectNotesPr
     
     setIsSubmitting(true);
     try {
-      // Store current selected project
-      const originalProject = selectedProject;
+      // Create the note data directly with project association to avoid any synchronization issues
+      const newNoteData = {
+        id: crypto.randomUUID(),
+        content: newNoteContent,
+        user: user.id,
+        project: projectId, // Directly set the projectId here
+        last_updated: new Date().toISOString(),
+        pinned: false
+      };
       
-      // Temporarily set the selected project to ensure proper association
-      setSelectedProject(projectId);
-      
-      // Add the note with project association
-      await addNote(newNoteContent);
-      
-      // Restore original selection
-      setSelectedProject(originalProject);
+      // Insert the note directly into the database
+      const { error } = await supabase.from('notes').insert([newNoteData]);
+      if (error) throw error;
       
       // Refresh the notes list
       fetchNotes(user.id);
@@ -150,6 +154,13 @@ export const ProjectNotes = forwardRef<{ handleNew: () => void }, ProjectNotesPr
                 onPin={() => note.pinned ? unpinNote(note.id) : pinNote(note.id)}
                 onDelete={() => deleteNote(note.id)}
                 onEdit={() => startEdit(note)}
+                onUnlink={() => unlinkNoteFromProject(note.id)}
+                isEditing={editingId === note.id}
+                editContent={editContent}
+                onEditChange={setEditContent}
+                editInputRef={editInputRef}
+                onSave={saveEdit}
+                onCancel={cancelEdit}
               />
             ))}
           </div>
@@ -164,9 +175,28 @@ interface NoteCardProps {
   onPin: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  onUnlink?: () => void;
+  isEditing: boolean;
+  editContent: string;
+  onEditChange: (content: string) => void;
+  editInputRef: React.RefObject<HTMLTextAreaElement>;
+  onSave: () => Promise<boolean>;
+  onCancel: () => void;
 }
 
-const NoteCard: React.FC<NoteCardProps> = ({ note, onPin, onDelete, onEdit }) => {
+const NoteCard: React.FC<NoteCardProps> = ({ 
+  note, 
+  onPin, 
+  onDelete, 
+  onEdit,
+  onUnlink,
+  isEditing,
+  editContent,
+  onEditChange,
+  editInputRef,
+  onSave,
+  onCancel
+}) => {
   const handleCopy = () => {
     navigator.clipboard.writeText(note.content);
   };
@@ -178,26 +208,67 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onPin, onDelete, onEdit }) =>
           {note.title || note.content.slice(0, 32) || "Untitled"}
         </h3>
         <div className="flex space-x-1">
-          <Button size="icon" variant="ghost" onClick={onPin} title={note.pinned ? "Unpin" : "Pin"}>
-            <Pin className={note.pinned ? "text-primary" : ""} size={16} />
-          </Button>
-          <Button size="icon" variant="ghost" onClick={handleCopy} title="Copy">
-            <Copy size={16} />
-          </Button>
-          <Button size="icon" variant="ghost" onClick={onEdit} title="Edit">
-            <Edit2 size={16} />
-          </Button>
-          <Button size="icon" variant="ghost" onClick={onDelete} title="Delete">
-            <Trash size={16} className="text-destructive" />
-          </Button>
+          {isEditing ? (
+            <>
+              <Button size="icon" variant="ghost" onClick={onSave} title="Save">
+                <Save size={16} />
+              </Button>
+              <Button size="icon" variant="ghost" onClick={onCancel} title="Cancel">
+                <X size={16} />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button size="icon" variant="ghost" onClick={onPin} title={note.pinned ? "Unpin" : "Pin"}>
+                <Pin className={note.pinned ? "text-primary" : ""} size={16} />
+              </Button>
+              <Button size="icon" variant="ghost" onClick={handleCopy} title="Copy">
+                <Copy size={16} />
+              </Button>
+              <Button size="icon" variant="ghost" onClick={onEdit} title="Edit">
+                <Edit2 size={16} />
+              </Button>
+              {onUnlink && (
+                <Button size="icon" variant="ghost" onClick={onUnlink} title="Unlink from project">
+                  <Unlink size={16} className="text-muted-foreground" />
+                </Button>
+              )}
+              <Button size="icon" variant="ghost" onClick={onDelete} title="Delete">
+                <Trash size={16} className="text-destructive" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
-      <div className="whitespace-pre-wrap text-sm">
-        {note.content}
-      </div>
+      
+      {isEditing ? (
+        <Textarea
+          ref={editInputRef}
+          value={editContent}
+          onChange={(e) => onEditChange(e.target.value)}
+          className="min-h-[100px] mb-4"
+          placeholder="Edit your note..."
+        />
+      ) : (
+        <div className="text-sm">
+          <div className="whitespace-pre-wrap line-clamp-3">
+            {note.content}
+          </div>
+          {note.content.length > 150 && (
+            <Button 
+              variant="link" 
+              className="text-xs p-0 h-auto mt-1 text-muted-foreground hover:text-primary" 
+              onClick={onEdit}
+            >
+              View more
+            </Button>
+          )}
+        </div>
+      )}
+      
       <div className="text-xs text-muted-foreground mt-2">
         {new Date(note.last_updated).toLocaleString()}
       </div>
     </Card>
   );
-}; 
+};

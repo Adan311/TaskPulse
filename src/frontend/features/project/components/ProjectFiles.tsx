@@ -3,13 +3,13 @@ import { useFiles } from '@/frontend/features/files/hooks/useFiles';
 import { Button } from '@/frontend/components/ui/button';
 import { Card, CardContent } from '@/frontend/components/ui/card';
 import { 
-  Upload as UploadIcon, 
   File as FileIcon, 
   Trash2 as TrashIcon, 
   FileText, 
   Image as ImageIcon, 
   Archive as ArchiveIcon,
-  ExternalLink
+  ExternalLink,
+  Unlink
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/frontend/lib/utils';
@@ -23,53 +23,18 @@ export const ProjectFiles = forwardRef<{ refreshFiles: () => void }, ProjectFile
   const { 
     files, 
     loading, 
-    uploadFile, 
     deleteFile, 
     getDownloadUrl,
-    loadFiles
+    loadFiles,
+    detachFile
   } = useFiles({ project_id: projectId, autoLoad: true });
   
-  const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Expose the refresh method through the ref
   useImperativeHandle(ref, () => ({
     refreshFiles: loadFiles
   }));
-
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      if (!event.target.files || event.target.files.length === 0) {
-        return;
-      }
-
-      setUploading(true);
-      const file = event.target.files[0];
-      
-      await uploadFile(file);
-      
-      toast({
-        title: 'File uploaded',
-        description: 'Your file has been uploaded successfully.',
-      });
-      
-      // Reset the file input
-      event.target.value = '';
-    } catch (error: any) {
-      toast({
-        title: 'Upload failed',
-        description: error.message || 'Failed to upload file. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const handleDelete = async (fileId: string) => {
     try {
@@ -103,6 +68,26 @@ export const ProjectFiles = forwardRef<{ refreshFiles: () => void }, ProjectFile
       toast({
         title: 'Error',
         description: 'Failed to download file. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleUnlink = async (fileId: string) => {
+    try {
+      await detachFile(fileId, 'project');
+      
+      toast({
+        title: 'File unlinked',
+        description: 'The file has been removed from this project.',
+      });
+      
+      // Refresh the file list
+      loadFiles();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: 'Failed to unlink file from project. Please try again.',
         variant: 'destructive',
       });
     }
@@ -143,32 +128,6 @@ export const ProjectFiles = forwardRef<{ refreshFiles: () => void }, ProjectFile
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end mb-4">
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileUpload}
-          className="hidden"
-        />
-        <Button 
-          onClick={handleUploadClick} 
-          disabled={uploading}
-          className="flex items-center gap-2"
-        >
-          {uploading ? (
-            <>
-              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent"></span>
-              Uploading...
-            </>
-          ) : (
-            <>
-              <UploadIcon className="h-4 w-4" />
-              Upload File
-            </>
-          )}
-        </Button>
-      </div>
-
       {loading && !files.length ? (
         <div className="text-center py-8">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
@@ -206,12 +165,29 @@ export const ProjectFiles = forwardRef<{ refreshFiles: () => void }, ProjectFile
                     </Button>
                     <Button 
                       variant="ghost" 
+                      size="icon"
+                      onClick={() => handleUnlink(file.id)}
+                    >
+                      <Unlink className="h-4 w-4 text-muted-foreground" />
+                      <span className="sr-only">Unlink from project</span>
+                    </Button>
+                    <Button 
+                      variant="ghost" 
                       size="icon" 
                       className="text-destructive" 
                       onClick={() => handleDelete(file.id)}
                     >
                       <TrashIcon className="h-4 w-4" />
                       <span className="sr-only">Delete</span>
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-warning" 
+                      onClick={() => handleUnlink(file.id)}
+                    >
+                      <Unlink className="h-4 w-4" />
+                      <span className="sr-only">Unlink</span>
                     </Button>
                   </div>
                 </div>
@@ -222,4 +198,4 @@ export const ProjectFiles = forwardRef<{ refreshFiles: () => void }, ProjectFile
       )}
     </div>
   );
-}); 
+});

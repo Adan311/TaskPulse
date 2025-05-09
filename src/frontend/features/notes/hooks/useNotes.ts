@@ -213,6 +213,43 @@ export function useNotes() {
     }
   };
 
+  // Unlink a note from a project
+  const unlinkNoteFromProject = async (noteId: string) => {
+    try {
+      const { error } = await supabase
+        .from('notes')
+        .update({ 
+          project: null,
+          last_updated: new Date().toISOString() 
+        })
+        .eq('id', noteId);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setNotes(notes.map(note => 
+        note.id === noteId 
+          ? { ...note, project: null, last_updated: new Date().toISOString() }
+          : note
+      ));
+      
+      toast({
+        title: "Success!",
+        description: "Note removed from project.",
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error removing note from project:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove note from project. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   return {
     notes,
     projects,
@@ -234,5 +271,6 @@ export function useNotes() {
     pinNote,
     unpinNote,
     addNoteToProject,
+    unlinkNoteFromProject,
   };
 }

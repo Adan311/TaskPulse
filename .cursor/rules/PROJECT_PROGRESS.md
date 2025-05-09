@@ -2,6 +2,8 @@
 
 This file tracks the status of all major features in your project, including what's done, what's left, and suggestions for improvement. Use ✅ for completed and ❌ for pending/incomplete items.
 
+**Last Updated: May 9, 2025**
+
 ---
 
 ## 🗂️ Features Overview
@@ -69,7 +71,18 @@ This file tracks the status of all major features in your project, including wha
 ### 6. Projects
 - [✅] Projects page
 - [✅] Project details view
-- [✅] Project progress tracking
+- [✅] Project progress tracking:
+  - [✅] Auto-updating progress based on task completion
+  - [✅] Toggle between auto/manual progress modes
+  - [✅] Manual progress slider with save functionality
+- [✅] Project view modes:
+  - [✅] Dashboard view with collapsible sections
+  - [✅] Tabbed view for different content types
+  - [✅] Toggle between views with state persistence
+- [✅] Project-item associations:
+  - [✅] Linking notes, tasks, events, and files to projects
+  - [✅] Unlinking functionality for all item types
+  - [✅] Automatic linking of items created in project context
 - [✅] Project UI improvements:
   - [✅] Removed duplicate upload buttons
   - [✅] Improved event filtering (hide/show past events)
@@ -77,6 +90,11 @@ This file tracks the status of all major features in your project, including wha
   - [✅] Removed unnecessary share button
   - [✅] Consistent tab styling across project views
   - [✅] Simplified sidebar with only upcoming events
+  - [✅] Consistent card styles across content types
+- [✅] Global ↔ Project synchronization:
+  - [✅] Changes reflect in both global and project views
+  - [✅] Task status changes propagate correctly
+  - [✅] Notes, files and events appear in all relevant views
 - [✅] Error handling for project actions
 - [❌] Tests
 
@@ -173,6 +191,36 @@ This file tracks the status of all major features in your project, including wha
 
 ---
 
-_Last updated: 2025-05-10_
+## 🚀 MoSCoW Priority Status
+
+### Must Have (M)
+- [✅] Project creation and management
+- [✅] Task integration with projects
+- [✅] Event integration with projects
+- [✅] File integration with projects
+- [✅] Note integration with projects
+- [✅] Project progress tracking
+- [✅] Different view modes for projects
+- [❌] Comprehensive testing of project features
+
+### Should Have (S)
+- [✅] Auto-updating project progress based on tasks
+- [✅] Unlinking items from projects without deletion
+- [✅] View preferences persistence
+- [❌] Performance optimization for project views
+- [❌] Mobile responsiveness improvements
+
+### Could Have (C)
+- [✅] Manual project progress adjustment
+- [✅] Project item filtering options
+- [❌] Project templates
+- [❌] Project sharing
+
+### Won't Have (W)
+- [❌] Collaborative real-time editing of project items
+- [❌] Complex project dependencies
+- [❌] Gantt chart views
+
+_Last updated: 2025-05-09_
 
 
