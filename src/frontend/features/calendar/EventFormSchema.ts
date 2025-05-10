@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 
 // Define the form schema
@@ -12,6 +11,7 @@ export const formSchema = z.object({
   endTime: z.string().min(1, { message: "End time is required" }),
   color: z.string().default("#3b82f6"),
   project: z.string().optional(),
+  reminderAt: z.string().nullable().optional(),
 });
 
 export type FormValues = z.infer<typeof formSchema>;

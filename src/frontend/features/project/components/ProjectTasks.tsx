@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/frontend/lib/utils';
 import { PencilIcon, Trash2Icon, PlusIcon, CheckCircleIcon, CircleIcon, ArrowRightIcon, ArrowLeftIcon, Unlink } from 'lucide-react';
 import { useToast } from '@/frontend/hooks/use-toast';
+import { TaskDialog } from '@/frontend/features/tasks/components/TaskDialog';
 
 // Status mapping functions to handle UI vs database format differences
 const mapUiStatusToDb = (status: string): Task['status'] => {
@@ -31,17 +32,9 @@ interface ProjectTasksProps {
 
 export const ProjectTasks = forwardRef<{ refreshTasks: () => void }, ProjectTasksProps>(({ projectId }, ref) => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    status: 'todo' as Task['status'],
-    priority: 'medium' as Task['priority'],
-    due_date: null as Date | null,
-  });
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
 
@@ -73,53 +66,20 @@ export const ProjectTasks = forwardRef<{ refreshTasks: () => void }, ProjectTask
   }));
 
   const handleCreateTask = () => {
-    setFormData({
-      title: '',
-      description: '',
-      status: 'todo',
-      priority: 'medium',
-      due_date: null,
-    });
-    setIsCreateModalOpen(true);
+    setSelectedTask(undefined);
+    setIsTaskDialogOpen(true);
   };
 
   const handleEditTask = (task: Task) => {
     setSelectedTask(task);
-    setFormData({
-      title: task.title,
-      description: task.description || '',
-      status: task.status || 'todo',
-      priority: task.priority || 'medium',
-      due_date: task.due_date ? new Date(task.due_date) : null,
-    });
-    setIsCreateModalOpen(true);
+    setIsTaskDialogOpen(true);
   };
 
-  const handleCloseModal = () => {
-    setIsCreateModalOpen(false);
-    setSelectedTask(null);
-  };
-
-  const handleSubmit = async () => {
-    if (!formData.title.trim()) {
-      toast({
-        title: "Error",
-        description: "Title is required",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
+  const handleSaveTask = async (taskData: Omit<Task, "id" | "user">) => {
     try {
-      // Make sure the status is in the correct format for the database
-      const statusForDb = mapUiStatusToDb(formData.status);
-      
       if (selectedTask) {
         await updateTask(selectedTask.id, {
-          ...formData,
-          status: statusForDb,
-          due_date: formData.due_date?.toISOString(),
+          ...taskData,
           project: projectId,
         });
         toast({
@@ -128,9 +88,7 @@ export const ProjectTasks = forwardRef<{ refreshTasks: () => void }, ProjectTask
         });
       } else {
         await createTask({
-          ...formData,
-          status: statusForDb,
-          due_date: formData.due_date?.toISOString(),
+          ...taskData,
           project: projectId,
         });
         toast({
@@ -138,7 +96,6 @@ export const ProjectTasks = forwardRef<{ refreshTasks: () => void }, ProjectTask
           description: "Task created successfully",
         });
       }
-      handleCloseModal();
       loadTasks();
     } catch (err) {
       console.error('Error saving task:', err);
@@ -147,8 +104,6 @@ export const ProjectTasks = forwardRef<{ refreshTasks: () => void }, ProjectTask
         description: "Failed to save task. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -305,75 +260,12 @@ export const ProjectTasks = forwardRef<{ refreshTasks: () => void }, ProjectTask
         </div>
       )}
 
-      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>{selectedTask ? 'Edit Task' : 'Create Task'}</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Task title"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Task description"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) => setFormData({ ...formData, status: value as Task['status'] })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todo">To Do</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="done">Done</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="priority">Priority</Label>
-                <Select
-                  value={formData.priority}
-                  onValueChange={(value) => setFormData({ ...formData, priority: value as Task['priority'] })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            {/* Due date field would go here, but requires additional date picker component */}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCloseModal} disabled={isSubmitting}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : (selectedTask ? 'Update' : 'Create')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <TaskDialog
+        task={selectedTask}
+        open={isTaskDialogOpen}
+        onOpenChange={setIsTaskDialogOpen}
+        onSave={handleSaveTask}
+      />
     </div>
   );
 });

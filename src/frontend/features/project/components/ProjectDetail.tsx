@@ -19,6 +19,7 @@ import { useNotes } from '@/frontend/features/notes/hooks/useNotes';
 import { NoteViewer } from '@/frontend/features/notes/components/NoteViewer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/frontend/components/ui/dialog';
 import { EventForm } from '@/frontend/features/calendar/components/EventForm';
+import { TaskDialog } from '@/frontend/features/tasks/components/TaskDialog';
 import { Label } from '@/frontend/components/ui/label';
 import { Input } from '@/frontend/components/ui/input';
 import { Textarea } from '@/frontend/components/ui/textarea';
@@ -50,7 +51,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   
-  // Task form state
+  // Task form state - keeping references for compatibility but we'll use TaskDialog
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
   const [taskStatus, setTaskStatus] = useState<Task['status']>('todo');
@@ -77,10 +78,6 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
   };
   
   const handleAddTask = () => {
-    setTaskTitle('');
-    setTaskDescription('');
-    setTaskStatus('todo');
-    setTaskPriority('medium');
     setIsTaskDialogOpen(true);
   };
   
@@ -132,7 +129,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
     projectEventsRef.current?.refreshEvents();
   };
 
-  const handleTaskSuccess = () => {
+  const handleTaskSuccess = (taskData: Omit<Task, "id" | "user">) => {
     setIsTaskDialogOpen(false);
     // Refresh tasks list
     projectTasksRef.current?.refreshTasks();
@@ -255,76 +252,19 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({
       </Dialog>
 
       {/* Task Dialog */}
-      <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Create Task</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="task-title">Title</Label>
-              <Input 
-                id="task-title" 
-                placeholder="Task title" 
-                value={taskTitle}
-                onChange={(e) => setTaskTitle(e.target.value)}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="task-description">Description</Label>
-              <Textarea 
-                id="task-description" 
-                placeholder="Task description"
-                value={taskDescription}
-                onChange={(e) => setTaskDescription(e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="task-status">Status</Label>
-                <Select 
-                  value={taskStatus}
-                  onValueChange={(value: Task['status']) => setTaskStatus(value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todo">To Do</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="done">Done</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="task-priority">Priority</Label>
-                <Select 
-                  value={taskPriority}
-                  onValueChange={(value: Task['priority']) => setTaskPriority(value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsTaskDialogOpen(false)}>Cancel</Button>
-            <Button 
-              onClick={handleCreateTask} 
-              disabled={!taskTitle.trim() || isCreatingTask}
-            >
-              {isCreatingTask ? 'Creating...' : 'Create Task'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <TaskDialog
+        open={isTaskDialogOpen}
+        onOpenChange={setIsTaskDialogOpen}
+        onSave={(taskData) => {
+          // Add the project ID to the task data
+          const taskWithProject = {
+            ...taskData,
+            project: currentProject.id
+          };
+          
+          handleTaskSuccess(taskWithProject);
+        }}
+      />
     </div>
   );
 }; 

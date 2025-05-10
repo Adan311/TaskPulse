@@ -20,6 +20,7 @@ import { ThemeProvider } from "./frontend/components/theme/theme-provider";
 import { Toaster } from "./frontend/components/ui/toaster";
 import { GoogleCalendarCallback } from "./frontend/features/calendar/components/GoogleCalendarCallback";
 import { SidebarProvider } from "./frontend/components/ui/sidebar";
+import { ReminderProvider } from "./frontend/components/ReminderProvider";
 
 const router = createBrowserRouter([
   {
@@ -92,8 +93,10 @@ ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <SidebarProvider>
-        <RouterProvider router={router} />
-        <Toaster />
+        <ReminderProvider>
+          <RouterProvider router={router} />
+          <Toaster />
+        </ReminderProvider>
       </SidebarProvider>
     </ThemeProvider>
   </React.StrictMode>

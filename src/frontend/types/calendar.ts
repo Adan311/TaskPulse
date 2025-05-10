@@ -1,4 +1,3 @@
-
 // Define calendar-related types
 export interface Event {
   id: string;
@@ -10,6 +9,8 @@ export interface Event {
   project?: string;
   googleEventId?: string;
   source?: 'app' | 'google';
+  reminderAt?: string;
+  reminderSent?: boolean;
   participants: Participant[];
 }
 

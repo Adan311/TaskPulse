@@ -50,6 +50,8 @@ export interface Database {
           start_time: string
           title: string
           user: string | null
+          reminder_at: string | null
+          reminder_sent: boolean
         }
         Insert: {
           color?: string | null
@@ -62,6 +64,8 @@ export interface Database {
           start_time: string
           title: string
           user?: string | null
+          reminder_at?: string | null
+          reminder_sent?: boolean
         }
         Update: {
           color?: string | null
@@ -74,6 +78,8 @@ export interface Database {
           start_time?: string
           title?: string
           user?: string | null
+          reminder_at?: string | null
+          reminder_sent?: boolean
         }
         Relationships: [
           {
@@ -246,6 +252,8 @@ export interface Database {
           last_updated_at: string | null;
           created_at: string | null;
           updated_at: string | null;
+          reminder_at: string | null
+          reminder_sent: boolean
         };
         Insert: {
           id?: string;
@@ -263,6 +271,8 @@ export interface Database {
           last_updated_at?: string | null;
           created_at?: string | null;
           updated_at?: string | null;
+          reminder_at?: string | null
+          reminder_sent?: boolean
         };
         Update: {
           id?: string;
@@ -280,6 +290,8 @@ export interface Database {
           last_updated_at?: string | null;
           created_at?: string | null;
           updated_at?: string | null;
+          reminder_at?: string | null
+          reminder_sent?: boolean
         };
       }
     }

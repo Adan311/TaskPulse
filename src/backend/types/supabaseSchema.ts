@@ -17,6 +17,8 @@ export interface Task {
   last_updated_at?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  reminder_at?: string | null;
+  reminder_sent?: boolean | null;
 }
 
 export interface Project {
@@ -49,6 +51,8 @@ export interface Event {
   source?: 'app' | 'google' | null;
   created_at?: string;
   updated_at?: string;
+  reminder_at?: string | null;
+  reminder_sent?: boolean | null;
 }
 
 // Helper type to extract event type from Database

@@ -13,6 +13,7 @@ import { DatePickerField } from "./FormFields/DatePickerField";
 import { TimePickerField } from "./FormFields/TimePickerField";
 import { ColorPickerField } from "./FormFields/ColorPickerField";
 import { ProjectSelectField } from "./FormFields/ProjectSelectField";
+import { ReminderDateTimeField } from "./FormFields/ReminderDateTimeField";
 import { hasGoogleCalendarConnected } from "@/backend/api/services/googleCalendarService";
 import { CalendarClock, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/frontend/components/ui/alert";
@@ -54,6 +55,7 @@ export function EventForm({ onSuccess, onCancel, event, initialProjectId }: Even
         endTime: event.endTime.split("T")[1].substring(0, 5),
         color: event.color || "#3b82f6",
         project: event.project || "none",
+        reminderAt: event.reminderAt || undefined,
       }
     : {
         title: "",
@@ -63,6 +65,7 @@ export function EventForm({ onSuccess, onCancel, event, initialProjectId }: Even
         endTime: "10:00",
         color: "#3b82f6",
         project: initialProjectId || "none",
+        reminderAt: undefined,
       };
 
   const form = useForm<FormValues>({
@@ -84,6 +87,7 @@ export function EventForm({ onSuccess, onCancel, event, initialProjectId }: Even
         endTime: formattedEndTime,
         color: values.color,
         project: values.project === "none" ? undefined : values.project,
+        reminderAt: values.reminderAt,
         participants: []
       };
 
@@ -194,6 +198,26 @@ export function EventForm({ onSuccess, onCancel, event, initialProjectId }: Even
           <ColorPickerField form={form} />
           <ProjectSelectField form={form} />
         </div>
+
+        <FormField
+          control={form.control}
+          name="reminderAt"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Reminder</FormLabel>
+              <FormControl>
+                <ReminderDateTimeField
+                  form={form}
+                  fieldName="reminderAt"
+                  entityDate={form.watch('date')}
+                  entityTime={form.watch('startTime')}
+                  label="Reminder"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="flex justify-end space-x-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>

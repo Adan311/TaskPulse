@@ -23,6 +23,8 @@ const mapDbTaskToTask = (dbTask: DbTask): Task => ({
   last_updated_at: dbTask.last_updated_at,
   created_at: dbTask.created_at,
   updated_at: dbTask.updated_at,
+  reminder_at: dbTask.reminder_at,
+  reminder_sent: dbTask.reminder_sent || false,
 });
 
 // Utility function to update project progress when a task changes
@@ -114,6 +116,7 @@ export const createTask = async (task: Omit<Task, "id" | "user" | "created_at" |
     ...task,
     user: user.id,
     archived: false,
+    reminder_sent: false,
   };
 
   const { data, error } = await supabase
@@ -144,6 +147,16 @@ export const updateTask = async (taskId: string, updates: Partial<Omit<Task, "id
   
   if (!user) {
     throw new Error("User must be authenticated to update tasks");
+  }
+
+  // If reminder_at is being updated, reset reminder_sent flag
+  if (updates.reminder_at !== undefined) {
+    updates.reminder_sent = false;
+  }
+  
+  // Ensure project is properly handled
+  if (updates.project === "") {
+    updates.project = null;
   }
 
   // Get the current task to check if project association changed

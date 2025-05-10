@@ -17,6 +17,8 @@ function formatEventForFrontend(dbEvent: DatabaseEvent): FrontendEvent {
     project: dbEvent.project || undefined,
     googleEventId: dbEvent.google_event_id || undefined,
     source: dbEvent.source as 'app' | 'google' | undefined,
+    reminderAt: dbEvent.reminder_at || undefined,
+    reminderSent: dbEvent.reminder_sent || undefined,
     participants: [] // Initialize with empty array
   };
 }
@@ -33,6 +35,10 @@ function formatEventForDatabase(event: Partial<FrontendEvent>): DatabaseEventUpd
   if (event.project !== undefined) dbEvent.project = event.project;
   if (event.googleEventId !== undefined) dbEvent.google_event_id = event.googleEventId;
   if (event.source !== undefined) dbEvent.source = event.source;
+  if (event.reminderAt !== undefined) {
+    dbEvent.reminder_at = event.reminderAt;
+    dbEvent.reminder_sent = false; // Reset reminder_sent when changing reminder time
+  }
   
   return dbEvent;
 }
@@ -123,7 +129,9 @@ export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<Fro
     project: event.project ?? null,
     source: event.source || "app",
     user: user.id,
-    google_event_id: event.googleEventId ?? null
+    google_event_id: event.googleEventId ?? null,
+    reminder_at: event.reminderAt ?? null,
+    reminder_sent: false
   };
 
   console.log("Creating new event:", newEvent);

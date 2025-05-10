@@ -22,11 +22,10 @@ import { Task } from '@/backend/types/supabaseSchema';
 import { useToast } from "@/frontend/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
-import { FileUpload } from "@/frontend/features/files/components/FileUpload";
-import { FileList } from "@/frontend/features/files/components/FileList";
 import { Calendar } from '@/frontend/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/frontend/components/ui/popover';
-import { CalendarIcon, X } from 'lucide-react';
+import { CalendarIcon, X, Bell } from 'lucide-react';
+import { format, parseISO, addMinutes, addHours, addDays } from "date-fns";
 
 interface Project {
   id: string;
@@ -39,6 +38,18 @@ interface TaskDialogProps {
   onOpenChange: (open: boolean) => void;
   onSave: (task: Omit<Task, "id" | "user">) => void;
 }
+
+// Reminder options for tasks
+const REMINDER_OPTIONS = [
+  { value: "none", label: "No reminder" },
+  { value: "at_time", label: "At due date/time" },
+  { value: "5_min", label: "5 minutes before" },
+  { value: "15_min", label: "15 minutes before" },
+  { value: "30_min", label: "30 minutes before" },
+  { value: "1_hour", label: "1 hour before" },
+  { value: "2_hour", label: "2 hours before" },
+  { value: "1_day", label: "1 day before" }
+];
 
 export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps) {
   const { toast } = useToast();
@@ -54,6 +65,8 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
   const [dueDate, setDueDate] = useState(task?.due_date ? new Date(task.due_date) : undefined);
   const [labels, setLabels] = useState<string[]>(task?.labels || []);
   const [labelInput, setLabelInput] = useState("");
+  const [reminderAt, setReminderAt] = useState<string | null>(task?.reminder_at || null);
+  const [reminderOption, setReminderOption] = useState<string>("none");
 
   useEffect(() => {
     if (open) {
@@ -62,6 +75,10 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
       setStatus(task?.status || "todo");
       setPriority(task?.priority || "medium");
       setProjectId(task?.project || "none");
+      setDueDate(task?.due_date ? new Date(task.due_date) : undefined);
+      setLabels(task?.labels || []);
+      setReminderAt(task?.reminder_at || null);
+      setReminderOption(task?.reminder_at ? "1_hour" : "none"); // Default to 1 hour if reminder exists
       fetchProjects();
     }
   }, [open, task]);
@@ -96,6 +113,32 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
     }
   };
 
+  // Calculate reminder time based on due date and selected option
+  const calculateReminderTime = (option: string): string | null => {
+    if (!dueDate || option === "none") return null;
+    
+    let reminderDate = new Date(dueDate);
+    
+    switch (option) {
+      case "at_time":
+        return reminderDate.toISOString();
+      case "5_min":
+        return addMinutes(reminderDate, -5).toISOString();
+      case "15_min":
+        return addMinutes(reminderDate, -15).toISOString();
+      case "30_min":
+        return addMinutes(reminderDate, -30).toISOString();
+      case "1_hour":
+        return addHours(reminderDate, -1).toISOString();
+      case "2_hour":
+        return addHours(reminderDate, -2).toISOString();
+      case "1_day":
+        return addDays(reminderDate, -1).toISOString();
+      default:
+        return null;
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -108,6 +151,11 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
       return;
     }
 
+    // Calculate the reminder time if needed
+    const calculatedReminderAt = reminderOption !== "none" && dueDate 
+      ? calculateReminderTime(reminderOption)
+      : null;
+
     const taskData = {
       title,
       description,
@@ -116,6 +164,7 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
       project: projectId === "none" ? null : projectId,
       due_date: dueDate ? dueDate.toISOString() : undefined,
       labels,
+      reminder_at: calculatedReminderAt,
     };
 
     onSave(taskData);
@@ -178,7 +227,7 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todo">To Do</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
                   <SelectItem value="done">Done</SelectItem>
                 </SelectContent>
               </Select>
@@ -262,22 +311,47 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
                 <Button type="button" onClick={handleAddLabel} className="w-full">Add</Button>
               </div>
             </div>
-          </div>
-          {task && (
-            <div className="space-y-4 mt-4">
-              <Label>Files</Label>
-              <FileUpload
-                task_id={task.id}
-                onUploadComplete={() => {
-                  toast({
-                    title: "File uploaded",
-                    description: "The file has been attached to this task",
-                  });
-                }}
-              />
-              <FileList task_id={task.id} />
+            <div className="grid grid-cols-4 items-center gap-2 mt-4">
+              <Label htmlFor="reminder" className="col-span-4">
+                Reminder
+              </Label>
+              <div className="col-span-4">
+                {dueDate ? (
+                  <div className="space-y-4">
+                    <Select
+                      value={reminderOption}
+                      onValueChange={(value) => {
+                        setReminderOption(value);
+                        setReminderAt(calculateReminderTime(value));
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select reminder option" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {REMINDER_OPTIONS.map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    {reminderAt && (
+                      <div className="text-sm text-muted-foreground flex items-center">
+                        <Bell className="h-3 w-3 mr-2" />
+                        Reminder set for: {format(parseISO(reminderAt), "PPP 'at' p")}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Please set a due date first to enable reminders.
+                  </p>
+                )}
+              </div>
             </div>
-          )}
+          </div>
           <DialogFooter>
             <Button type="submit">{task ? "Update" : "Create"}</Button>
           </DialogFooter>

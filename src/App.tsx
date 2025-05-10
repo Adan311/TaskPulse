@@ -4,23 +4,29 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Outlet } from "react-router-dom";
 import { AppSidebar } from "@/frontend/components/layout/app-sidebar";
 import { UserProvider } from "@/frontend/components/ui/user-context";
+import { useReminders } from './frontend/hooks/useReminders';
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <UserProvider>
-        <div className="min-h-screen flex bg-background">
-          <AppSidebar />
-          <div className="flex-1">
-            <SonnerToast />
-            <Outlet />
+const App = () => {
+  // Hook to check for reminders every minute
+  useReminders();
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <UserProvider>
+          <div className="min-h-screen flex bg-background">
+            <AppSidebar />
+            <div className="flex-1">
+              <SonnerToast />
+              <Outlet />
+            </div>
           </div>
-        </div>
-      </UserProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+        </UserProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

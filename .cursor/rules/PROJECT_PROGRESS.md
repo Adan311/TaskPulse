@@ -2,7 +2,7 @@
 
 This file tracks the status of all major features in your project, including what's done, what's left, and suggestions for improvement. Use ✅ for completed and ❌ for pending/incomplete items.
 
-**Last Updated: May 9, 2025**
+**Last Updated: May  10, 2025**
 
 ---
 
@@ -23,7 +23,7 @@ This file tracks the status of all major features in your project, including wha
 - [✅] Error boundary for task board
 - [✅] Error handling for all task actions
 - [✅] Table/schema updates: created_at, archived, last_updated_at, labels, due_date, activity log
-- [❌] Task notifications/reminders
+- [✅] Task notifications/reminders
 - [❌] Bulk actions (multi-select, delete/restore/archive in archive view)
 - [❌] Task activity log/history (UI)
 - [❌] Unit/integration tests
@@ -34,7 +34,7 @@ This file tracks the status of all major features in your project, including wha
 - [✅] Event service (backend)
 - [✅] Calendar sync (Google)
 - [❌] Recurring events
-- [❌] Event notifications
+- [✅] Event notifications
 - [❌] Error handling for invalid dates
 - [❌] Tests for event logic
 
@@ -69,8 +69,8 @@ This file tracks the status of all major features in your project, including wha
 - [❌] Tests
 
 ### 6. Projects
-- [✅] Projects page
-- [✅] Project details view
+- [✅] Projects page with proper layout containers
+- [✅] Project details view with consistent layout
 - [✅] Project progress tracking:
   - [✅] Auto-updating progress based on task completion
   - [✅] Toggle between auto/manual progress modes
@@ -84,6 +84,9 @@ This file tracks the status of all major features in your project, including wha
   - [✅] Unlinking functionality for all item types
   - [✅] Automatic linking of items created in project context
 - [✅] Project UI improvements:
+  - [✅] Unified form fields component for create/edit
+  - [✅] Consistent modal implementations
+  - [✅] Proper layout containers matching other pages
   - [✅] Removed duplicate upload buttons
   - [✅] Improved event filtering (hide/show past events)
   - [✅] Enhanced title/description layout
@@ -91,6 +94,7 @@ This file tracks the status of all major features in your project, including wha
   - [✅] Consistent tab styling across project views
   - [✅] Simplified sidebar with only upcoming events
   - [✅] Consistent card styles across content types
+  - [✅] Standardized task dialog implementation across app
 - [✅] Global ↔ Project synchronization:
   - [✅] Changes reflect in both global and project views
   - [✅] Task status changes propagate correctly
@@ -107,12 +111,22 @@ This file tracks the status of all major features in your project, including wha
 - [✅] Error handling for auth (settings page)
 - [❌] Tests
 
+### 8. Reminders
+- [✅] Reminders for tasks and events
+- [✅] Multiple timing options (at event time, 5 min before, 15 min before, etc.)
+- [✅] User-configurable reminder settings
+- [✅] Visual notification system 
+- [✅] Theme-aware notifications (light/dark mode support)
+- [✅] Deduplication of notification alerts
+- [✅] Database schema with reminder_at and reminder_sent fields
+- [✅] Background checking for pending reminders
+
 ---
 
 ## 🛠️ General Improvements
 - [✅] Navigation bar (all main features linked)
 - [❌] Dashboard/landing page
-- [❌] Notifications system (in-app/email)
+- [✅] Notifications system (in-app)
 - [❌] Global search
 - [✅] Dark mode
 - [❌] Accessibility (ARIA, color contrast)
@@ -167,8 +181,8 @@ This file tracks the status of all major features in your project, including wha
 
 ## 🟡 Should-Have Functional Requirements
 [❌] FR-16: Auto-Generate Events 🟠 (Medium Effort)  
-[❌] FR-20: Task Reminders 🟢 (Low Effort/High Impact)  
-[❌] FR-21: Event Reminders 🟢 (Low Effort/High Impact)  
+[✅] FR-20: Task Reminders  (Completed)  
+[✅] FR-21: Event Reminders (Completed)  
 [❌] FR-23: Log Time Spent 🟢 (Low Effort)  
 [✅] FR-31: Track Task Completion  
 [❌] FR-29: Accept/Reject Suggestions 🔴 (Depends on FR-6)  
@@ -190,37 +204,4 @@ This file tracks the status of all major features in your project, including wha
 [✅]] NFR-12: Performance Monitoring 🟠 (Medium Effort)  
 
 ---
-
-## 🚀 MoSCoW Priority Status
-
-### Must Have (M)
-- [✅] Project creation and management
-- [✅] Task integration with projects
-- [✅] Event integration with projects
-- [✅] File integration with projects
-- [✅] Note integration with projects
-- [✅] Project progress tracking
-- [✅] Different view modes for projects
-- [❌] Comprehensive testing of project features
-
-### Should Have (S)
-- [✅] Auto-updating project progress based on tasks
-- [✅] Unlinking items from projects without deletion
-- [✅] View preferences persistence
-- [❌] Performance optimization for project views
-- [❌] Mobile responsiveness improvements
-
-### Could Have (C)
-- [✅] Manual project progress adjustment
-- [✅] Project item filtering options
-- [❌] Project templates
-- [❌] Project sharing
-
-### Won't Have (W)
-- [❌] Collaborative real-time editing of project items
-- [❌] Complex project dependencies
-- [❌] Gantt chart views
-
-_Last updated: 2025-05-09_
-
 
