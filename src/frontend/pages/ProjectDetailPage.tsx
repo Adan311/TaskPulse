@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppLayout } from '@/frontend/components/layout/AppLayout';
 import { ProjectDetail } from '@/frontend/features/project/components/ProjectDetail';
 import { useProjects } from '@/frontend/features/project/hooks/useProjects';
@@ -15,15 +15,7 @@ import {
   DialogTitle,
 } from '@/frontend/components/ui/dialog';
 import { Button } from '@/frontend/components/ui/button';
-import { Input } from '@/frontend/components/ui/input';
-import { Label } from '@/frontend/components/ui/label';
-import { Textarea } from '@/frontend/components/ui/textarea';
-import { format } from 'date-fns';
-import { Calendar } from '@/frontend/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/frontend/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
-import { cn } from '@/frontend/lib/utils';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/frontend/components/ui/select';
+import { ProjectFormFields } from '@/frontend/features/project/components/ProjectFormFields';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -34,17 +26,31 @@ export default function ProjectDetailPage() {
 
   const project = projects.find((p) => p.id === id);
 
-  // State for edit dialog
+  // State for edit form
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [dueDate, setDueDate] = useState<string | undefined>(undefined);
+  const [status, setStatus] = useState<Project['status']>('active');
+  const [priority, setPriority] = useState<Project['priority']>('medium');
+  const [progressValue, setProgressValue] = useState(0);
+  const [color, setColor] = useState('#3b82f6');
+  
+  // Dialog state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editFormData, setEditFormData] = useState<Partial<Project>>({
-    name: '',
-    description: '',
-    due_date: null,
-    status: 'active',
-    priority: 'medium',
-    progress: 0
-  });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Update form fields when project changes
+  useEffect(() => {
+    if (project) {
+      setName(project.name || '');
+      setDescription(project.description || '');
+      setDueDate(project.due_date || undefined);
+      setStatus(project.status || 'active');
+      setPriority(project.priority || 'medium');
+      setProgressValue(project.progress || 0);
+      setColor(project.color || '#3b82f6');
+    }
+  }, [project]);
 
   const handleDelete = async () => {
     if (!project) return;
@@ -66,38 +72,31 @@ export default function ProjectDetailPage() {
   };
 
   const handleEdit = () => {
-    if (!project) return;
-
-    // Initialize form with current project data
-    setEditFormData({
-      name: project.name,
-      description: project.description || '',
-      due_date: project.due_date ? project.due_date : null,
-      status: project.status || 'active',
-      priority: project.priority || 'medium',
-      progress: project.progress || 0
-    });
-    
     setIsEditDialogOpen(true);
   };
 
   const handleSaveProject = async () => {
-    if (!project || !editFormData.name?.trim()) return;
+    if (!project || !name.trim()) return;
     
     setIsSubmitting(true);
     try {
-      // Only include fields that are in the Project type
-      const updates: Partial<Omit<Project, 'id' | 'user'>> = {
-        name: editFormData.name,
-        description: editFormData.description,
-        due_date: editFormData.due_date,
-        status: editFormData.status as 'active' | 'completed' | 'on-hold',
-        priority: editFormData.priority as 'low' | 'medium' | 'high',
-        progress: editFormData.progress
+      const updates: Partial<Project> = {
+        name,
+        description,
+        due_date: dueDate,
+        status,
+        priority,
+        progress: progressValue,
+        manual_progress: progressValue,
+        color
       };
+
+      // If the progress is being manually set, update auto_progress flag
+      if (project.auto_progress !== false) {
+        updates.auto_progress = false;
+      }
       
       await updateProject(project.id, updates);
-      
       setIsEditDialogOpen(false);
       
       toast({
@@ -170,129 +169,35 @@ export default function ProjectDetailPage() {
               Update your project details. Click save when you're done.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="project-name">Name</Label>
-              <Input 
-                id="project-name" 
-                value={editFormData.name}
-                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                placeholder="Project name"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="project-description">Description</Label>
-              <Textarea 
-                id="project-description" 
-                value={editFormData.description || ''}
-                onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
-                placeholder="Project description"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="project-due-date">Due Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !editFormData.due_date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {editFormData.due_date ? (
-                      format(new Date(editFormData.due_date), "PPP")
-                    ) : (
-                      <span>No due date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={editFormData.due_date ? new Date(editFormData.due_date) : undefined}
-                    onSelect={(date) => setEditFormData({ 
-                      ...editFormData, 
-                      due_date: date ? date.toISOString() : null 
-                    })}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="project-status">Status</Label>
-                <Select
-                  value={editFormData.status}
-                  onValueChange={(value) => 
-                    setEditFormData({ 
-                      ...editFormData, 
-                      status: value as 'active' | 'completed' | 'on-hold' 
-                    })
-                  }
-                >
-                  <SelectTrigger id="project-status">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="on-hold">On Hold</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="project-priority">Priority</Label>
-                <Select
-                  value={editFormData.priority}
-                  onValueChange={(value) => 
-                    setEditFormData({ 
-                      ...editFormData, 
-                      priority: value as 'low' | 'medium' | 'high' 
-                    })
-                  }
-                >
-                  <SelectTrigger id="project-priority">
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="project-progress">Progress ({editFormData.progress}%)</Label>
-              <Input
-                id="project-progress"
-                type="range"
-                min="0"
-                max="100"
-                value={editFormData.progress}
-                onChange={(e) => setEditFormData({ 
-                  ...editFormData, 
-                  progress: parseInt(e.target.value) 
-                })}
-              />
-            </div>
-          </div>
+          
+          <ProjectFormFields
+            name={name}
+            description={description}
+            dueDate={dueDate}
+            status={status}
+            priority={priority}
+            color={color}
+            progress={progressValue}
+            onNameChange={setName}
+            onDescriptionChange={setDescription}
+            onDueDateChange={setDueDate}
+            onStatusChange={setStatus}
+            onPriorityChange={setPriority}
+            onColorChange={setColor}
+            onProgressChange={setProgressValue}
+            isEditMode={true}
+            fieldPrefix="project"
+          />
+          
           <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsEditDialogOpen(false)}
-              disabled={isSubmitting}
-            >
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               Cancel
             </Button>
             <Button 
-              onClick={handleSaveProject}
-              disabled={!editFormData.name?.trim() || isSubmitting}
+              onClick={handleSaveProject} 
+              disabled={isSubmitting || !name.trim()}
             >
-              {isSubmitting ? 'Saving...' : 'Save Changes'}
+              {isSubmitting ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>

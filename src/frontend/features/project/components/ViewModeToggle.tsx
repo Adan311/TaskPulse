@@ -1,6 +1,4 @@
 import React from 'react';
-import { Switch } from '@/frontend/components/ui/switch';
-import { Label } from '@/frontend/components/ui/label';
 import { Button } from '@/frontend/components/ui/button';
 import { LayoutDashboard, LayoutList } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/frontend/components/ui/tooltip';
@@ -15,41 +13,49 @@ export const ViewModeToggle: React.FC<ViewModeToggleProps> = ({
   onToggle,
 }) => {
   return (
-    <div className="flex items-center space-x-2">
-      <TooltipProvider>
+    <div className="flex bg-muted rounded-md p-0.5">
+      <TooltipProvider delayDuration={300}>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant={isDashboardView ? "default" : "outline"}
+              variant="ghost"
               size="sm"
               onClick={() => onToggle(true)}
-              className="flex items-center space-x-1"
+              className={`flex h-8 items-center gap-1.5 px-2.5 ${
+                isDashboardView 
+                  ? "bg-background text-foreground shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
             >
-              <LayoutDashboard className="h-4 w-4" />
-              <span className="hidden sm:inline-block">Dashboard</span>
+              <LayoutDashboard className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">Dashboard</span>
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
-            <p>Show all project content at once</p>
+          <TooltipContent side="bottom">
+            <p className="text-xs">Show all project content at once</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
 
-      <TooltipProvider>
+      <TooltipProvider delayDuration={300}>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant={!isDashboardView ? "default" : "outline"}
+              variant="ghost"
               size="sm"
               onClick={() => onToggle(false)}
-              className="flex items-center space-x-1"
+              className={`flex h-8 items-center gap-1.5 px-2.5 ${
+                !isDashboardView 
+                  ? "bg-background text-foreground shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
             >
-              <LayoutList className="h-4 w-4" />
-              <span className="hidden sm:inline-block">Tabbed</span>
+              <LayoutList className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">Tabbed</span>
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
-            <p>Browse content by tabs</p>
+          <TooltipContent side="bottom">
+            <p className="text-xs">Browse content by tabs</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

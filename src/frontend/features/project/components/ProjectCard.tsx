@@ -1,135 +1,166 @@
 import React from 'react';
-import { Card, CardContent, Typography, LinearProgress, Box, Chip, IconButton } from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { Project } from '@/backend/types/supabaseSchema';
 import { format, differenceInDays } from 'date-fns';
-import { MoreVert as MoreVertIcon } from '@mui/icons-material';
-
-const StyledCard = styled(Card)(({ theme }) => ({
-  position: 'relative',
-  transition: 'transform 0.2s ease-in-out',
-  cursor: 'pointer',
-  '&:hover': {
-    transform: 'translateY(-4px)',
-    boxShadow: theme.shadows[4],
-  },
-}));
-
-const ColorBar = styled('div')<{ barcolor?: string }>(({ barcolor }) => ({
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  height: '4px',
-  backgroundColor: barcolor || '#1976d2',
-}));
-
-const StatusChip = styled(Chip)<{ status: string }>(({ status, theme }) => ({
-  backgroundColor: status === 'active' 
-    ? theme.palette.success.light 
-    : status === 'on-hold'
-    ? theme.palette.warning.light
-    : theme.palette.grey[400],
-  color: theme.palette.getContrastText(
-    status === 'active' 
-      ? theme.palette.success.light 
-      : status === 'on-hold'
-      ? theme.palette.warning.light
-      : theme.palette.grey[400]
-  ),
-}));
-
-const PriorityChip = styled(Chip)<{ priority: string }>(({ priority, theme }) => ({
-  backgroundColor: priority === 'high' 
-    ? theme.palette.error.light 
-    : priority === 'medium'
-    ? theme.palette.warning.light
-    : theme.palette.success.light,
-  color: theme.palette.getContrastText(
-    priority === 'high'
-      ? theme.palette.error.light
-      : priority === 'medium'
-      ? theme.palette.warning.light
-      : theme.palette.success.light
-  ),
-}));
+import { Project } from '@/backend/types/supabaseSchema';
+import { Card, CardContent } from '@/frontend/components/ui/card';
+import { Badge } from '@/frontend/components/ui/badge';
+import { cn } from '@/frontend/lib/utils';
+import { MoreVertical, Edit, Trash2 } from 'lucide-react';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/frontend/components/ui/dropdown-menu';
+import { Button } from '@/frontend/components/ui/button';
 
 interface ProjectCardProps {
   project: Project;
   onClick: () => void;
-  onMenuClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onEdit?: (project: Project) => void;
+  onDelete?: (project: Project) => void;
 }
 
-export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onMenuClick }) => {
+export const ProjectCard: React.FC<ProjectCardProps> = ({ 
+  project, 
+  onClick, 
+  onEdit,
+  onDelete 
+}) => {
   const daysRemaining = project.due_date 
     ? differenceInDays(new Date(project.due_date), new Date())
     : null;
 
-  const handleMenuClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  // Default color if not provided
+  const borderColor = project.color || '#3b82f6'; // blue-500
+
+  const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onMenuClick(e);
+    if (onEdit) onEdit(project);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete) onDelete(project);
   };
 
   return (
-    <StyledCard onClick={onClick}>
-      <ColorBar barcolor={project.color} />
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-          <Typography variant="h6" component="h2" gutterBottom>
-            {project.name}
-          </Typography>
-          <IconButton size="small" onClick={handleMenuClick}>
-            <MoreVertIcon />
-          </IconButton>
-        </Box>
+    <Card 
+      className="overflow-hidden cursor-pointer transition-all hover:shadow-md hover:translate-y-[-4px]"
+      onClick={onClick}
+      style={{ borderTop: `3px solid ${borderColor}` }}
+    >
+      <CardContent className="p-5">
+        <div className="flex justify-between items-start mb-3">
+          <h3 className="font-semibold text-lg">{project.name}</h3>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {onEdit && (
+                <DropdownMenuItem onClick={handleEditClick}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {onDelete && (
+                <DropdownMenuItem 
+                  className="text-destructive" 
+                  onClick={handleDeleteClick}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
-        <Typography variant="body2" color="textSecondary" gutterBottom noWrap>
-          {project.description || 'No description'}
-        </Typography>
+        {project.description && (
+          <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
+            {project.description}
+          </p>
+        )}
+        
+        {!project.description && (
+          <p className="text-muted-foreground text-sm mb-3">No description</p>
+        )}
 
-        <Box display="flex" gap={1} mb={2}>
-          <StatusChip
-            status={project.status}
-            label={project.status}
-            size="small"
-          />
-          <PriorityChip
-            priority={project.priority}
-            label={`${project.priority} priority`}
-            size="small"
-          />
-        </Box>
+        <div className="flex gap-2 mb-4">
+          <Badge 
+            variant={
+              project.status === 'active' ? 'default' : 
+              project.status === 'on-hold' ? 'outline' : 
+              'secondary'
+            }
+            className={cn(
+              project.status === 'active' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 
+              project.status === 'on-hold' ? 'bg-amber-100 text-amber-800 hover:bg-amber-100' : 
+              'bg-gray-100 text-gray-800 hover:bg-gray-100'
+            )}
+          >
+            {project.status === 'active' ? 'active' : 
+             project.status === 'on-hold' ? 'on hold' : 
+             'completed'}
+          </Badge>
+          
+          <Badge 
+            variant="outline"
+            className={cn(
+              project.priority === 'high' ? 'bg-red-100 text-red-800 hover:bg-red-100' : 
+              project.priority === 'medium' ? 'bg-amber-100 text-amber-800 hover:bg-amber-100' : 
+              'bg-green-100 text-green-800 hover:bg-green-100'
+            )}
+          >
+            {project.priority} priority
+          </Badge>
+        </div>
 
-        <Box mb={2}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.5}>
-            <Typography variant="body2" color="textSecondary">
-              Progress
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              {project.progress}%
-            </Typography>
-          </Box>
-          <LinearProgress 
-            variant="determinate" 
-            value={project.progress} 
-            sx={{ height: 8, borderRadius: 4 }}
-          />
-        </Box>
+        <div className="mb-4">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-sm text-muted-foreground">Progress</span>
+            <span className="text-sm font-medium">{project.progress}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+            <div 
+              className={cn(
+                "h-2.5 rounded-full",
+                project.progress < 25 ? "bg-red-500" :
+                project.progress < 75 ? "bg-amber-500" :
+                "bg-green-500"
+              )}
+              style={{ width: `${project.progress}%` }}
+            ></div>
+          </div>
+        </div>
 
         {project.due_date && (
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="body2" color="textSecondary">
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-muted-foreground">
               Due: {format(new Date(project.due_date), 'MMM d, yyyy')}
-            </Typography>
-            <Typography 
-              variant="body2" 
-              color={daysRemaining && daysRemaining < 3 ? 'error' : 'textSecondary'}
-            >
-              {daysRemaining ? `${daysRemaining} days left` : 'Due today'}
-            </Typography>
-          </Box>
+            </span>
+            {daysRemaining !== null && (
+              <span className={cn(
+                "font-medium",
+                daysRemaining < 0 ? "text-red-600 dark:text-red-400" :
+                daysRemaining < 3 ? "text-amber-600 dark:text-amber-400" : 
+                "text-muted-foreground"
+              )}>
+                {daysRemaining < 0 
+                  ? `${Math.abs(daysRemaining)} ${Math.abs(daysRemaining) === 1 ? 'day' : 'days'} overdue`
+                  : daysRemaining === 0
+                  ? 'Due today'
+                  : `${daysRemaining} ${daysRemaining === 1 ? 'day' : 'days'} left`
+                }
+              </span>
+            )}
+          </div>
         )}
       </CardContent>
-    </StyledCard>
+    </Card>
   );
 }; 

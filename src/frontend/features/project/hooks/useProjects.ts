@@ -111,7 +111,14 @@ export function useProjects() {
     };
   }, [fetchProjects, subscribeToProjectUpdates]);
 
-  const createProject = useCallback(async (name: string, description: string = "") => {
+  const createProject = useCallback(async (
+    name: string, 
+    description: string = "", 
+    priority: Project['priority'] = 'medium', 
+    color: string = "#3b82f6",
+    dueDate?: string,
+    status: Project['status'] = 'active'
+  ) => {
     try {
       setLoading(true);
       
@@ -126,10 +133,12 @@ export function useProjects() {
         name,
         description,
         user: user.id,
-        status: 'active',
+        status,
         progress: 0,
-        priority: 'medium',
-        auto_progress: true
+        priority,
+        auto_progress: true,
+        color,
+        due_date: dueDate
       };
 
       const { data, error } = await supabase
