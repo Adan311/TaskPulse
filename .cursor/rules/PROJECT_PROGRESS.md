@@ -211,7 +211,6 @@ This file tracks the status of all major features in your project, including wha
 
 ## 🔵 Could-Have Functional Requirements
 [✅] FR-32: Recurring Tasks
-
 ## 🔵 Could-Have Non-Functional Requirements
 [❌] NFR-10: Multi-Language 🟠 (Medium Effort)  
 [✅]] NFR-12: Performance Monitoring 🟠 (Medium Effort)  
