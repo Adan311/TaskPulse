@@ -52,6 +52,12 @@ export interface Database {
           user: string | null
           reminder_at: string | null
           reminder_sent: boolean
+          is_recurring: boolean | null
+          recurrence_pattern: string | null
+          recurrence_days: Json | null
+          recurrence_end_date: string | null
+          recurrence_count: number | null
+          parent_id: string | null
         }
         Insert: {
           color?: string | null
@@ -66,6 +72,12 @@ export interface Database {
           user?: string | null
           reminder_at?: string | null
           reminder_sent?: boolean
+          is_recurring?: boolean | null
+          recurrence_pattern?: string | null
+          recurrence_days?: Json | null
+          recurrence_end_date?: string | null
+          recurrence_count?: number | null
+          parent_id?: string | null
         }
         Update: {
           color?: string | null
@@ -80,6 +92,12 @@ export interface Database {
           user?: string | null
           reminder_at?: string | null
           reminder_sent?: boolean
+          is_recurring?: boolean | null
+          recurrence_pattern?: string | null
+          recurrence_days?: Json | null
+          recurrence_end_date?: string | null
+          recurrence_count?: number | null
+          parent_id?: string | null
         }
         Relationships: [
           {
@@ -254,6 +272,13 @@ export interface Database {
           updated_at: string | null;
           reminder_at: string | null
           reminder_sent: boolean
+          is_recurring: boolean | null;
+          recurrence_pattern: string | null;
+          recurrence_days: Json | null;
+          recurrence_end_date: string | null;
+          recurrence_count: number | null;
+          parent_id: string | null;
+          recurrence_mode: string | null;
         };
         Insert: {
           id?: string;
@@ -273,6 +298,13 @@ export interface Database {
           updated_at?: string | null;
           reminder_at?: string | null
           reminder_sent?: boolean
+          is_recurring?: boolean | null;
+          recurrence_pattern?: string | null;
+          recurrence_days?: Json | null;
+          recurrence_end_date?: string | null;
+          recurrence_count?: number | null;
+          parent_id?: string | null;
+          recurrence_mode?: string | null;
         };
         Update: {
           id?: string;
@@ -292,6 +324,13 @@ export interface Database {
           updated_at?: string | null;
           reminder_at?: string | null
           reminder_sent?: boolean
+          is_recurring?: boolean | null;
+          recurrence_pattern?: string | null;
+          recurrence_days?: Json | null;
+          recurrence_end_date?: string | null;
+          recurrence_count?: number | null;
+          parent_id?: string | null;
+          recurrence_mode?: string | null;
         };
       }
     }

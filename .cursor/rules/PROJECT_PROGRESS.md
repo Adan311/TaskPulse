@@ -2,7 +2,7 @@
 
 This file tracks the status of all major features in your project, including what's done, what's left, and suggestions for improvement. Use ✅ for completed and ❌ for pending/incomplete items.
 
-**Last Updated: May  10, 2025**
+**Last Updated: May 11, 2025**
 
 ---
 
@@ -24,6 +24,7 @@ This file tracks the status of all major features in your project, including wha
 - [✅] Error handling for all task actions
 - [✅] Table/schema updates: created_at, archived, last_updated_at, labels, due_date, activity log
 - [✅] Task notifications/reminders
+- [✅] Recurring tasks with multiple patterns and modes
 - [❌] Bulk actions (multi-select, delete/restore/archive in archive view)
 - [❌] Task activity log/history (UI)
 - [❌] Unit/integration tests
@@ -33,9 +34,9 @@ This file tracks the status of all major features in your project, including wha
 - [✅] Event CRUD (frontend/backend)
 - [✅] Event service (backend)
 - [✅] Calendar sync (Google)
-- [❌] Recurring events
+- [✅] Recurring events with multiple patterns and update modes
 - [✅] Event notifications
-- [❌] Error handling for invalid dates
+- [✅] Error handling for invalid dates
 - [❌] Tests for event logic
 
 ### 3. Notes
@@ -121,6 +122,18 @@ This file tracks the status of all major features in your project, including wha
 - [✅] Database schema with reminder_at and reminder_sent fields
 - [✅] Background checking for pending reminders
 
+### 9. Recurring Items
+- [✅] Database schema for recurring tasks and events
+- [✅] Recurrence patterns (daily, weekly, monthly, yearly)
+- [✅] Day-of-week selection for weekly patterns
+- [✅] Multiple end conditions (never, on date, after occurrences)
+- [✅] Two modes for tasks (refresh existing/clone new)
+- [✅] Visual indicators in calendars and task lists
+- [✅] Update modes (this occurrence only/all occurrences)
+- [✅] Delete modes (this occurrence only/all occurrences)
+- [✅] Backend processing system for generating instances
+- [✅] Error handling for recurrence operations
+
 ---
 
 ## 🛠️ General Improvements
@@ -181,8 +194,8 @@ This file tracks the status of all major features in your project, including wha
 
 ## 🟡 Should-Have Functional Requirements
 [❌] FR-16: Auto-Generate Events 🟠 (Medium Effort)  
-[✅] FR-20: Task Reminders  (Completed)  
-[✅] FR-21: Event Reminders (Completed)  
+[✅] FR-20: Task Reminders  
+[✅] FR-21: Event Reminders 
 [❌] FR-23: Log Time Spent 🟢 (Low Effort)  
 [✅] FR-31: Track Task Completion  
 [❌] FR-29: Accept/Reject Suggestions 🔴 (Depends on FR-6)  
@@ -197,7 +210,7 @@ This file tracks the status of all major features in your project, including wha
 [❌] NFR-13: Accessibility 🟢 (Low Effort)  
 
 ## 🔵 Could-Have Functional Requirements
-[❌] FR-32: Recurring Tasks 🟢 (Low Effort)  
+[✅] FR-32: Recurring Tasks
 
 ## 🔵 Could-Have Non-Functional Requirements
 [❌] NFR-10: Multi-Language 🟠 (Medium Effort)  

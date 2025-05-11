@@ -15,6 +15,7 @@ import {
 import { Event } from '@/frontend/types/calendar';
 import { EventItem } from './EventItem';
 import { EventDialog } from './EventDialog';
+import { Repeat } from 'lucide-react';
 
 interface MonthViewProps {
   events: Event[];
@@ -96,23 +97,29 @@ export function MonthView({ events, date, onEditEvent, onEventsChange }: MonthVi
                   </div>
                   {/* Event pills */}
                   <div className="flex flex-col gap-2 w-full">
-                    {dayEvents.slice(0, 3).map(event => (
-                      <span
-                        key={event.id}
-                        className="w-full max-w-full truncate px-3 py-1 rounded-full text-xs font-medium mt-0.5"
-                        style={{
-                          backgroundColor: event.color || "#2563eb",
-                          color: "#fff"
-                        }}
-                        title={event.title}
-                        onClick={e => {
-                          e.stopPropagation();
-                          onEditEvent(event);
-                        }}
-                      >
-                        {event.title}
-                      </span>
-                    ))}
+                    {dayEvents.slice(0, 3).map(event => {
+                      const isRecurring = event.isRecurring || event.parentId;
+                      return (
+                        <div
+                          key={event.id}
+                          className="w-full max-w-full rounded-full text-xs font-medium mt-0.5 flex items-center px-3 py-1"
+                          style={{
+                            backgroundColor: event.color || "#2563eb",
+                            color: "#fff"
+                          }}
+                          title={`${event.title}${isRecurring ? ' (Recurring)' : ''}`}
+                          onClick={e => {
+                            e.stopPropagation();
+                            onEditEvent(event);
+                          }}
+                        >
+                          <span className="truncate">{event.title}</span>
+                          {isRecurring && (
+                            <Repeat className="h-3 w-3 ml-1 flex-shrink-0" />
+                          )}
+                        </div>
+                      );
+                    })}
                     {dayEvents.length > 3 && (
                       <span className="text-xs text-muted-foreground mt-0.5">+{dayEvents.length - 3} more</span>
                     )}
@@ -133,18 +140,26 @@ export function MonthView({ events, date, onEditEvent, onEventsChange }: MonthVi
             <div className="py-2 text-base text-muted-foreground">No events scheduled for this day.</div>
           ) : (
             <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2">
-              {selectedDate && events.filter(event => isSameDay(parseISO(event.startTime), selectedDate)).map(event => (
-                <div
-                  key={event.id}
-                  className="rounded-lg bg-muted p-3 hover:bg-accent cursor-pointer flex flex-col gap-1"
-                  onClick={() => onEditEvent(event)}
-                >
-                  <span className="font-medium text-base truncate">{event.title}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {format(parseISO(event.startTime), 'h:mm a')} - {format(parseISO(event.endTime), 'h:mm a')}
-                  </span>
-                </div>
-              ))}
+              {selectedDate && events.filter(event => isSameDay(parseISO(event.startTime), selectedDate)).map(event => {
+                const isRecurring = event.isRecurring || event.parentId;
+                return (
+                  <div
+                    key={event.id}
+                    className="rounded-lg bg-muted p-3 hover:bg-accent cursor-pointer flex flex-col gap-1"
+                    onClick={() => onEditEvent(event)}
+                  >
+                    <div className="flex items-center">
+                      <span className="font-medium text-base truncate">{event.title}</span>
+                      {isRecurring && (
+                        <Repeat className="h-3 w-3 ml-1.5 text-muted-foreground" />
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {format(parseISO(event.startTime), 'h:mm a')} - {format(parseISO(event.endTime), 'h:mm a')}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

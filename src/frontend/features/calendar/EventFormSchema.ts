@@ -12,6 +12,13 @@ export const formSchema = z.object({
   color: z.string().default("#3b82f6"),
   project: z.string().optional(),
   reminderAt: z.string().nullable().optional(),
+  // Recurrence fields
+  isRecurring: z.boolean().default(false),
+  recurrencePattern: z.enum(["daily", "weekly", "monthly", "yearly"]).optional(),
+  recurrenceDays: z.array(z.string()).optional(),
+  recurrenceEndType: z.enum(["never", "on_date", "after_occurrences"]).default("never"),
+  recurrenceEndDate: z.date().optional(),
+  recurrenceCount: z.number().positive().optional(),
 });
 
 export type FormValues = z.infer<typeof formSchema>;

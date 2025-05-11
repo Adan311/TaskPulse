@@ -5,13 +5,40 @@ import { Outlet } from "react-router-dom";
 import { AppSidebar } from "@/frontend/components/layout/app-sidebar";
 import { UserProvider } from "@/frontend/components/ui/user-context";
 import { useReminders } from './frontend/hooks/useReminders';
+import { initRecurrenceProcessing } from './backend/api/services/recurrence.service';
+import { useEffect, useRef } from 'react';
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Hook to check for reminders every minute
-  useReminders();
+  // Initialize reminder checking system
+  useReminders(60000); // Check every minute
   
+  // Use ref instead of state to prevent re-renders
+  const recurrenceInitializedRef = useRef(false);
+
+  // Initialize recurrence processing system
+  useEffect(() => {
+    // Skip if already initialized
+    if (recurrenceInitializedRef.current) return;
+    
+    // Mark as initialized immediately to prevent duplicate execution
+    recurrenceInitializedRef.current = true;
+    
+    console.log("Setting up recurrence processing (App component)");
+    
+    // Process recurring tasks and events every hour
+    const cleanup = initRecurrenceProcessing(60);
+    
+    // Clean up on unmount
+    return () => {
+      console.log("Cleaning up recurrence processing (App component)");
+      cleanup();
+      // Reset the ref on unmount
+      recurrenceInitializedRef.current = false;
+    };
+  }, []); // Empty dependency array runs once on mount
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

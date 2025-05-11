@@ -1,6 +1,7 @@
 import React from 'react';
 import { format, isToday, parseISO } from 'date-fns';
 import { Event } from '@/frontend/types/calendar';
+import { Repeat } from 'lucide-react';
 
 interface DayViewProps {
   events: Event[];
@@ -141,6 +142,8 @@ export function DayView({ events, date, onEditEvent, hideHeader }: DayViewProps)
               const height = ((eventEndMin - eventStartMin) / CAL_TOTAL) * (HOUR_HEIGHT * HOURS.length);
               const width = `calc((100% - ${(totalSlots-1)*8}px) / ${totalSlots})`;
               const left = `calc(${slot} * ((100% - ${(totalSlots-1)*8}px) / ${totalSlots}) + ${slot*8}px`;
+              const isRecurring = event.isRecurring || event.parentId;
+              
               return (
                 <div
                   key={event.id}
@@ -163,12 +166,17 @@ export function DayView({ events, date, onEditEvent, hideHeader }: DayViewProps)
                     justifyContent: 'flex-start',
                     alignItems: 'flex-start',
                   }}
-                  title={`${event.title ? event.title + '\n' : ''}${format(start, 'HH:mm')} – ${format(end, 'HH:mm')}`}
+                  title={`${event.title ? event.title + '\n' : ''}${format(start, 'HH:mm')} – ${format(end, 'HH:mm')}${isRecurring ? '\n(Recurring event)' : ''}`}
                   onClick={() => onEditEvent(event)}
                 >
-                  {event.title && (
-                    <span className="font-semibold text-base truncate w-full block" style={{fontSize: '0.97em', lineHeight: 1.2, whiteSpace: 'nowrap'}}>{event.title}</span>
-                  )}
+                  <div className="w-full flex items-center justify-between">
+                    {event.title && (
+                      <span className="font-semibold text-base truncate block" style={{fontSize: '0.97em', lineHeight: 1.2, whiteSpace: 'nowrap'}}>{event.title}</span>
+                    )}
+                    {isRecurring && (
+                      <Repeat className="h-3 w-3 ml-1 flex-shrink-0" />
+                    )}
+                  </div>
                   <span className="text-xs opacity-80 mt-0.5 w-full block" style={{fontSize: '0.95em', whiteSpace: 'nowrap'}}>
                     {format(start, 'h:mm a')} – {format(end, 'h:mm a')}
                   </span>

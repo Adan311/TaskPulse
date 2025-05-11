@@ -1,4 +1,3 @@
-
 import {
   Dialog,
   DialogContent,
@@ -17,6 +16,16 @@ interface EventDialogProps {
 }
 
 export function EventDialog({ open, onOpenChange, onSuccess, event }: EventDialogProps) {
+  const handleSuccess = () => {
+    onSuccess();
+    onOpenChange(false);
+  };
+
+  const handleDelete = () => {
+    onSuccess();
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -29,11 +38,9 @@ export function EventDialog({ open, onOpenChange, onSuccess, event }: EventDialo
           </DialogDescription>
         </DialogHeader>
         <EventForm 
-          onSuccess={() => {
-            onSuccess();
-            onOpenChange(false);
-          }}
+          onSuccess={handleSuccess}
           onCancel={() => onOpenChange(false)}
+          onDelete={handleDelete}
           event={event}
         />
       </DialogContent>

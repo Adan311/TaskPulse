@@ -12,6 +12,13 @@ export interface Event {
   reminderAt?: string;
   reminderSent?: boolean;
   participants: Participant[];
+  // Recurrence fields
+  isRecurring?: boolean;
+  recurrencePattern?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  recurrenceDays?: string[]; // Days of the week for weekly recurrence
+  recurrenceEndDate?: string;
+  recurrenceCount?: number;
+  parentId?: string; // Link to parent recurring event
 }
 
 export interface Participant {

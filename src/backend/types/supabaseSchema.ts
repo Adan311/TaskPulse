@@ -19,6 +19,14 @@ export interface Task {
   updated_at?: string | null;
   reminder_at?: string | null;
   reminder_sent?: boolean | null;
+  // Recurrence fields
+  is_recurring?: boolean | null;
+  recurrence_pattern?: 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
+  recurrence_days?: string[] | null; // Days of the week for weekly recurrence
+  recurrence_end_date?: string | null;
+  recurrence_count?: number | null;
+  parent_id?: string | null; // Link to parent recurring task
+  recurrence_mode?: 'clone' | 'refresh' | null; // Whether to create new tasks or refresh the existing one
 }
 
 export interface Project {
@@ -53,6 +61,13 @@ export interface Event {
   updated_at?: string;
   reminder_at?: string | null;
   reminder_sent?: boolean | null;
+  // Recurrence fields
+  is_recurring?: boolean | null;
+  recurrence_pattern?: 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
+  recurrence_days?: string[] | null; // Days of the week for weekly recurrence
+  recurrence_end_date?: string | null;
+  recurrence_count?: number | null;
+  parent_id?: string | null; // Link to parent recurring event
 }
 
 // Helper type to extract event type from Database
