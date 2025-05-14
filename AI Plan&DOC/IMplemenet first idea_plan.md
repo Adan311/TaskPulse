@@ -1,36 +1,36 @@
-
 # AI-Powered Application with Gemini API - Implementation Guide
 
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Architecture Overview](#architecture-overview)
-3. [API Key Management Strategies](#api-key-management-strategies)
+3. [Language and Technology Stack](#language-and-technology-stack)
+4. [API Key Management Strategies](#api-key-management-strategies)
    - [Client-Side Storage Approach](#client-side-storage-approach)
    - [Supabase Backend Storage Approach](#supabase-backend-storage-approach)
-4. [AI Chat Implementation](#ai-chat-implementation)
+5. [AI Chat Implementation](#ai-chat-implementation)
    - [Basic Chat Interface](#basic-chat-interface)
    - [Message History Management](#message-history-management)
    - [AI Response Processing](#ai-response-processing)
-5. [AI Task and Event Suggestions](#ai-task-and-event-suggestions)
+6. [AI Task and Event Suggestions](#ai-task-and-event-suggestions)
    - [Generating Suggestions](#generating-suggestions)
    - [Accept/Reject Mechanism](#acceptreject-mechanism)
    - [Storing Suggestions in Supabase](#storing-suggestions-in-supabase)
-6. [Notes and Document Analysis](#notes-and-document-analysis)
+7. [Notes and Document Analysis](#notes-and-document-analysis)
    - [AI-Enhanced Note Taking](#ai-enhanced-note-taking)
    - [Document Processing](#document-processing)
-7. [Supabase Database Integration](#supabase-database-integration)
+8. [Supabase Database Integration](#supabase-database-integration)
    - [Database Schema](#database-schema)
    - [Data Access Patterns](#data-access-patterns)
    - [Security and RLS Policies](#security-and-rls-policies)
-8. [Advanced Features](#advanced-features)
+9. [Advanced Features](#advanced-features)
    - [Structured Output Parsing](#structured-output-parsing)
    - [Edge Functions for API Security](#edge-functions-for-api-security)
    - [Recurring Tasks and Events](#recurring-tasks-and-events)
-9. [Implementation Best Practices](#implementation-best-practices)
+10. [Implementation Best Practices](#implementation-best-practices)
    - [Performance Optimization](#performance-optimization)
    - [Error Handling](#error-handling)
    - [Testing Strategies](#testing-strategies)
-10. [Appendix: API Reference](#appendix-api-reference)
+11. [Appendix: API Reference](#appendix-api-reference)
 
 ## Introduction
 
@@ -76,6 +76,16 @@ This architecture offers several benefits:
 |                         |      |   Functions            |
 +-------------------------+      +-------------------------+
 ```
+
+## Language and Technology Stack
+
+All features in this implementation will be developed using **TypeScript** for both the frontend and backend. The key technologies include:
+
+- **Frontend**: React with TypeScript for building user interfaces.
+- **Backend**: Supabase Edge Functions (TypeScript) for secure API communication and database operations.
+- **AI Integration**: Google Gemini API for AI-powered features.
+
+This ensures a consistent and type-safe development experience across the entire application.
 
 ## API Key Management Strategies
 

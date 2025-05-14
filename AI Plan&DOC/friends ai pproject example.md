@@ -1,4 +1,3 @@
-
 # Gemini Note Scribe - Technical Documentation
 
 ## Table of Contents
@@ -11,6 +10,7 @@
 7. [Local Storage Usage](#local-storage-usage)
 8. [Component Structure](#component-structure)
 9. [Implementation Guide](#implementation-guide)
+10. [Notes on AI Chat Implementation](#notes-on-ai-chat-implementation)
 
 ## Introduction
 
@@ -428,6 +428,16 @@ To get a Gemini API key:
 3. Navigate to the API Keys section
 4. Create a new API key
 5. Use this key in your application
+
+## Notes on AI Chat Implementation
+
+The AI chat implementation in Gemini Note Scribe provides a simple and effective approach to integrating AI-powered conversations. However, for MotionMingle, the implementation will be enhanced with:
+
+1. **Database-Backed Conversations**: Using Supabase to store conversation history for persistence and multi-device access.
+2. **Secure API Key Management**: Leveraging Supabase Edge Functions to securely handle API keys, avoiding exposure on the client side.
+3. **Advanced Context Management**: Supporting project-specific contexts and threading for more meaningful interactions.
+
+These enhancements ensure a robust and scalable AI chat experience tailored to MotionMingle's requirements.
 
 ## Conclusion
 
