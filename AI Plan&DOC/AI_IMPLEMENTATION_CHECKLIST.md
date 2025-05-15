@@ -2,36 +2,36 @@
 
 This file tracks the status of all AI-related features in MotionMingle, including what's done, what's left, and implementation priorities. Use ✅ for completed and ❌ for pending/incomplete items.
 
-**Last Updated: May 14, 2025**
+**Last Updated: May 15, 2025**
 
 ---
 
 ## 🤖 Core AI Features (FR-6, FR-28, FR-29, FR-30)
 
 ### 1. AI Chat Feature (FR-6)
-- [❌] Google Gemini API Setup
-  - [❌] Create Google Cloud project
-  - [❌] Enable Gemini API
-  - [❌] Implement API key management
-  - [❌] Create configuration constants
-- [❌] Backend Integration
-  - [❌] Create Edge Functions for Gemini API
-  - [❌] Implement message processing utilities
+- [✅] Google Gemini API Setup
+  - [✅] Create Google Cloud project
+  - [✅] Enable Gemini API
+  - [✅] Implement API key management (user must provide their own key; no fallback)
+  - [✅] Create configuration constants
+- [✅] Backend Integration
+  - [N/A] Create Edge Functions for Gemini API (no longer needed; direct client calls only)
+  - [✅] Implement message processing utilities
   - [❌] Add streaming support
-  - [❌] Add error handling and retry logic
-- [❌] Database Schema
-  - [❌] Create `ai_conversations` table
-  - [❌] Create `ai_messages` table
-  - [❌] Create `user_settings` table for API keys
-  - [❌] Implement RLS policies
-- [❌] Frontend Chat Interface
-  - [❌] Chat window component
-  - [❌] Message display component
-  - [❌] Input handling
+  - [✅] Add error handling and retry logic
+- [✅] Database Schema
+  - [✅] Create `ai_conversations` table
+  - [✅] Create `ai_messages` table
+  - [✅] Create `user_settings` table for API keys
+  - [✅] Implement RLS policies
+- [✅] Frontend Chat Interface
+  - [✅] Chat window component
+  - [✅] Message display component
+  - [✅] Input handling
   - [❌] Streaming response visualization
-  - [❌] Error handling UI
-- [❌] Context Management
-  - [❌] Conversation history tracking
+  - [✅] Error handling UI
+- [✅] Context Management
+  - [✅] Conversation history tracking
   - [❌] Project-specific context handling
   - [❌] Message threading support
 - [❌] Testing
@@ -215,9 +215,9 @@ This approach allows you to create a tailored solution while leveraging the best
 
 ## 📝 Additional Notes
 
-- **API Keys**: Application should support both organization-level and user-provided API keys
-- **Fallback Strategy**: Implement graceful degradation when AI features are unavailable
+- **API Keys**: Application now only supports user-provided API keys for Gemini AI features (organization-level fallback removed)
+- **Fallback Strategy**: Graceful UI degradation and clear user guidance when AI features are unavailable
 - **Performance**: Monitor token usage and implement caching where appropriate
-- **User Education**: Create short tutorials on how to effectively use AI features
+- **User Education**: Clear instructions in UI for obtaining and entering API keys
 
 ---
