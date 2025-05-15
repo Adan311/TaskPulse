@@ -6,6 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/al
 import ProfileSettings from "@/frontend/features/settings/components/ProfileSettings";
 import PasswordSettings from "@/frontend/features/settings/components/PasswordSettings";
 import DeleteAccount from "@/frontend/features/settings/components/DeleteAccount";
+import AiSettings from "@/frontend/features/settings/components/AiSettings";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -29,7 +30,7 @@ export default function Settings() {
         </Alert>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid grid-cols-3 w-full md:w-[400px]">
+          <TabsList className="grid grid-cols-4 w-full md:w-[540px]">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               <span>Profile</span>
@@ -41,6 +42,10 @@ export default function Settings() {
             <TabsTrigger value="data" className="flex items-center gap-2">
               <Database className="h-4 w-4" />
               <span>Data</span>
+            </TabsTrigger>
+            <TabsTrigger value="ai" className="flex items-center gap-2">
+              <span role="img" aria-label="AI">🤖</span>
+              <span>AI</span>
             </TabsTrigger>
           </TabsList>
           
@@ -61,8 +66,14 @@ export default function Settings() {
               <DeleteAccount />
             </div>
           </TabsContent>
+
+          <TabsContent value="ai" className="space-y-4">
+            <div className="grid gap-6">
+              <AiSettings />
+            </div>
+          </TabsContent>
         </Tabs>
       </div>
     </AppLayout>
   );
-} 
+}

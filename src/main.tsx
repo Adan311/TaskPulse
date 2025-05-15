@@ -15,6 +15,7 @@ import SignUp from "./frontend/pages/auth/SignUp";
 import NotesPage from "./frontend/pages/Notes";
 import Settings from "./frontend/pages/Settings";
 import ProjectDetailPage from "./frontend/pages/ProjectDetailPage";
+import Chat from "./frontend/pages/Chat";
 import "./index.css";
 import { ThemeProvider } from "./frontend/components/theme/theme-provider";
 import { Toaster } from "./frontend/components/ui/toaster";
@@ -69,6 +70,16 @@ const router = createBrowserRouter([
       {
         path: "notes",
         element: <NotesPage />,
+      },
+      {
+        path: "chat",
+        element: <Chat />,
+        children: [
+          {
+            path: ":conversationId",
+            element: <Chat />,
+          },
+        ],
       },
     ],
   },

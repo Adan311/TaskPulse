@@ -9,7 +9,7 @@ import {
   SidebarFooter,
   useSidebar
 } from "@/frontend/components/ui/sidebar";
-import { Home, Calendar, Clock, ListTodo, FileText, User, LogOut, ChevronLeft, ChevronRight, Files, Settings, Sun, Moon } from "lucide-react";
+import { Home, Calendar, Clock, ListTodo, FileText, User, LogOut, ChevronLeft, ChevronRight, Files, Settings, Sun, Moon, MessageSquare } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/frontend/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,6 +55,11 @@ const mainItems = [
     title: "Projects",
     url: "/projects",
     icon: FileText,
+  },
+  {
+    title: "AI Chat",
+    url: "/chat",
+    icon: MessageSquare,
   },
   {
     title: "Settings",
