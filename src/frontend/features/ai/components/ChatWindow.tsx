@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/frontend/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/frontend/components/ui/card";
 import { Input } from "@/frontend/components/ui/input";
@@ -8,7 +8,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/al
 import { useToast } from "@/frontend/hooks/use-toast";
 import { ChatMessage, sendMessage, createConversation, getConversation } from "@/backend/api/services/ai/chatService";
 import { getAiSettings } from "@/backend/api/services/ai/geminiService";
+import { getSuggestionCounts } from "@/backend/api/services/ai/suggestionService";
 import { useNavigate } from "react-router-dom";
+import SuggestionBadge from './SuggestionBadge';
+import { supabase } from "@/integrations/supabase/client";
 
 interface ChatWindowProps {
   conversationId?: string;
@@ -24,6 +27,8 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [messagesWithSuggestions, setMessagesWithSuggestions] = useState<Set<string>>(new Set());
+  const [suggestionCounts, setSuggestionCounts] = useState<{[key: string]: number}>({});
   
   // Check if user has API key
   useEffect(() => {
@@ -59,6 +64,7 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
         
         if (conversation) {
           setMessages(conversation.messages || []);
+          await checkForSuggestions();
         }
       } catch (error) {
         console.error("Error loading conversation:", error);
@@ -174,6 +180,21 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
             result.userMessage,
             result.aiMessage
           ]);
+          
+          // Check if the message has suggestions
+          if (result.hasSuggestions) {
+            // Add this message to the set of messages with suggestions
+            setMessagesWithSuggestions(prev => new Set(prev).add(result.aiMessage.id));
+            
+            // Show toast notification
+            toast({
+              title: "AI Suggestions Available",
+              description: "The AI has identified tasks or events in this message. Click on the suggestion icon to view them.",
+            });
+            
+            // Update suggestion counts
+            await checkForSuggestions();
+          }
         }
       } catch (error) {
         console.error("Error sending message:", error);
@@ -229,6 +250,26 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
     navigate("/settings");
   };
   
+  const checkForSuggestions = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      // Get current suggestion counts
+      const counts = await getSuggestionCounts(user.id);
+      const totalSuggestions = counts.tasks + counts.events;
+      
+      if (totalSuggestions > 0) {
+        toast({
+          title: "New Suggestions Available",
+          description: `AI has found ${totalSuggestions} suggestion(s) from your conversations.`,
+        });
+      }
+    } catch (error) {
+      console.error("Error checking for suggestions:", error);
+    }
+  };
+  
   if (initialLoad) {
     return (
       <Card className="w-full h-[600px] flex items-center justify-center">
@@ -241,6 +282,30 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
     // Simple formatting - could be enhanced with markdown processing
     return message.content.split("\n").map((line, index) => (
       <p key={index} className={index > 0 ? "mt-2" : ""}>{line}</p>
+    ));
+  };
+  
+  const renderMessages = () => {
+    return messages.map((message) => (
+      <div
+        key={message.id}
+        className={`flex ${
+          message.role === "user" ? "justify-end" : "justify-start"
+        }`}
+      >
+        <div
+          className={`rounded-lg px-4 py-2 max-w-[80%] ${
+            message.role === "user"
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted"
+          }`}
+        >
+          {formatMessage(message)}
+          {messagesWithSuggestions.has(message.id) && (
+            <SuggestionBadge messageId={message.id} />
+          )}
+        </div>
+      </div>
     ));
   };
   
@@ -292,24 +357,7 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
           </div>
         ) : (
           <div className="space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${
-                  message.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`rounded-lg px-4 py-2 max-w-[80%] ${
-                    message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted"
-                  }`}
-                >
-                  {formatMessage(message)}
-                </div>
-              </div>
-            ))}
+            {renderMessages()}
             <div ref={messagesEndRef} />
           </div>
         )}

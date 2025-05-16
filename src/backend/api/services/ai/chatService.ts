@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { getGeminiApiKey, callGeminiApiDirectly, FormattedMessage } from "./geminiService";
+import { analyzeConversation, saveTaskSuggestions, saveEventSuggestions } from "./suggestionService";
 
 /**
  * Types for chat messages
@@ -165,7 +166,7 @@ export const getConversation = async (conversationId: string): Promise<ChatConve
 /**
  * Update conversation title
  */
-export const updateConversationTitle = async (conversationId: string, title: string): Promise<boolean> => {
+export const updateConversationTitle = async (conversationId: string, title?: string): Promise<boolean> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -177,7 +178,7 @@ export const updateConversationTitle = async (conversationId: string, title: str
     const { error } = await supabase
       .from('ai_conversations')
       .update({ 
-        title,
+        title: title || "New Conversation",
         updated_at: new Date().toISOString()
       })
       .eq('id', conversationId)
@@ -243,144 +244,134 @@ export const deleteConversation = async (conversationId: string): Promise<boolea
 export const sendMessage = async (
   conversationId: string, 
   message: string
-): Promise<{userMessage: ChatMessage; aiMessage: ChatMessage} | null> => {
+): Promise<{userMessage: ChatMessage; aiMessage: ChatMessage; hasSuggestions?: boolean} | null> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      console.error("User must be authenticated to send a message");
-      return null;
-    }
-    
-    console.log("Saving user message to conversation:", conversationId);
-    
-    // Save user message
-    const userMessageId = uuidv4();
-    const userMessage = {
-      id: userMessageId,
+    if (!user) throw new Error("User not authenticated");
+
+    const userMessage: ChatMessage = {
+      id: uuidv4(),
+      conversationId,
+      userId: user.id,
+      content: message,
+      role: 'user',
+      createdAt: new Date().toISOString(),
+    };
+
+    // Insert user message
+    const { error: userMessageError } = await supabase.from('ai_messages').insert({
+      id: userMessage.id,
       conversation_id: conversationId,
       user_id: user.id,
       content: message,
-      role: 'user' as const,
-      created_at: new Date().toISOString()
-    };
-    
-    const { error: userMessageError } = await supabase
-      .from('ai_messages')
-      .insert(userMessage);
-      
-    if (userMessageError) {
-      console.error("Error saving user message:", userMessageError);
-      return null;
-    }
-    
-    console.log("Updating conversation timestamp");
-    
-    // Update conversation updated_at time
-    const { error: updateError } = await supabase
-      .from('ai_conversations')
-      .update({ updated_at: new Date().toISOString() })
-      .eq('id', conversationId)
-      .eq('user_id', user.id);
-      
-    if (updateError) {
-      console.error("Error updating conversation timestamp:", updateError);
-      // Don't return null here, we can still try to get an AI response
-    }
-    
-    console.log("Getting Gemini API key");
-    
-    // Get API key from user settings - now mandatory
-    const apiKey = await getGeminiApiKey();
-    if (!apiKey) {
-      console.error("No Gemini API key found for user");
-      throw new Error("You need to add your Gemini API key in settings to use the AI chat. Go to Settings > AI Settings to add your key.");
-    }
-    
-    console.log("Getting previous messages for context");
-    
-    // Get previous messages for context
+      role: 'user',
+      created_at: userMessage.createdAt
+    });
+
+    if (userMessageError) throw userMessageError;
+
+    // Get conversation history
     const { data: messagesData, error: messagesError } = await supabase
       .from('ai_messages')
       .select('*')
       .eq('conversation_id', conversationId)
-      .eq('user_id', user.id)
       .order('created_at', { ascending: true });
     
-    if (messagesError) {
-      console.error("Error retrieving conversation messages:", messagesError);
-      throw new Error("Could not retrieve conversation history.");
+    if (messagesError) throw messagesError;
+
+    const history: ChatMessage[] = messagesData.map(msg => ({
+      id: msg.id,
+      conversationId: msg.conversation_id,
+      userId: msg.user_id,
+      content: msg.content,
+      role: msg.role as 'user' | 'assistant' | 'system',
+      createdAt: msg.created_at
+    }));
+
+    // Get API key
+    const apiKey = await getGeminiApiKey();
+    if (!apiKey) {
+      throw new Error("No Gemini API key available. Please add your API key in the settings.");
     }
-    
-    console.log(`Found ${messagesData?.length || 0} previous messages`);
-    
-    // Format messages for Gemini API
-    const formattedMessages: FormattedMessage[] = (messagesData || []).map(msg => ({
+
+    // Format history for Gemini API
+    const formattedHistory: FormattedMessage[] = history.map(msg => ({
       role: msg.role === 'assistant' ? 'model' : 'user',
       content: msg.content
     }));
-    
-    console.log("Calling Gemini API directly");
-    
-    // Generate AI message ID in advance
-    const aiMessageId = uuidv4();
-    
-    try {
-      // Make a direct call to the Gemini API
-      const aiResponse = await callGeminiApiDirectly(apiKey, formattedMessages);
-      
-      if (!aiResponse) {
-        throw new Error("No response received from AI. Please try again later.");
-      }
-      
-      console.log("AI response received, saving to database");
-      
-      // Save AI response
-      const aiMessage = {
-        id: aiMessageId,
-        conversation_id: conversationId,
-        user_id: user.id,
-        content: aiResponse,
-        role: 'assistant' as const,
-        created_at: new Date().toISOString()
-      };
-      
-      const { error: aiMessageError } = await supabase
-        .from('ai_messages')
-        .insert(aiMessage);
-        
-      if (aiMessageError) {
-        console.error("Error saving AI message:", aiMessageError);
-        // Still return the AI response even if we couldn't save it
-      }
-      
-      // Analyze message for potential task/event suggestions
-      // This will be implemented in Phase 2
-      
-      return {
-        userMessage: {
-          id: userMessageId,
-          conversationId,
-          userId: user.id,
-          content: message,
-          role: 'user',
-          createdAt: userMessage.created_at
-        },
-        aiMessage: {
-          id: aiMessageId,
-          conversationId,
-          userId: user.id,
-          content: aiResponse,
-          role: 'assistant',
-          createdAt: aiMessage.created_at
-        }
-      };
-    } catch (error) {
-      console.error("Exception calling Gemini API:", error);
-      throw error; // Rethrow so the UI can handle it
+
+    // Call Gemini API directly
+    const aiResponse = await callGeminiApiDirectly(apiKey, formattedHistory);
+    if (!aiResponse) {
+      throw new Error("Failed to get response from Gemini API");
     }
+
+    // Create AI message
+    const aiMessage: ChatMessage = {
+      id: uuidv4(),
+      conversationId,
+      userId: user.id,
+      content: aiResponse,
+      role: 'assistant',
+      createdAt: new Date().toISOString(),
+    };
+
+    // Insert AI message
+    const { error: aiMessageError } = await supabase.from('ai_messages').insert({
+      id: aiMessage.id,
+      conversation_id: conversationId,
+      user_id: user.id,
+      content: aiResponse,
+      role: 'assistant',
+      created_at: aiMessage.createdAt
+    });
+
+    if (aiMessageError) throw aiMessageError;
+
+    // Update the conversation title if it's the first message
+    if (history.length <= 1) {
+      await updateConversationTitle(conversationId);
+    }
+
+    // Update conversation's updated_at timestamp
+    const { error: updateError } = await supabase
+      .from('ai_conversations')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', conversationId);
+
+    if (updateError) throw updateError;
+
+    // Analyze conversation for suggestions
+    let hasSuggestions = false;
+    try {
+      // Get updated conversation history including the new AI message
+      const updatedHistory = [...history, userMessage, aiMessage];
+      
+      // Analyze the conversation
+      const extractionResult = await analyzeConversation(updatedHistory);
+      
+      if (extractionResult && 
+          (extractionResult.tasks.length > 0 || extractionResult.events.length > 0)) {
+        // Save task suggestions
+        if (extractionResult.tasks.length > 0) {
+          await saveTaskSuggestions(user.id, extractionResult.tasks, aiMessage.id);
+        }
+        
+        // Save event suggestions
+        if (extractionResult.events.length > 0) {
+          await saveEventSuggestions(user.id, extractionResult.events, aiMessage.id);
+        }
+        
+        hasSuggestions = true;
+      }
+    } catch (error) {
+      // Log error but don't fail the entire response if suggestion extraction fails
+      console.error("Error extracting suggestions:", error);
+    }
+
+    return { userMessage, aiMessage, hasSuggestions };
   } catch (error) {
-    console.error("Exception sending message:", error);
-    throw error; // Rethrow so the UI can handle it
+    console.error("Error sending message:", error);
+    throw error;
   }
-}; 
+};

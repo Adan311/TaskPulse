@@ -208,7 +208,7 @@ export default function AiSettings() {
               </ol>
               <p className="text-xs mt-2">Your API key is stored securely in your user settings.</p>
             </div>
-            
+
             <Alert variant="warning">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Important Information</AlertTitle>
@@ -222,16 +222,16 @@ export default function AiSettings() {
             </Alert>
           </div>
         </CardContent>
-        <CardFooter>
-          <Button
-            onClick={handleSaveApiKey}
-            disabled={!apiKey || saving}
-            className="ml-auto"
-          >
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save API Key
-          </Button>
-        </CardFooter>
+          <CardFooter>
+            <Button
+              onClick={handleSaveApiKey}
+              disabled={!apiKey || saving}
+              className="ml-auto"
+            >
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save API Key
+            </Button>
+          </CardFooter>
       </Card>
     </div>
   );

@@ -1,13 +1,13 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
-# Supabase Guidelines and Database Management
+# Supabase Guidelines and Database Management with MCP Pattern
 
 ## Project Configuration
-- The Supabase project is configured in [supabase/config.toml](mdc:supabase/config.toml) with project ID: `haghjmyeiaeubrfkuqts`
-- All Supabase Edge Functions should be placed in the [supabase/functions/](mdc:supabase/functions) directory
+- The Supabase project is configured with project ID: `haghjmyeiaeubrfkuqts`
+- **IMPORTANT: Always use the MCP (Model-Controller-Persistence) server pattern for all Supabase interactions**
 
 ## Database Schema Guidelines
 When working with the database:
@@ -15,29 +15,29 @@ When working with the database:
 1. Schema Changes:
    - All schema changes must be made through migration files
    - Place new migrations in `supabase/migrations/` with format: `YYYYMMDDHHMMSS_descriptive_name.sql`
-   - Test migrations locally before deploying
+   - Follow existing patterns seen in tasks, calendar, and other features
    - Document breaking changes in migration comments
 
 2. Table Naming:
    - Use snake_case for all database objects
-   - Prefix tables with feature name when appropriate (e.g., `notes_`, `tasks_`, `calendar_`)
+   - Follow existing naming conventions (e.g., `tasks`, `events`, `ai_conversations`)
    - Use plural form for table names (e.g., `users`, `projects`, `tasks`)
 
 3. Column Conventions:
    - Primary keys should be named `id` and use UUID type
    - Include `created_at` TIMESTAMP and `updated_at` TIMESTAMP on all tables
-   - Foreign keys should be named `{table_name}_id`
+   - Follow existing patterns for foreign keys
    - Use appropriate data types (e.g., TEXT for variable strings, INTEGER for numbers)
    - Add appropriate constraints (NOT NULL, UNIQUE, etc.)
 
 4. Row Level Security (RLS):
-   - Enable RLS on all tables
-   - Define policies for each table
-   - Test policies thoroughly
+   - Enable RLS on all tables with policies directly in table definitions
+   - Use `auth.uid() = user_id` pattern for ownership-based access
+   - Follow existing RLS implementations in the project
    - Document policy intentions in comments
 
 5. Database Functions:
-   - Place reusable functions in `supabase/functions/`
+   - Add business logic in MCP service files
    - Document function parameters and return types
    - Add error handling
    - Test functions with various inputs
@@ -47,55 +47,68 @@ When working with the database:
    - Consider composite indexes for multi-column queries
    - Document index justification in comments
 
-## API Integration
-When working with Supabase in the codebase:
+## MCP Integration Pattern
+Always use the MCP (Model-Controller-Persistence) server pattern when working with Supabase:
 
-1. Client Setup:
+1. Client Setup with MCP Pattern:
    ```typescript
-   import { createClient } from '@supabase/supabase-js'
+   // Use existing service files in src/backend/api/services/ 
+   // Example: taskService.ts, calendarService.ts
    
-   const supabase = createClient(
-     process.env.NEXT_PUBLIC_SUPABASE_URL,
-     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-   )
+   // All database operations should be encapsulated in service functions:
+   export async function getItems(userId: string) {
+     const { data, error } = await supabase
+       .from('items')
+       .select('*')
+       .eq('user_id', userId);
+     
+     if (error) throw error;
+     return data;
+   }
    ```
 
-2. Error Handling:
+2. Error Handling in MCP Pattern:
    ```typescript
-   const { data, error } = await supabase
-     .from('table_name')
-     .select('*')
-   
-   if (error) {
-     console.error('Error:', error.message)
-     return
+   // Centralized error handling in service functions
+   export async function createItem(item) {
+     try {
+       const { data, error } = await supabase
+         .from('items')
+         .insert(item);
+       
+       if (error) throw error;
+       return data;
+     } catch (error) {
+       console.error('Error creating item:', error.message);
+       throw error; // Propagate to UI for handling
+     }
    }
    ```
 
 3. Type Safety:
    - Define TypeScript interfaces for all database tables
-   - Use generated types from Supabase CLI
-   - Place types in appropriate feature directories
+   - Use consistent types between frontend and backend
+   - Follow existing type patterns in the project
 
 4. Security:
    - Never expose sensitive data in client-side code
-   - Use RLS policies instead of manual filtering
+   - Use RLS policies as the primary security mechanism
    - Keep API keys secure in environment variables
+
+## Integration with AI & Google Calendar
+- AI features must integrate with the MCP pattern
+- Google Calendar integration must follow the same approach
+- When implementing AI suggestions, use existing service patterns
+- New suggestion tables should follow the same structure as other tables
 
 ## Development Workflow
 1. Local Development:
-   - Use Supabase CLI for local development
    - Test changes locally before deploying
-   - Use `supabase start` for local instance
+   - Follow existing patterns in the codebase
+   - Ensure compatibility with MCP approach
 
 2. Deployment:
    - Review changes before deploying
-   - Use `supabase db push` for schema changes
    - Test in staging environment first
 
-3. Monitoring:
-   - Monitor query performance
-   - Set up alerts for errors
-   - Review logs regularly
-
-Remember to always consider data integrity, security, and performance when making changes to the database or its schema.
+The MCP pattern must be automatically used for all Supabase interactions. Every implementation should follow this pattern without exception.

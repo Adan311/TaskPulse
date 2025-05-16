@@ -60,8 +60,8 @@ export const getGeminiApiKey = async (): Promise<string | null> => {
     if (!userSettings?.gemini_api_key) {
       console.log("User has not provided a Gemini API key");
       return null;
-    }
-    
+      }
+      
     return userSettings.gemini_api_key;
   } catch (error) {
     console.error("Exception getting Gemini API key:", error);
