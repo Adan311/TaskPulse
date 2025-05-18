@@ -29,7 +29,7 @@ export const detectCommandIntent = async (
     // Create a specialized command detection prompt
     const commandPrompt: FormattedMessage = {
       role: "user",
-      content: `Analyze this message and determine if it contains a command to create a task, event, or set a reminder:
+      content: `Analyze this message and determine if it contains an EXPLICIT command to create a task, event, or set a reminder:
       
       "${message}"
       
@@ -59,11 +59,22 @@ export const detectCommandIntent = async (
         }
       }
       
-      Only return hasCommand: true if the message is clearly an instruction to create something.
-      Examples of commands:
+      IMPORTANT: ONLY return hasCommand: true if the message is CLEARLY and EXPLICITLY an instruction to create something.
+      The message must include a direct command verb like "create", "add", "make", "schedule", "set up", etc.
+      
+      Examples of commands that should return hasCommand: true:
       - "Create a task to finish the report by Friday"
-      - "Schedule a meeting with John tomorrow at 3pm"
-      - "Remind me about the presentation on Monday morning"
+      - "Add a meeting with John tomorrow at 3pm"
+      - "Make a reminder for the presentation on Monday"
+      - "Schedule a call with the team next week"
+      
+      Examples of statements that should return hasCommand: false (these are just informational):
+      - "I need to research topics about cars and make a ppt"
+      - "My presentation is due next Friday"
+      - "I have to finish this project soon"
+      - "The meeting is tomorrow at 2pm"
+      
+      If the message just describes something the user needs to do, but doesn't explicitly request creation of a task/event, return hasCommand: false.
       
       Current date for reference: ${new Date().toISOString().split('T')[0]}`
     };

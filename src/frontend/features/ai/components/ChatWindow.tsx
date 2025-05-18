@@ -3,7 +3,7 @@ import { Button } from "@/frontend/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/frontend/components/ui/card";
 import { Input } from "@/frontend/components/ui/input";
 import { Textarea } from "@/frontend/components/ui/textarea";
-import { Loader2, Send, Plus, KeyIcon, ExternalLinkIcon, Lightbulb } from "lucide-react";
+import { Loader2, Send, Plus, KeyIcon, ExternalLinkIcon, Lightbulb, User, Bot } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { ChatMessage, sendMessage, createConversation, getConversation } from "@/backend/api/services/ai/chatService";
@@ -12,6 +12,7 @@ import { getSuggestionCounts, requestSuggestions, ClarifyingQuestion } from "@/b
 import { useNavigate } from "react-router-dom";
 import SuggestionBadge from './SuggestionBadge';
 import { supabase } from "@/integrations/supabase/client";
+import { useSidebar } from "@/frontend/components/ui/sidebar/sidebar";
 
 interface ChatWindowProps {
   conversationId?: string;
@@ -31,6 +32,8 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
   const [messagesWithSuggestions, setMessagesWithSuggestions] = useState<Set<string>>(new Set());
   const [suggestionCounts, setSuggestionCounts] = useState<{tasks: number; events: number}>({tasks: 0, events: 0});
   const [clarifyingQuestions, setClarifyingQuestions] = useState<ClarifyingQuestion[]>([]);
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
   
   // Check if user has API key
   useEffect(() => {
@@ -366,9 +369,9 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
   
   if (initialLoad) {
     return (
-      <Card className="w-full h-[600px] flex items-center justify-center">
+      <div className={`p-4 ${isCollapsed ? 'ml-16' : 'ml-64'} h-screen flex items-center justify-center`}>
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </Card>
+      </div>
     );
   }
   
@@ -385,20 +388,30 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
         key={message.id}
         className={`flex ${
           message.role === "user" ? "justify-end" : "justify-start"
-        }`}
+        } mb-4`}
       >
+        {message.role !== "user" && (
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-2">
+            <Bot className="h-4 w-4 text-primary" />
+          </div>
+        )}
         <div
-          className={`rounded-lg px-4 py-2 max-w-[80%] ${
+          className={`rounded-lg px-4 py-3 max-w-[80%] ${
             message.role === "user"
               ? "bg-primary text-primary-foreground"
-              : "bg-muted"
-          }`}
+              : "bg-accent/30"
+          } shadow-sm`}
         >
           {formatMessage(message)}
           {messagesWithSuggestions.has(message.id) && (
             <SuggestionBadge messageId={message.id} />
           )}
         </div>
+        {message.role === "user" && (
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center ml-2">
+            <User className="h-4 w-4 text-primary" />
+          </div>
+        )}
       </div>
     ));
   };
@@ -406,51 +419,50 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
   const totalSuggestions = suggestionCounts.tasks + suggestionCounts.events;
   
   return (
-    <Card className="w-full h-[600px] flex flex-col">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-center">
-          <CardTitle>AI Assistant</CardTitle>
-          <div className="flex space-x-2">
-            {totalSuggestions > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleViewSuggestions}
-                className="flex items-center"
-              >
-                <Lightbulb className="h-4 w-4 mr-2 text-amber-500" />
-                View Suggestions
-                <span className="ml-1 bg-amber-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                  {totalSuggestions}
-                </span>
-              </Button>
-            )}
-            <Button 
-              variant="outline" 
+    <div className={`flex flex-col h-screen ${isCollapsed ? 'ml-16' : 'ml-64'} p-4`}>
+      <div className="flex justify-between items-center mb-4 p-2 border-b">
+        <h2 className="text-xl font-semibold">AI Assistant</h2>
+        <div className="flex space-x-2">
+          {totalSuggestions > 0 && (
+            <Button
+              variant="outline"
               size="sm"
-              onClick={handleGetSuggestions}
-              disabled={loading || requestingSuggestions || hasApiKey === false || !conversationId || messages.length === 0}
+              onClick={handleViewSuggestions}
               className="flex items-center"
             >
-              {requestingSuggestions ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Lightbulb className="h-4 w-4 mr-2" />
-              )}
-              Get Suggestions
+              <Lightbulb className="h-4 w-4 mr-2 text-amber-500" />
+              View Suggestions
+              <span className="ml-1 bg-amber-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                {totalSuggestions}
+              </span>
             </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleStartNewConversation}
-              disabled={loading || hasApiKey === false}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
+          )}
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleGetSuggestions}
+            disabled={loading || requestingSuggestions || hasApiKey === false || !conversationId || messages.length === 0}
+            className="flex items-center"
+          >
+            {requestingSuggestions ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Lightbulb className="h-4 w-4 mr-2" />
+            )}
+            Get Suggestions
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleStartNewConversation}
+            disabled={loading || hasApiKey === false}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
-      </CardHeader>
-      <CardContent className="flex-1 overflow-y-auto">
+      </div>
+      
+      <div className="flex-1 overflow-y-auto mb-4 rounded-lg bg-background/50 p-4">
         {hasApiKey === false ? (
           <div className="h-full flex flex-col items-center justify-center p-4">
             <Alert variant="destructive" className="mb-4">
@@ -482,26 +494,28 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
             <p className="text-sm">I can help you organize your work, manage your time, or brainstorm ideas.</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2">
             {renderMessages()}
             <div ref={messagesEndRef} />
           </div>
         )}
-      </CardContent>
-      <CardFooter className="pt-3">
-        <div className="flex w-full items-center space-x-2">
+      </div>
+      
+      <div className="sticky bottom-0 bg-background p-3 border rounded-lg shadow-sm">
+        <div className="flex items-center space-x-2">
           <Textarea
             placeholder={hasApiKey === false ? "Add your API key in settings to use AI chat" : "Type your message..."}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 min-h-[60px] max-h-[120px]"
+            className="flex-1 min-h-[60px] max-h-[120px] border focus:ring-1 focus:ring-primary"
             disabled={loading || hasApiKey === false}
           />
           <Button 
-            size="icon" 
+            size="icon"
             onClick={handleSendMessage} 
             disabled={loading || !input.trim() || hasApiKey === false}
+            className="h-10 w-10 rounded-full"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -510,7 +524,7 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
             )}
           </Button>
         </div>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 } 

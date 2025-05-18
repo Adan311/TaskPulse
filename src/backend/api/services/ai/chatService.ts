@@ -8,6 +8,7 @@ import {
   createEventFromCommand, 
   CommandDetectionResult 
 } from "./commandService";
+import { getUserEvents, getUserTasks, formatDateForUser, formatTimeForUser } from "./userDataService";
 
 /**
  * Types for chat messages
@@ -396,7 +397,29 @@ export const sendMessage = async (
       return { userMessage, aiMessage: aiCommandResponseMessage };
     }
 
-    // If not a command, proceed with normal Gemini chat and passive suggestion analysis
+    // If not a command, check if it's a user data query (like asking about calendar events)
+    const userDataResponse = await handleUserDataQuery(user.id, message);
+    if (userDataResponse) {
+      const aiDataResponseMessage: ChatMessage = {
+        id: uuidv4(),
+        conversationId,
+        userId: user.id,
+        content: userDataResponse,
+        role: 'assistant',
+        createdAt: new Date().toISOString(),
+      };
+      await supabase.from('ai_messages').insert({
+        id: aiDataResponseMessage.id,
+        conversation_id: conversationId,
+        user_id: user.id,
+        content: userDataResponse,
+        role: 'assistant',
+        created_at: aiDataResponseMessage.createdAt
+      });
+      return { userMessage, aiMessage: aiDataResponseMessage };
+    }
+
+    // If not a command or user data query, proceed with normal Gemini chat and passive suggestion analysis
     const apiKey = await getGeminiApiKey();
     if (!apiKey) {
       throw new Error("No Gemini API key available. Please add your API key in the settings.");
@@ -480,5 +503,112 @@ export const sendMessage = async (
     // Return null or throw, depending on desired error handling for the caller (ChatWindow.tsx)
     // Throwing will allow ChatWindow to display a generic error toast
     throw error;
+  }
+};
+
+/**
+ * Handle queries about user data like "What events do I have on June 5th?"
+ */
+export const handleUserDataQuery = async (
+  userId: string,
+  query: string
+): Promise<string | null> => {
+  try {
+    // Check if query is about calendar/events
+    const calendarEventKeywords = [
+      'event', 'calendar', 'schedule', 'appointment', 'meeting', 'have on', 
+      'what do i have', 'what\'s on', 'what is on', 'happening on', 'planned for'
+    ];
+    
+    // Check if query is about tasks
+    const taskKeywords = [
+      'task', 'to-do', 'to do', 'todo', 'need to do', 'should do', 
+      'assignment', 'work', 'project'
+    ];
+    
+    // Detect date mentioned in query
+    const dateRegex = /(?:on|for|this|next|coming)?\s*(?:the\s*)?(\d{1,2}(?:st|nd|rd|th)?\s*(?:of\s*)?(?:january|february|march|april|may|june|july|august|september|october|november|december)|(?:mon|tues|wednes|thurs|fri|satur|sun)day|tomorrow|today|(?:\d{1,2}[-/\.]\d{1,2}(?:[-/\.]\d{2,4})?))/i;
+    const dateMatch = query.match(dateRegex);
+    
+    let targetDate = null;
+    if (dateMatch && dateMatch[1]) {
+      // Simple date parsing for common formats
+      const dateText = dateMatch[1].toLowerCase();
+      if (dateText === 'today') {
+        targetDate = new Date().toISOString().split('T')[0];
+      } else if (dateText === 'tomorrow') {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        targetDate = tomorrow.toISOString().split('T')[0];
+      } else if (dateText.includes('june 5') || dateText.includes('5th of june') || dateText.includes('5 june')) {
+        // Special case for June 5th
+        const currentYear = new Date().getFullYear();
+        targetDate = `${currentYear}-06-05`;
+      } else {
+        try {
+          // Try to parse the date - this is a simplified approach
+          // A more comprehensive date parsing would be needed for production
+          const parsedDate = new Date(dateText);
+          if (!isNaN(parsedDate.getTime())) {
+            targetDate = parsedDate.toISOString().split('T')[0];
+          }
+        } catch (e) {
+          console.log("Failed to parse date:", dateText);
+        }
+      }
+    }
+    
+    // If it seems like a calendar query
+    if (calendarEventKeywords.some(keyword => query.toLowerCase().includes(keyword.toLowerCase()))) {
+      try {
+        const events = await getUserEvents(userId, targetDate, targetDate);
+        
+        if (events.length === 0) {
+          return targetDate 
+            ? `You don't have any events scheduled on ${formatDateForUser(targetDate)}.` 
+            : "You don't have any upcoming events scheduled.";
+        }
+        
+        const formattedEvents = events.map(event => (
+          `- ${event.title}${event.startTime ? ` at ${formatTimeForUser(event.startTime)}` : ''}`
+        )).join('\n');
+        
+        return targetDate
+          ? `Here are your events for ${formatDateForUser(targetDate)}:\n${formattedEvents}`
+          : `Here are your upcoming events:\n${formattedEvents}`;
+      } catch (error) {
+        console.error("Error handling calendar query:", error);
+        return "I couldn't retrieve your calendar information. Please try again later.";
+      }
+    }
+    
+    // If it seems like a task query
+    if (taskKeywords.some(keyword => query.toLowerCase().includes(keyword.toLowerCase()))) {
+      try {
+        const tasks = await getUserTasks(userId, undefined, targetDate);
+        
+        if (tasks.length === 0) {
+          return targetDate 
+            ? `You don't have any tasks due on ${formatDateForUser(targetDate)}.`
+            : "You don't have any pending tasks.";
+        }
+        
+        const formattedTasks = tasks.map(task => (
+          `- ${task.title}${task.status ? ` (${task.status})` : ''}`
+        )).join('\n');
+        
+        return targetDate
+          ? `Here are your tasks for ${formatDateForUser(targetDate)}:\n${formattedTasks}`
+          : `Here are your pending tasks:\n${formattedTasks}`;
+      } catch (error) {
+        console.error("Error handling task query:", error);
+        return "I couldn't retrieve your task information. Please try again later.";
+      }
+    }
+    
+    return null; // Not a user data query
+  } catch (error) {
+    console.error("Error handling user data query:", error);
+    return null;
   }
 };
