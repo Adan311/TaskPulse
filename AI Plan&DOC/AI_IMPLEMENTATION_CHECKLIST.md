@@ -2,7 +2,7 @@
 
 This file tracks the status of all AI-related features in MotionMingle, including what's done, what's left, and implementation priorities. Use ✅ for completed and ❌ for pending/incomplete items.
 
-**Last Updated: June 15, 2025**
+**Last Updated: June 16, 2025**
 
 ---
 
@@ -32,7 +32,7 @@ This file tracks the status of all AI-related features in MotionMingle, includin
   - [✅] Error handling UI
 - [✅] Context Management
   - [✅] Conversation history tracking
-  - [❌] Project-specific context handling
+  - [✅] Project-specific context handling
   - [❌] Message threading support
 - [❌] Testing
   - [❌] Unit tests for API utilities
@@ -89,7 +89,7 @@ This file tracks the status of all AI-related features in MotionMingle, includin
   - [✅] Task creation from NL
   - [✅] Event scheduling from NL
   - [❌] Reminder setting from NL
-  - [❌] Project creation/assignment from NL
+  - [✅] Project creation/assignment from NL
 - [✅] User Interface
   - [✅] Natural language input component
   - [✅] Command execution feedback
@@ -99,6 +99,28 @@ This file tracks the status of all AI-related features in MotionMingle, includin
   - [❌] Unit tests for command parsing
   - [❌] Test corpus of sample commands
   - [❌] User testing for command recognition
+
+### 5. Data Querying and Filtering (New)
+- [✅] Event filtering
+  - [✅] Properly filter upcoming vs past events
+  - [✅] Default to upcoming events when not specified
+  - [✅] Date-specific event filtering
+  - [✅] Project-specific event filtering
+- [✅] Task filtering
+  - [✅] Filter by task status (todo, in_progress, done)
+  - [✅] Show tasks with correct status information
+  - [✅] Due date filtering
+  - [✅] Project-specific task filtering
+- [✅] Project information
+  - [✅] Query user projects with filtering
+  - [✅] Retrieve items linked to specific projects
+  - [✅] Project status information
+  - [✅] Combined view of tasks, events, and notes per project
+- [✅] Natural language query understanding
+  - [✅] Parse project-related queries
+  - [✅] Extract project names from queries
+  - [✅] Handle status-specific queries
+  - [✅] Improved date extraction
 
 ---
 
@@ -136,7 +158,98 @@ This approach allows you to create a tailored solution while leveraging the best
 
 ---
 
-*Note: All implementation will be custom to MotionMingle, using the MCP repository only as a reference for best practices.*
+## 🔁 Recurring Tasks & Events Implementation
+
+### 1. Database Schema and Types
+- [✅] Task Table Schema
+  - [✅] `is_recurring` flag
+  - [✅] `recurrence_pattern` enum
+  - [✅] `recurrence_days` array
+  - [✅] `recurrence_end_date` timestamp
+  - [✅] `recurrence_count` integer
+  - [✅] `parent_id` for linking child to parent
+  - [✅] `recurrence_mode` enum ('clone', 'refresh')
+- [✅] Event Table Schema
+  - [✅] `is_recurring` flag
+  - [✅] `recurrence_pattern` enum
+  - [✅] `recurrence_days` array
+  - [✅] `recurrence_end_date` timestamp
+  - [✅] `recurrence_count` integer
+  - [✅] `parent_id` for linking child to parent
+- [✅] TypeScript Type Definitions
+  - [✅] Task interface with recurrence fields
+  - [✅] Event interface with recurrence fields
+  - [✅] Helper types for consistent usage
+
+### 2. Backend Services
+- [✅] Core Recurrence Service
+  - [✅] Processing initialization
+  - [✅] Background interval checking
+  - [✅] Cleanup mechanism
+- [✅] Task Recurrence Service
+  - [✅] Creating recurring tasks
+  - [✅] Next occurrence date calculation
+  - [✅] Future task instance generation
+  - [✅] Task status refresh for 'refresh' mode
+  - [✅] Processing all recurring tasks
+  - [✅] Updating all instances when parent changes
+- [✅] Event Recurrence Service
+  - [✅] Creating recurring events
+  - [✅] Next occurrence date calculation
+  - [✅] Future event instance generation
+  - [✅] Processing all recurring events
+  - [✅] Updating all instances when parent changes
+- [✅] MCP Pattern Implementation
+  - [✅] Service abstraction for recurrence logic
+  - [✅] Authentication checks
+  - [✅] Proper error handling
+  - [✅] Data transformation
+
+### 3. Frontend Components
+- [✅] Task Recurrence UI
+  - [✅] Recurrence toggle switch
+  - [✅] Pattern selection dropdown
+  - [✅] Weekly day selection checkboxes
+  - [✅] End condition options (never, date, occurrences)
+  - [✅] Mode selection (clone vs refresh)
+  - [✅] Visual indicators for recurring tasks
+- [✅] Event Recurrence UI
+  - [✅] RecurrenceField component
+  - [✅] Pattern selection dropdown
+  - [✅] Weekly day selection checkboxes
+  - [✅] End condition options
+  - [✅] Visual badges for recurring events
+- [✅] Form Handling
+  - [✅] Field validation for recurring items
+  - [✅] Recurrence data structure conversion
+  - [✅] Error handling for invalid recurrence settings
+
+### 4. User Experience Enhancements
+- [✅] Visual Indicators
+  - [✅] Recurring event indicators in calendar views
+  - [✅] Visual distinction between parent and instances
+  - [✅] Clear status indicators for recurring items
+- [✅] Editing Experience
+  - [✅] Parent vs instance editing UX
+  - [✅] Propagation of changes to instances
+  - [✅] Clear messaging about editing implications
+- [❌] AI Integration with Recurring Items
+  - [❌] Natural language creation of recurring items
+  - [❌] AI-suggested recurring patterns
+  - [❌] Intelligent recurrence suggestions based on usage
+
+### 5. Testing and Documentation
+- [✅] Documentation
+  - [✅] Developer documentation (RECURRING_FEATURE_DOCS.md)
+  - [✅] Code comments
+  - [✅] Implementation examples
+- [❌] Testing
+  - [❌] Unit tests for recurrence calculations
+  - [❌] Integration tests for instance generation
+  - [❌] UI component tests
+  - [❌] End-to-end testing of recurrence workflows
+
+---
 
 ## 📊 AI Performance Monitoring
 

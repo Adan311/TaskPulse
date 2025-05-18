@@ -490,4 +490,97 @@ This enhancement plan addresses the key issues with the current AI suggestion sy
 
 5. **Natural Language Commands**: Building on the suggestion system to support explicit commands will provide a more intuitive user experience.
 
-These improvements will make the AI features more useful and integrated with the rest of the application while maintaining the existing MCP pattern and database structure. 
+These improvements will make the AI features more useful and integrated with the rest of the application while maintaining the existing MCP pattern and database structure.
+
+## Recent Improvements to User Data Query System (June 2025)
+
+### Problem Statement
+
+1. When a user asked about upcoming events, the system would show all events, including past ones.
+2. Task queries didn't properly filter by status when users asked specifically about "to-do" or "in progress" tasks.
+3. The system couldn't provide information about projects or which tasks/events were linked to specific projects.
+
+### Implemented Solutions
+
+#### 1. Improved Event Filtering
+
+- **Default to upcoming events**: Modified `getUserEvents` to automatically filter for future events when no specific filters are set.
+- **Smarter date handling**: Enhanced date detection patterns to handle more date formats.
+- **Sort direction**: Upcoming events are now sorted from soonest to latest, while past events are sorted from most recent to oldest.
+- **Better response formatting**: Clarified responses to indicate when events are upcoming vs past.
+
+```typescript
+// Example: Default to upcoming events when no specific filter is set
+if (filters?.includes('upcoming') || (!startDate && !endDate && !filters?.includes('past'))) {
+  // Default behavior is to show upcoming events if no specific filter is set
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Start of today
+  filteredEvents = filteredEvents.filter(event => {
+    const eventStart = new Date(event.startTime);
+    return eventStart >= today;
+  });
+}
+```
+
+#### 2. Enhanced Task Status Filtering
+
+- **Improved status keywords**: Expanded the pattern matching to detect more ways users might ask about different task statuses.
+- **Fixed status matching**: Corrected the task status values to match database schema ('todo', 'in_progress', 'done').
+- **Better response formatting**: Added clearer status labels in responses.
+
+```typescript
+// Detect task status from query
+const todoStatusKeywords = ['to do', 'todo', 'to-do list', 'pending', 'not done'];
+const inProgressStatusKeywords = ['in progress', 'ongoing', 'working on', 'started'];
+const doneStatusKeywords = ['done', 'completed', 'finished'];
+
+// Set status filter based on keywords
+if (todoStatusKeywords.some(keyword => lowercaseQuery.includes(keyword))) {
+  statusFilter = 'todo';
+  statusLabel = "to do";
+} else if (inProgressStatusKeywords.some(keyword => lowercaseQuery.includes(keyword))) {
+  statusFilter = 'in_progress';
+  statusLabel = "in progress";
+}
+```
+
+#### 3. Added Project Query Support
+
+- **New query patterns**: Added detection of project-related queries, including "what projects do I have" and "what's linked to project X".
+- **Project information retrieval**: Created new functions to fetch projects and their associated items.
+- **Project status filtering**: Added support for filtering projects by status (active, completed, on-hold).
+
+```typescript
+// New function to get all items linked to a project
+export const getProjectItems = async (
+  userId: string,
+  projectId: string
+): Promise<{tasks: any[], events: any[], notes: any[]}> => {
+  // ... implementation details ...
+}
+```
+
+#### 4. Natural Language Project Relation Detection
+
+- **Enhanced regex patterns**: Added sophisticated pattern matching to detect queries about project-related items.
+- **Project name extraction**: Implemented extraction of project names from natural language queries.
+- **Organized response formatting**: Added structured responses that group tasks, events, and notes by type when related to a project.
+
+```typescript
+// Pattern to detect queries about items linked to a project
+const projectItemsPattern = /(?:what|which|list|show|get|any|all|items?|tasks?|events?|notes?).*(?:(?:linked|related|connected|assigned|attached|associated) to|for|in|on) (?:project|the project|my project)(?:[: ]+)?(.*?)(?:\?|$|\.|,)/i;
+```
+
+### Benefits of These Improvements
+
+1. **More intuitive responses**: The system now responds with the data users actually want when they ask about events, tasks, or projects.
+2. **Context-aware filtering**: Default behavior is smarter - showing upcoming events and properly filtering tasks by status.
+3. **Project organization**: Users can now get a complete picture of what's related to their projects.
+4. **Better date handling**: Improved date extraction and sorting makes the responses more relevant to users' timeframe.
+
+### Future Improvements
+
+1. **Advanced natural language time understanding**: Implement more sophisticated parsing of relative time expressions ("end of Q2", "next quarter", etc.)
+2. **Multi-project filtering**: Support queries like "show tasks in projects X and Y"
+3. **Conversation context memory**: Remember which project a user was discussing to improve follow-up queries
+4. **Personalized default filters**: Learn user preferences for how they prefer tasks to be filtered 

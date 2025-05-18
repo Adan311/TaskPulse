@@ -8,7 +8,7 @@ import {
   createEventFromCommand, 
   CommandDetectionResult 
 } from "./commandService";
-import { getUserEvents, getUserTasks, formatDateForUser, formatTimeForUser } from "./userDataService";
+import { getUserEvents, getUserTasks, formatDateForUser, formatTimeForUser, getUserProjects, getProjectItems } from "./userDataService";
 
 /**
  * Types for chat messages
@@ -361,7 +361,8 @@ export const sendMessage = async (
     }));
 
     // Handle explicit commands first
-    const commandResult = await detectCommandIntent(message);
+    const commandResult = await detectCommandIntent(message, history);
+    
     if (commandResult.hasCommand && commandResult.commandType) {
       let commandResponseText = "";
       if (commandResult.commandType === 'create_task') {
@@ -523,8 +524,24 @@ export const handleUserDataQuery = async (
     // Check if query is about tasks
     const taskKeywords = [
       'task', 'to-do', 'to do', 'todo', 'need to do', 'should do', 
-      'assignment', 'work', 'project'
+      'assignment', 'work', 'project tasks'
     ];
+
+    // Check if query is about projects
+    const projectKeywords = [
+      'project', 'projects', 'working on', 'current projects', 'active projects',
+      'completed projects', 'project status'
+    ];
+
+    // Check if query is about items linked to a project
+    const projectItemsPattern = /(?:what|which|list|show|get|any|all|items?|tasks?|events?|notes?).*(?:(?:linked|related|connected|assigned|attached|associated) to|for|in|on) (?:project|the project|my project)(?:[: ]+)?(.*?)(?:\?|$|\.|,)/i;
+    const projectItemsMatch = query.match(projectItemsPattern);
+    const projectNameFromQuery = projectItemsMatch ? projectItemsMatch[1].trim() : null;
+
+    // Check if query is specifically about status
+    const todoStatusKeywords = ['to do', 'todo', 'to-do list', 'pending', 'not done'];
+    const inProgressStatusKeywords = ['in progress', 'ongoing', 'working on', 'started'];
+    const doneStatusKeywords = ['done', 'completed', 'finished'];
     
     // Detect date mentioned in query
     const dateRegex = /(?:on|for|this|next|coming)?\s*(?:the\s*)?(\d{1,2}(?:st|nd|rd|th)?\s*(?:of\s*)?(?:january|february|march|april|may|june|july|august|september|october|november|december)|(?:mon|tues|wednes|thurs|fri|satur|sun)day|tomorrow|today|(?:\d{1,2}[-/\.]\d{1,2}(?:[-/\.]\d{2,4})?))/i;
@@ -540,10 +557,14 @@ export const handleUserDataQuery = async (
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         targetDate = tomorrow.toISOString().split('T')[0];
-      } else if (dateText.includes('june 5') || dateText.includes('5th of june') || dateText.includes('5 june')) {
-        // Special case for June 5th
+      } else if (
+        dateText.includes('june 5') || dateText.includes('5th of june') || dateText.includes('5 june') ||
+        dateText.includes('june 6') || dateText.includes('6th of june') || dateText.includes('6 june')
+      ) {
+        // Special case for June dates
         const currentYear = new Date().getFullYear();
-        targetDate = `${currentYear}-06-05`;
+        const day = dateText.includes('5') ? '05' : '06';
+        targetDate = `${currentYear}-06-${day}`;
       } else {
         try {
           // Try to parse the date - this is a simplified approach
@@ -561,21 +582,35 @@ export const handleUserDataQuery = async (
     // If it seems like a calendar query
     if (calendarEventKeywords.some(keyword => query.toLowerCase().includes(keyword.toLowerCase()))) {
       try {
-        const events = await getUserEvents(userId, targetDate, targetDate);
+        // If not explicitly asking for past events, default to upcoming
+        const filters = query.toLowerCase().includes('past') ? ['past'] : ['upcoming'];
+        const events = await getUserEvents(userId, targetDate, targetDate, undefined, filters);
         
         if (events.length === 0) {
-          return targetDate 
-            ? `You don't have any events scheduled on ${formatDateForUser(targetDate)}.` 
-            : "You don't have any upcoming events scheduled.";
+          if (filters.includes('past')) {
+            return targetDate 
+              ? `You don't have any past events on ${formatDateForUser(targetDate)}.` 
+              : "You don't have any past events.";
+          } else {
+            return targetDate 
+              ? `You don't have any events scheduled on ${formatDateForUser(targetDate)}.` 
+              : "You don't have any upcoming events scheduled.";
+          }
         }
         
         const formattedEvents = events.map(event => (
           `- ${event.title}${event.startTime ? ` at ${formatTimeForUser(event.startTime)}` : ''}`
         )).join('\n');
         
-        return targetDate
-          ? `Here are your events for ${formatDateForUser(targetDate)}:\n${formattedEvents}`
-          : `Here are your upcoming events:\n${formattedEvents}`;
+        if (filters.includes('past')) {
+          return targetDate
+            ? `Here are your past events for ${formatDateForUser(targetDate)}:\n${formattedEvents}`
+            : `Here are your past events:\n${formattedEvents}`;
+        } else {
+          return targetDate
+            ? `Here are your events for ${formatDateForUser(targetDate)}:\n${formattedEvents}`
+            : `Here are your upcoming events:\n${formattedEvents}`;
+        }
       } catch (error) {
         console.error("Error handling calendar query:", error);
         return "I couldn't retrieve your calendar information. Please try again later.";
@@ -585,24 +620,170 @@ export const handleUserDataQuery = async (
     // If it seems like a task query
     if (taskKeywords.some(keyword => query.toLowerCase().includes(keyword.toLowerCase()))) {
       try {
-        const tasks = await getUserTasks(userId, undefined, targetDate);
+        // Determine which task status to filter by
+        let statusFilter: string | undefined = undefined;
+        let statusLabel = "pending";
         
-        if (tasks.length === 0) {
-          return targetDate 
-            ? `You don't have any tasks due on ${formatDateForUser(targetDate)}.`
-            : "You don't have any pending tasks.";
+        const lowercaseQuery = query.toLowerCase();
+        
+        if (todoStatusKeywords.some(keyword => lowercaseQuery.includes(keyword))) {
+          statusFilter = 'todo';
+          statusLabel = "to do";
+        } else if (inProgressStatusKeywords.some(keyword => lowercaseQuery.includes(keyword))) {
+          statusFilter = 'in_progress';
+          statusLabel = "in progress";
+        } else if (doneStatusKeywords.some(keyword => lowercaseQuery.includes(keyword))) {
+          statusFilter = 'done';
+          statusLabel = "completed";
         }
         
-        const formattedTasks = tasks.map(task => (
-          `- ${task.title}${task.status ? ` (${task.status})` : ''}`
-        )).join('\n');
+        const tasks = await getUserTasks(userId, statusFilter, targetDate);
+        
+        if (tasks.length === 0) {
+          if (targetDate) {
+            return statusFilter 
+              ? `You don't have any ${statusLabel} tasks due on ${formatDateForUser(targetDate)}.`
+              : `You don't have any tasks due on ${formatDateForUser(targetDate)}.`;
+          } else {
+            return statusFilter 
+              ? `You don't have any ${statusLabel} tasks.`
+              : "You don't have any pending tasks.";
+          }
+        }
+        
+        const formattedTasks = tasks.map(task => {
+          let statusDisplay = "";
+          if (task.status && !statusFilter) {
+            statusDisplay = ` (${task.status === 'in_progress' ? 'in progress' : task.status})`;
+          }
+          return `- ${task.title}${statusDisplay}`;
+        }).join('\n');
+        
+        let responsePrefix = "Here are your ";
+        if (statusFilter) {
+          responsePrefix += `${statusLabel} tasks`;
+        } else {
+          responsePrefix += "tasks";
+        }
         
         return targetDate
-          ? `Here are your tasks for ${formatDateForUser(targetDate)}:\n${formattedTasks}`
-          : `Here are your pending tasks:\n${formattedTasks}`;
+          ? `${responsePrefix} for ${formatDateForUser(targetDate)}:\n${formattedTasks}`
+          : `${responsePrefix}:\n${formattedTasks}`;
       } catch (error) {
         console.error("Error handling task query:", error);
         return "I couldn't retrieve your task information. Please try again later.";
+      }
+    }
+
+    // If query is about projects
+    if (projectKeywords.some(keyword => query.toLowerCase().includes(keyword.toLowerCase())) &&
+        !projectNameFromQuery) {
+      try {
+        // Determine which project status to filter by
+        let statusFilter: string | undefined = undefined;
+        
+        const lowercaseQuery = query.toLowerCase();
+        
+        if (lowercaseQuery.includes('active') || lowercaseQuery.includes('current')) {
+          statusFilter = 'active';
+        } else if (lowercaseQuery.includes('completed') || lowercaseQuery.includes('finished')) {
+          statusFilter = 'completed';
+        } else if (lowercaseQuery.includes('on hold') || lowercaseQuery.includes('paused')) {
+          statusFilter = 'on-hold';
+        }
+        
+        const projects = await getUserProjects(userId, statusFilter);
+        
+        if (projects.length === 0) {
+          return statusFilter
+            ? `You don't have any ${statusFilter} projects.`
+            : "You don't have any projects yet.";
+        }
+        
+        const formattedProjects = projects.map(project => {
+          let dueInfo = '';
+          if (project.due_date) {
+            const dueDate = new Date(project.due_date);
+            dueInfo = ` (due ${formatDateForUser(project.due_date)})`;
+          }
+          
+          let progressInfo = '';
+          if (typeof project.progress === 'number') {
+            progressInfo = ` - ${project.progress}% complete`;
+          }
+          
+          return `- ${project.name}${dueInfo}${progressInfo}`;
+        }).join('\n');
+        
+        let responsePrefix = "Here are your ";
+        if (statusFilter) {
+          responsePrefix += `${statusFilter} projects:`;
+        } else {
+          responsePrefix += "projects:";
+        }
+        
+        return `${responsePrefix}\n${formattedProjects}`;
+      } catch (error) {
+        console.error("Error handling project query:", error);
+        return "I couldn't retrieve your project information. Please try again later.";
+      }
+    }
+
+    // If query is about items linked to a specific project
+    if (projectNameFromQuery) {
+      try {
+        const projectItems = await getProjectItems(userId, projectNameFromQuery);
+        
+        if (!projectItems.tasks.length && !projectItems.events.length && !projectItems.notes.length) {
+          return `I couldn't find any items linked to project "${projectNameFromQuery}".`;
+        }
+        
+        const hasMultipleTypes = 
+          (projectItems.tasks.length > 0 ? 1 : 0) + 
+          (projectItems.events.length > 0 ? 1 : 0) + 
+          (projectItems.notes.length > 0 ? 1 : 0) > 1;
+        
+        let response = `Here are the items linked to project "${projectNameFromQuery}":\n\n`;
+        
+        if (projectItems.tasks.length > 0) {
+          if (hasMultipleTypes) {
+            response += `Tasks:\n`;
+          }
+          projectItems.tasks.forEach(task => {
+            response += `- Task: ${task.title} (${task.status})\n`;
+          });
+          if (hasMultipleTypes) {
+            response += '\n';
+          }
+        }
+        
+        if (projectItems.events.length > 0) {
+          if (hasMultipleTypes) {
+            response += `Events:\n`;
+          }
+          projectItems.events.forEach(event => {
+            const eventDate = new Date(event.start_time);
+            response += `- Event: ${event.title} (${formatDateForUser(event.start_time)} at ${formatTimeForUser(event.start_time)})\n`;
+          });
+          if (hasMultipleTypes) {
+            response += '\n';
+          }
+        }
+        
+        if (projectItems.notes.length > 0) {
+          if (hasMultipleTypes) {
+            response += `Notes:\n`;
+          }
+          projectItems.notes.forEach(note => {
+            const notePreview = note.content ? note.content.substring(0, 50) + (note.content.length > 50 ? '...' : '') : 'No content';
+            response += `- Note: ${notePreview}\n`;
+          });
+        }
+        
+        return response;
+      } catch (error) {
+        console.error("Error handling project items query:", error);
+        return "I couldn't retrieve the items linked to that project. Please try again later.";
       }
     }
     
