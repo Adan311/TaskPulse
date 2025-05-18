@@ -3,12 +3,12 @@ import { Button } from "@/frontend/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/frontend/components/ui/card";
 import { Input } from "@/frontend/components/ui/input";
 import { Textarea } from "@/frontend/components/ui/textarea";
-import { Loader2, Send, Plus, KeyIcon, ExternalLinkIcon } from "lucide-react";
+import { Loader2, Send, Plus, KeyIcon, ExternalLinkIcon, Lightbulb } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { ChatMessage, sendMessage, createConversation, getConversation } from "@/backend/api/services/ai/chatService";
 import { getAiSettings } from "@/backend/api/services/ai/geminiService";
-import { getSuggestionCounts } from "@/backend/api/services/ai/suggestionService";
+import { getSuggestionCounts, requestSuggestions } from "@/backend/api/services/ai/suggestionService";
 import { useNavigate } from "react-router-dom";
 import SuggestionBadge from './SuggestionBadge';
 import { supabase } from "@/integrations/supabase/client";
@@ -24,11 +24,12 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
+  const [requestingSuggestions, setRequestingSuggestions] = useState(false);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const [messagesWithSuggestions, setMessagesWithSuggestions] = useState<Set<string>>(new Set());
-  const [suggestionCounts, setSuggestionCounts] = useState<{[key: string]: number}>({});
+  const [suggestionCounts, setSuggestionCounts] = useState<{tasks: number; events: number}>({tasks: 0, events: 0});
   
   // Check if user has API key
   useEffect(() => {
@@ -81,6 +82,21 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
     
     loadConversation();
   }, [conversationId, toast]);
+  
+  // Check for suggestion updates periodically
+  useEffect(() => {
+    if (!conversationId) return;
+    
+    // Initial check
+    checkForSuggestions();
+    
+    // Set up interval to check for suggestion updates
+    const interval = setInterval(() => {
+      checkForSuggestions();
+    }, 30000); // Check every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [conversationId]);
   
   const handleStartNewConversation = async () => {
     if (!hasApiKey) {
@@ -189,7 +205,7 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
             // Show toast notification
             toast({
               title: "AI Suggestions Available",
-              description: "The AI has identified tasks or events in this message. Click on the suggestion icon to view them.",
+              description: "The AI has identified tasks or events in this message. Click the suggestion icon to view them.",
             });
             
             // Update suggestion counts
@@ -257,17 +273,79 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
       
       // Get current suggestion counts
       const counts = await getSuggestionCounts(user.id);
+      setSuggestionCounts(counts);
+      
+      // If we have suggestions, update UI
       const totalSuggestions = counts.tasks + counts.events;
       
-      if (totalSuggestions > 0) {
-        toast({
-          title: "New Suggestions Available",
-          description: `AI has found ${totalSuggestions} suggestion(s) from your conversations.`,
-        });
-      }
+      // Log for debugging
+      console.log(`Found ${totalSuggestions} suggestions: ${counts.tasks} tasks, ${counts.events} events`);
     } catch (error) {
       console.error("Error checking for suggestions:", error);
     }
+  };
+  
+  const handleGetSuggestions = async () => {
+    if (!conversationId) {
+      toast({
+        title: "No conversation",
+        description: "Start a conversation before requesting suggestions.",
+      });
+      return;
+    }
+
+    if (!hasApiKey) {
+      toast({
+        variant: "destructive",
+        title: "API Key Required",
+        description: "You need to add your Gemini API key in settings first."
+      });
+      return;
+    }
+
+    try {
+      setRequestingSuggestions(true);
+      
+      // Show toast to indicate we're analyzing the conversation
+      toast({
+        title: "Analyzing conversation",
+        description: "Looking for potential tasks and events...",
+      });
+      
+      const result = await requestSuggestions(conversationId);
+      
+      if (result.hasSuggestions) {
+        toast({
+          title: "Suggestions Found!",
+          description: "New suggestions have been identified from your conversation. Check the Suggestions page to review them.",
+        });
+        
+        // Update suggestion counts
+        await checkForSuggestions();
+        
+        // Update the messages with suggestions flags
+        // This would require a more complex approach to know which message triggered suggestions
+        // For now, we'll just notify the user that suggestions are available
+      } else {
+        toast({
+          title: "No Suggestions Found",
+          description: "No tasks or events were identified in your conversation.",
+        });
+      }
+    } catch (error) {
+      console.error("Error getting suggestions:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to get suggestions. Please try again."
+      });
+    } finally {
+      setRequestingSuggestions(false);
+    }
+  };
+  
+  const handleViewSuggestions = () => {
+    navigate("/suggestions");
   };
   
   if (initialLoad) {
@@ -309,19 +387,51 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
     ));
   };
   
+  const totalSuggestions = suggestionCounts.tasks + suggestionCounts.events;
+  
   return (
     <Card className="w-full h-[600px] flex flex-col">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <CardTitle>AI Assistant</CardTitle>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={handleStartNewConversation}
-            disabled={loading || hasApiKey === false}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
+          <div className="flex space-x-2">
+            {totalSuggestions > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleViewSuggestions}
+                className="flex items-center"
+              >
+                <Lightbulb className="h-4 w-4 mr-2 text-amber-500" />
+                View Suggestions
+                <span className="ml-1 bg-amber-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                  {totalSuggestions}
+                </span>
+              </Button>
+            )}
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleGetSuggestions}
+              disabled={loading || requestingSuggestions || hasApiKey === false || !conversationId || messages.length === 0}
+              className="flex items-center"
+            >
+              {requestingSuggestions ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Lightbulb className="h-4 w-4 mr-2" />
+              )}
+              Get Suggestions
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleStartNewConversation}
+              disabled={loading || hasApiKey === false}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto">

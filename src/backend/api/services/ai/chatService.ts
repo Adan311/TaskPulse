@@ -2,6 +2,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { getGeminiApiKey, callGeminiApiDirectly, FormattedMessage } from "./geminiService";
 import { analyzeConversation, saveTaskSuggestions, saveEventSuggestions } from "./suggestionService";
+import { 
+  detectCommandIntent, 
+  createTaskFromCommand, 
+  createEventFromCommand, 
+  CommandDetectionResult 
+} from "./commandService";
 
 /**
  * Types for chat messages
@@ -164,9 +170,59 @@ export const getConversation = async (conversationId: string): Promise<ChatConve
 };
 
 /**
+ * Generate a title for a conversation based on its content
+ */
+export const generateConversationTitle = async (
+  conversationId: string, 
+  messages: ChatMessage[]
+): Promise<string> => {
+  try {
+    const apiKey = await getGeminiApiKey();
+    
+    if (!apiKey || messages.length === 0) {
+      return "New Conversation";
+    }
+    
+    // Prepare a prompt for title generation using the first few messages
+    const messagesToUse = messages.slice(0, Math.min(messages.length, 4));
+    
+    const formattedHistory: FormattedMessage[] = messagesToUse.map(msg => ({
+      role: msg.role === 'assistant' ? 'model' : 'user',
+      content: msg.content
+    }));
+    
+    // Add the title generation instruction
+    formattedHistory.push({
+      role: 'user',
+      content: "Based on the above conversation, generate a short, descriptive title (5 words or less). Return ONLY the title text, nothing else."
+    });
+    
+    // Get a title suggestion from Gemini
+    const response = await callGeminiApiDirectly(apiKey, formattedHistory, {
+      temperature: 0.7,
+      maxOutputTokens: 30
+    });
+    
+    if (!response) {
+      return "New Conversation";
+    }
+    
+    // Clean up the response (remove quotes, periods, etc.)
+    const cleanTitle = response.replace(/^["']|["']$|[.:]$/g, '').trim();
+    return cleanTitle || "New Conversation";
+  } catch (error) {
+    console.error("Error generating conversation title:", error);
+    return "New Conversation";
+  }
+};
+
+/**
  * Update conversation title
  */
-export const updateConversationTitle = async (conversationId: string, title?: string): Promise<boolean> => {
+export const updateConversationTitle = async (
+  conversationId: string, 
+  title?: string
+): Promise<boolean> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -175,10 +231,21 @@ export const updateConversationTitle = async (conversationId: string, title?: st
       return false;
     }
     
+    // If no title is provided, get the conversation to generate one
+    let newTitle = title;
+    if (!newTitle) {
+      const conversation = await getConversation(conversationId);
+      if (conversation && conversation.messages && conversation.messages.length > 0) {
+        newTitle = await generateConversationTitle(conversationId, conversation.messages);
+      } else {
+        newTitle = "New Conversation";
+      }
+    }
+    
     const { error } = await supabase
       .from('ai_conversations')
       .update({ 
-        title: title || "New Conversation",
+        title: newTitle,
         updated_at: new Date().toISOString()
       })
       .eq('id', conversationId)
@@ -288,6 +355,58 @@ export const sendMessage = async (
       createdAt: msg.created_at
     }));
 
+    // Check if the message contains a command
+    const commandResult = await detectCommandIntent(message);
+
+    if (commandResult.hasCommand && commandResult.commandType) {
+      // Handle the command based on its type
+      let commandResponse = "";
+      
+      if (commandResult.commandType === 'create_task') {
+        // Create a task from the command
+        const taskResult = await createTaskFromCommand(user.id, commandResult.entities);
+        commandResponse = taskResult.success 
+          ? `✅ Created task: "${taskResult.title}"`
+          : `❌ Failed to create task: ${taskResult.error}`;
+      } 
+      else if (commandResult.commandType === 'create_event') {
+        // Create an event from the command
+        const eventResult = await createEventFromCommand(user.id, commandResult.entities);
+        commandResponse = eventResult.success 
+          ? `✅ Created event: "${eventResult.title}" for ${eventResult.time}`
+          : `❌ Failed to create event: ${eventResult.error}`;
+      }
+      else if (commandResult.commandType === 'set_reminder') {
+        // Set a reminder from the command (not implemented yet)
+        commandResponse = "Setting reminders directly is not implemented yet. You can create a task with a due date instead.";
+      }
+      
+      // Create AI message with command response
+      const aiMessage: ChatMessage = {
+        id: uuidv4(),
+        conversationId,
+        userId: user.id,
+        content: commandResponse,
+        role: 'assistant',
+        createdAt: new Date().toISOString(),
+      };
+
+      // Insert AI message
+      const { error: aiMessageError } = await supabase.from('ai_messages').insert({
+        id: aiMessage.id,
+        conversation_id: conversationId,
+        user_id: user.id,
+        content: commandResponse,
+        role: 'assistant',
+        created_at: aiMessage.createdAt
+      });
+
+      if (aiMessageError) throw aiMessageError;
+      
+      // Return the user message and AI response
+      return { userMessage, aiMessage };
+    }
+
     // Get API key
     const apiKey = await getGeminiApiKey();
     if (!apiKey) {
@@ -347,22 +466,31 @@ export const sendMessage = async (
       // Get updated conversation history including the new AI message
       const updatedHistory = [...history, userMessage, aiMessage];
       
+      console.log("Analyzing conversation for suggestions after new message...");
+      
       // Analyze the conversation
       const extractionResult = await analyzeConversation(updatedHistory);
       
-      if (extractionResult && 
-          (extractionResult.tasks.length > 0 || extractionResult.events.length > 0)) {
-        // Save task suggestions
-        if (extractionResult.tasks.length > 0) {
-          await saveTaskSuggestions(user.id, extractionResult.tasks, aiMessage.id);
-        }
+      if (extractionResult) {
+        console.log(`Extraction found ${extractionResult.tasks.length} tasks and ${extractionResult.events.length} events`);
         
-        // Save event suggestions
-        if (extractionResult.events.length > 0) {
-          await saveEventSuggestions(user.id, extractionResult.events, aiMessage.id);
+        if (extractionResult.tasks.length > 0 || extractionResult.events.length > 0) {
+          // Save task suggestions
+          if (extractionResult.tasks.length > 0) {
+            console.log("Saving task suggestions...");
+            await saveTaskSuggestions(user.id, extractionResult.tasks, aiMessage.id);
+          }
+          
+          // Save event suggestions
+          if (extractionResult.events.length > 0) {
+            console.log("Saving event suggestions...");
+            await saveEventSuggestions(user.id, extractionResult.events, aiMessage.id);
+          }
+          
+          hasSuggestions = true;
         }
-        
-        hasSuggestions = true;
+      } else {
+        console.log("No extraction result returned from analysis");
       }
     } catch (error) {
       // Log error but don't fail the entire response if suggestion extraction fails

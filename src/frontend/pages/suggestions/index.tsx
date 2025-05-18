@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/frontend/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/frontend/components/ui/tabs';
 import { Button } from '@/frontend/components/ui/button';
-import { Check, X, CalendarIcon, CheckSquareIcon, LucideIcon, Loader2 } from 'lucide-react';
+import { Check, X, CalendarIcon, CheckSquareIcon, LucideIcon, Loader2, Tag } from 'lucide-react';
 import { useToast } from '@/frontend/hooks/use-toast';
 import { format } from 'date-fns';
 import { Badge } from '@/frontend/components/ui/badge';
@@ -12,6 +12,7 @@ import {
   getEventSuggestions, 
   updateTaskSuggestionStatus, 
   updateEventSuggestionStatus,
+  findProjectIdByName,
   TaskSuggestion,
   EventSuggestion
 } from '@/backend/api/services/ai/suggestionService';
@@ -19,6 +20,7 @@ import {
 // Task service imports for accepting suggestions
 import { createTask } from '@/backend/api/services/task.service';
 import { createEvent } from '@/backend/api/services/eventService';
+import { AppLayout } from '@/frontend/components/layout/AppLayout';
 
 const SuggestionsPage: React.FC = () => {
   const { toast } = useToast();
@@ -76,20 +78,28 @@ const SuggestionsPage: React.FC = () => {
     setProcessing(prev => ({ ...prev, [suggestion.id]: true }));
     
     try {
-      // Create the actual task with the right parameters
-      // String type for due_date in task service
+      // If suggestion has project_name, try to find matching project
+      let projectId = null;
+      if (suggestion.projectName) {
+        projectId = await findProjectIdByName(user.id, suggestion.projectName);
+      }
+      
+      // Create the actual task with enhanced fields
       await createTask({
         title: suggestion.title,
         description: suggestion.description || undefined,
-        due_date: suggestion.dueDate || undefined, // Keep as string
+        due_date: suggestion.dueDate || undefined,
         priority: suggestion.priority || undefined,
         status: 'todo',
+        project: projectId || undefined,
+        labels: suggestion.labels || [],
+        reminder_at: suggestion.dueDate ? new Date(suggestion.dueDate).toISOString() : undefined,
       });
       
-      // Update suggestion status
+      // Delete suggestion by updating its status
       await updateTaskSuggestionStatus(user.id, suggestion.id, 'accepted');
       
-      // Update the UI
+      // Update the UI by removing the suggestion
       setTaskSuggestions(prev => prev.filter(item => item.id !== suggestion.id));
       
       toast({
@@ -120,6 +130,12 @@ const SuggestionsPage: React.FC = () => {
     setProcessing(prev => ({ ...prev, [suggestion.id]: true }));
     
     try {
+      // If suggestion has project_name, try to find matching project
+      let projectId = null;
+      if (suggestion.projectName) {
+        projectId = await findProjectIdByName(user.id, suggestion.projectName);
+      }
+      
       // Create the actual event with required properties
       await createEvent({
         title: suggestion.title,
@@ -127,13 +143,14 @@ const SuggestionsPage: React.FC = () => {
         startTime: suggestion.startTime,
         endTime: suggestion.endTime,
         source: 'app',
+        project: projectId || undefined,
         participants: [], // Required by the Event type
       });
       
-      // Update suggestion status
+      // Delete suggestion by updating its status
       await updateEventSuggestionStatus(user.id, suggestion.id, 'accepted');
       
-      // Update the UI
+      // Update the UI by removing the suggestion
       setEventSuggestions(prev => prev.filter(item => item.id !== suggestion.id));
       
       toast({
@@ -164,7 +181,7 @@ const SuggestionsPage: React.FC = () => {
     setProcessing(prev => ({ ...prev, [suggestion.id]: true }));
     
     try {
-      // Update suggestion status
+      // Update suggestion status (which now deletes it)
       await updateTaskSuggestionStatus(user.id, suggestion.id, 'rejected');
       
       // Update the UI
@@ -198,7 +215,7 @@ const SuggestionsPage: React.FC = () => {
     setProcessing(prev => ({ ...prev, [suggestion.id]: true }));
     
     try {
-      // Update suggestion status
+      // Update suggestion status (which now deletes it)
       await updateEventSuggestionStatus(user.id, suggestion.id, 'rejected');
       
       // Update the UI
@@ -242,6 +259,22 @@ const SuggestionsPage: React.FC = () => {
     );
   };
 
+  // Helper to render labels
+  const renderLabels = (labels: string[] | undefined) => {
+    if (!labels || labels.length === 0) return null;
+    
+    return (
+      <div className="flex flex-wrap gap-1 mt-2">
+        {labels.map((label, index) => (
+          <Badge key={index} variant="outline" className="text-xs flex items-center">
+            <Tag className="h-3 w-3 mr-1" />
+            {label}
+          </Badge>
+        ))}
+      </div>
+    );
+  };
+
   // Helper to format date
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return 'No date set';
@@ -262,194 +295,239 @@ const SuggestionsPage: React.FC = () => {
     }
   };
 
+  const handleRefresh = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    await loadSuggestions(user.id);
+  };
+
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-        <p className="text-muted-foreground">Loading suggestions...</p>
-      </div>
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center h-full p-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Loading suggestions...</p>
+        </div>
+      </AppLayout>
     );
   }
 
   if (taskSuggestions.length === 0 && eventSuggestions.length === 0) {
     return (
-      <div className="container max-w-4xl mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-6">AI Suggestions</h1>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center justify-center p-8 text-center">
-              <div className="bg-secondary rounded-full p-3 mb-4">
-                <CheckSquareIcon className="h-8 w-8 text-primary" />
+      <AppLayout>
+        <div className="container max-w-4xl mx-auto p-4">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">AI Suggestions</h1>
+            <Button variant="outline" onClick={handleRefresh}>
+              <Loader2 className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center justify-center p-8 text-center">
+                <div className="bg-secondary rounded-full p-3 mb-4">
+                  <CheckSquareIcon className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-medium mb-2">No suggestions yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Chat with the AI assistant to get suggestions for tasks and events.
+                </p>
+                <Button onClick={() => window.location.href = '/chat'}>
+                  Go to AI Chat
+                </Button>
               </div>
-              <h3 className="text-xl font-medium mb-2">No suggestions yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Chat with the AI assistant to get suggestions for tasks and events.
-              </p>
-              <Button onClick={() => window.location.href = '/chat'}>
-                Go to AI Chat
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="container max-w-4xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">AI Suggestions</h1>
-      
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="tasks" className="relative">
-            Tasks
-            {taskSuggestions.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {taskSuggestions.length}
-              </Badge>
+    <AppLayout>
+      <div className="container max-w-4xl mx-auto p-4">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">AI Suggestions</h1>
+          <Button variant="outline" onClick={handleRefresh} disabled={loading}>
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Loader2 className="h-4 w-4 mr-2" />
             )}
-          </TabsTrigger>
-          <TabsTrigger value="events" className="relative">
-            Events
-            {eventSuggestions.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {eventSuggestions.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
+            Refresh
+          </Button>
+        </div>
         
-        <TabsContent value="tasks">
-          {taskSuggestions.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex flex-col items-center justify-center p-6 text-center">
-                  <p className="text-muted-foreground">No task suggestions available</p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {taskSuggestions.map((suggestion) => (
-                <Card key={suggestion.id}>
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between">
-                      <div>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-6">
+            <TabsTrigger value="tasks" className="relative">
+              Tasks
+              {taskSuggestions.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {taskSuggestions.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="events" className="relative">
+              Events
+              {eventSuggestions.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {eventSuggestions.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="tasks">
+            {taskSuggestions.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex flex-col items-center justify-center p-6 text-center">
+                    <p className="text-muted-foreground">No task suggestions available</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {taskSuggestions.map((suggestion) => (
+                  <Card key={suggestion.id}>
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-lg">{suggestion.title}</CardTitle>
+                          {suggestion.priority && (
+                            <div className="mt-1">
+                              {renderPriority(suggestion.priority)}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="h-8 w-8 p-0" 
+                            onClick={() => handleRejectTask(suggestion)}
+                            disabled={processing[suggestion.id]}
+                          >
+                            {processing[suggestion.id] ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <X className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            className="h-8 w-8 p-0" 
+                            onClick={() => handleAcceptTask(suggestion)}
+                            disabled={processing[suggestion.id]}
+                          >
+                            {processing[suggestion.id] ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Check className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {suggestion.description && (
+                        <p className="text-sm text-muted-foreground mb-2">{suggestion.description}</p>
+                      )}
+                      <div className="flex flex-col gap-2">
+                        {suggestion.projectName && (
+                          <div className="flex items-center text-xs text-muted-foreground">
+                            <span>Project: {suggestion.projectName}</span>
+                          </div>
+                        )}
+                        {suggestion.dueDate && (
+                          <div className="flex items-center text-xs text-muted-foreground">
+                            <span>Due: {formatDate(suggestion.dueDate)}</span>
+                          </div>
+                        )}
+                        {renderLabels(suggestion.labels)}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="events">
+            {eventSuggestions.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex flex-col items-center justify-center p-6 text-center">
+                    <p className="text-muted-foreground">No event suggestions available</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {eventSuggestions.map((suggestion) => (
+                  <Card key={suggestion.id}>
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between">
                         <CardTitle className="text-lg">{suggestion.title}</CardTitle>
-                        {suggestion.priority && (
-                          <div className="mt-1">
-                            {renderPriority(suggestion.priority)}
+                        <div className="flex space-x-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="h-8 w-8 p-0" 
+                            onClick={() => handleRejectEvent(suggestion)}
+                            disabled={processing[suggestion.id]}
+                          >
+                            {processing[suggestion.id] ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <X className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            className="h-8 w-8 p-0" 
+                            onClick={() => handleAcceptEvent(suggestion)}
+                            disabled={processing[suggestion.id]}
+                          >
+                            {processing[suggestion.id] ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Check className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {suggestion.description && (
+                        <p className="text-sm text-muted-foreground mb-3">{suggestion.description}</p>
+                      )}
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center text-xs text-muted-foreground">
+                          <CalendarIcon className="h-3 w-3 mr-2" />
+                          <span>
+                            {formatDate(suggestion.startTime)} at {formatTime(suggestion.startTime)}
+                            {suggestion.endTime && ` - ${formatTime(suggestion.endTime)}`}
+                          </span>
+                        </div>
+                        {suggestion.projectName && (
+                          <div className="flex items-center text-xs text-muted-foreground">
+                            <span>Project: {suggestion.projectName}</span>
                           </div>
                         )}
                       </div>
-                      <div className="flex space-x-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="h-8 w-8 p-0" 
-                          onClick={() => handleRejectTask(suggestion)}
-                          disabled={processing[suggestion.id]}
-                        >
-                          {processing[suggestion.id] ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <X className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          className="h-8 w-8 p-0" 
-                          onClick={() => handleAcceptTask(suggestion)}
-                          disabled={processing[suggestion.id]}
-                        >
-                          {processing[suggestion.id] ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Check className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {suggestion.description && (
-                      <p className="text-sm text-muted-foreground mb-2">{suggestion.description}</p>
-                    )}
-                    {suggestion.dueDate && (
-                      <div className="flex items-center text-xs text-muted-foreground">
-                        <span>Due: {formatDate(suggestion.dueDate)}</span>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="events">
-          {eventSuggestions.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex flex-col items-center justify-center p-6 text-center">
-                  <p className="text-muted-foreground">No event suggestions available</p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {eventSuggestions.map((suggestion) => (
-                <Card key={suggestion.id}>
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-lg">{suggestion.title}</CardTitle>
-                      <div className="flex space-x-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="h-8 w-8 p-0" 
-                          onClick={() => handleRejectEvent(suggestion)}
-                          disabled={processing[suggestion.id]}
-                        >
-                          {processing[suggestion.id] ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <X className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          className="h-8 w-8 p-0" 
-                          onClick={() => handleAcceptEvent(suggestion)}
-                          disabled={processing[suggestion.id]}
-                        >
-                          {processing[suggestion.id] ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Check className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {suggestion.description && (
-                      <p className="text-sm text-muted-foreground mb-2">{suggestion.description}</p>
-                    )}
-                    <div className="flex items-center text-xs text-muted-foreground">
-                      <CalendarIcon className="h-3 w-3 mr-1" />
-                      <span>
-                        {formatDate(suggestion.startTime)} • {formatTime(suggestion.startTime)} - {formatTime(suggestion.endTime)}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-    </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    </AppLayout>
   );
 };
 
