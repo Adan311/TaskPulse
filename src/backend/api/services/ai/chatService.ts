@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 import { getGeminiApiKey, callGeminiApiDirectly, FormattedMessage } from "./geminiService";
-import { analyzeConversation, saveTaskSuggestions, saveEventSuggestions } from "./suggestionService";
+import { analyzeConversation, saveTaskSuggestions, saveEventSuggestions, ClarifyingQuestion } from "./suggestionService";
 import { 
   detectCommandIntent, 
   createTaskFromCommand, 
@@ -311,7 +311,13 @@ export const deleteConversation = async (conversationId: string): Promise<boolea
 export const sendMessage = async (
   conversationId: string, 
   message: string
-): Promise<{userMessage: ChatMessage; aiMessage: ChatMessage; hasSuggestions?: boolean} | null> => {
+): Promise<{
+  userMessage: ChatMessage;
+  aiMessage: ChatMessage;
+  newSuggestions?: {type: 'task'|'event', id: string, title: string}[]; // This might be complex to populate accurately without more info from suggestion service
+  hasOverallSuggestions?: boolean;
+  clarifyingQuestions?: ClarifyingQuestion[];
+} | null> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
@@ -325,7 +331,6 @@ export const sendMessage = async (
       createdAt: new Date().toISOString(),
     };
 
-    // Insert user message
     const { error: userMessageError } = await supabase.from('ai_messages').insert({
       id: userMessage.id,
       conversation_id: conversationId,
@@ -337,7 +342,6 @@ export const sendMessage = async (
 
     if (userMessageError) throw userMessageError;
 
-    // Get conversation history
     const { data: messagesData, error: messagesError } = await supabase
       .from('ai_messages')
       .select('*')
@@ -355,151 +359,126 @@ export const sendMessage = async (
       createdAt: msg.created_at
     }));
 
-    // Check if the message contains a command
+    // Handle explicit commands first
     const commandResult = await detectCommandIntent(message);
-
     if (commandResult.hasCommand && commandResult.commandType) {
-      // Handle the command based on its type
-      let commandResponse = "";
-      
+      let commandResponseText = "";
       if (commandResult.commandType === 'create_task') {
-        // Create a task from the command
         const taskResult = await createTaskFromCommand(user.id, commandResult.entities);
-        commandResponse = taskResult.success 
+        commandResponseText = taskResult.success 
           ? `✅ Created task: "${taskResult.title}"`
           : `❌ Failed to create task: ${taskResult.error}`;
-      } 
-      else if (commandResult.commandType === 'create_event') {
-        // Create an event from the command
+      } else if (commandResult.commandType === 'create_event') {
         const eventResult = await createEventFromCommand(user.id, commandResult.entities);
-        commandResponse = eventResult.success 
+        commandResponseText = eventResult.success 
           ? `✅ Created event: "${eventResult.title}" for ${eventResult.time}`
           : `❌ Failed to create event: ${eventResult.error}`;
+      } else if (commandResult.commandType === 'set_reminder') {
+        commandResponseText = "Setting reminders directly is not fully implemented yet. You can create a task with a due date instead.";
       }
-      else if (commandResult.commandType === 'set_reminder') {
-        // Set a reminder from the command (not implemented yet)
-        commandResponse = "Setting reminders directly is not implemented yet. You can create a task with a due date instead.";
-      }
-      
-      // Create AI message with command response
-      const aiMessage: ChatMessage = {
+
+      const aiCommandResponseMessage: ChatMessage = {
         id: uuidv4(),
         conversationId,
-        userId: user.id,
-        content: commandResponse,
+        userId: user.id, // Attributed to user for consistency in Supabase, but role is assistant
+        content: commandResponseText,
         role: 'assistant',
         createdAt: new Date().toISOString(),
       };
-
-      // Insert AI message
-      const { error: aiMessageError } = await supabase.from('ai_messages').insert({
-        id: aiMessage.id,
+      await supabase.from('ai_messages').insert({
+        id: aiCommandResponseMessage.id,
         conversation_id: conversationId,
         user_id: user.id,
-        content: commandResponse,
+        content: commandResponseText,
         role: 'assistant',
-        created_at: aiMessage.createdAt
+        created_at: aiCommandResponseMessage.createdAt
       });
-
-      if (aiMessageError) throw aiMessageError;
-      
-      // Return the user message and AI response
-      return { userMessage, aiMessage };
+      return { userMessage, aiMessage: aiCommandResponseMessage };
     }
 
-    // Get API key
+    // If not a command, proceed with normal Gemini chat and passive suggestion analysis
     const apiKey = await getGeminiApiKey();
     if (!apiKey) {
       throw new Error("No Gemini API key available. Please add your API key in the settings.");
     }
 
-    // Format history for Gemini API
-    const formattedHistory: FormattedMessage[] = history.map(msg => ({
+    const formattedHistoryForGemini: FormattedMessage[] = history.map(msg => ({
       role: msg.role === 'assistant' ? 'model' : 'user',
       content: msg.content
     }));
 
-    // Call Gemini API directly
-    const aiResponse = await callGeminiApiDirectly(apiKey, formattedHistory);
-    if (!aiResponse) {
+    const aiResponseText = await callGeminiApiDirectly(apiKey, formattedHistoryForGemini);
+    if (!aiResponseText) {
       throw new Error("Failed to get response from Gemini API");
     }
 
-    // Create AI message
     const aiMessage: ChatMessage = {
       id: uuidv4(),
       conversationId,
-      userId: user.id,
-      content: aiResponse,
+      userId: user.id, 
+      content: aiResponseText,
       role: 'assistant',
       createdAt: new Date().toISOString(),
     };
 
-    // Insert AI message
     const { error: aiMessageError } = await supabase.from('ai_messages').insert({
       id: aiMessage.id,
       conversation_id: conversationId,
       user_id: user.id,
-      content: aiResponse,
+      content: aiResponseText,
       role: 'assistant',
       created_at: aiMessage.createdAt
     });
 
     if (aiMessageError) throw aiMessageError;
 
-    // Update the conversation title if it's the first message
     if (history.length <= 1) {
       await updateConversationTitle(conversationId);
     }
 
-    // Update conversation's updated_at timestamp
-    const { error: updateError } = await supabase
+    await supabase
       .from('ai_conversations')
       .update({ updated_at: new Date().toISOString() })
       .eq('id', conversationId);
 
-    if (updateError) throw updateError;
-
-    // Analyze conversation for suggestions
-    let hasSuggestions = false;
+    // Analyze conversation for passive suggestions
+    let hasOverallSuggestions = false;
+    let clarifyingQuestions: ClarifyingQuestion[] | undefined = undefined;
     try {
-      // Get updated conversation history including the new AI message
-      const updatedHistory = [...history, userMessage, aiMessage];
-      
-      console.log("Analyzing conversation for suggestions after new message...");
-      
-      // Analyze the conversation
-      const extractionResult = await analyzeConversation(updatedHistory);
+      const updatedHistoryWithAiResponse = [...history, aiMessage]; // Use history *including* the latest AI response
+      console.log("Analyzing conversation for passive suggestions after AI response...");
+      const extractionResult = await analyzeConversation(updatedHistoryWithAiResponse);
       
       if (extractionResult) {
-        console.log(`Extraction found ${extractionResult.tasks.length} tasks and ${extractionResult.events.length} events`);
-        
-        if (extractionResult.tasks.length > 0 || extractionResult.events.length > 0) {
-          // Save task suggestions
-          if (extractionResult.tasks.length > 0) {
-            console.log("Saving task suggestions...");
+        console.log(`Passive extraction found ${extractionResult.tasks?.length || 0} tasks, ${extractionResult.events?.length || 0} events, ${extractionResult.clarifying_questions?.length || 0} questions.`);
+        const hasActualSuggestions = (extractionResult.tasks && extractionResult.tasks.length > 0) || 
+                                   (extractionResult.events && extractionResult.events.length > 0);
+
+        if (hasActualSuggestions) {
+          if (extractionResult.tasks && extractionResult.tasks.length > 0) {
             await saveTaskSuggestions(user.id, extractionResult.tasks, aiMessage.id);
           }
-          
-          // Save event suggestions
-          if (extractionResult.events.length > 0) {
-            console.log("Saving event suggestions...");
+          if (extractionResult.events && extractionResult.events.length > 0) {
             await saveEventSuggestions(user.id, extractionResult.events, aiMessage.id);
           }
-          
-          hasSuggestions = true;
+          hasOverallSuggestions = true;
+        }
+        if (extractionResult.clarifying_questions && extractionResult.clarifying_questions.length > 0) {
+          clarifyingQuestions = extractionResult.clarifying_questions;
+          // Potentially set hasOverallSuggestions to true even for questions, if UI should react
         }
       } else {
-        console.log("No extraction result returned from analysis");
+        console.log("No passive extraction result from analysis.");
       }
     } catch (error) {
-      // Log error but don't fail the entire response if suggestion extraction fails
-      console.error("Error extracting suggestions:", error);
+      console.error("Error extracting passive suggestions:", error);
     }
 
-    return { userMessage, aiMessage, hasSuggestions };
+    return { userMessage, aiMessage, hasOverallSuggestions, clarifyingQuestions };
   } catch (error) {
     console.error("Error sending message:", error);
+    // Return null or throw, depending on desired error handling for the caller (ChatWindow.tsx)
+    // Throwing will allow ChatWindow to display a generic error toast
     throw error;
   }
 };

@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/al
 import { useToast } from "@/frontend/hooks/use-toast";
 import { ChatMessage, sendMessage, createConversation, getConversation } from "@/backend/api/services/ai/chatService";
 import { getAiSettings } from "@/backend/api/services/ai/geminiService";
-import { getSuggestionCounts, requestSuggestions } from "@/backend/api/services/ai/suggestionService";
+import { getSuggestionCounts, requestSuggestions, ClarifyingQuestion } from "@/backend/api/services/ai/suggestionService";
 import { useNavigate } from "react-router-dom";
 import SuggestionBadge from './SuggestionBadge';
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +30,7 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
   const navigate = useNavigate();
   const [messagesWithSuggestions, setMessagesWithSuggestions] = useState<Set<string>>(new Set());
   const [suggestionCounts, setSuggestionCounts] = useState<{tasks: number; events: number}>({tasks: 0, events: 0});
+  const [clarifyingQuestions, setClarifyingQuestions] = useState<ClarifyingQuestion[]>([]);
   
   // Check if user has API key
   useEffect(() => {
@@ -198,7 +199,7 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
           ]);
           
           // Check if the message has suggestions
-          if (result.hasSuggestions) {
+          if (result.hasOverallSuggestions) {
             // Add this message to the set of messages with suggestions
             setMessagesWithSuggestions(prev => new Set(prev).add(result.aiMessage.id));
             
@@ -210,6 +211,21 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
             
             // Update suggestion counts
             await checkForSuggestions();
+          }
+
+          if (result.clarifyingQuestions && result.clarifyingQuestions.length > 0) {
+            setClarifyingQuestions(result.clarifyingQuestions);
+            // Optionally, add these questions as AI messages to the chat display
+            const questionMessages: ChatMessage[] = result.clarifyingQuestions.map((q, index) => ({
+              id: `clarifying-${Date.now()}-${index}`,
+              conversationId: currentConversationId,
+              userId: 'system',
+              content: q.question_text,
+              role: 'assistant', // Displayed as if AI is asking
+              createdAt: new Date().toISOString(),
+              isClarifyingQuestion: true // Custom flag for styling/handling
+            }));
+            setMessages(prev => [...prev, ...questionMessages]);
           }
         }
       } catch (error) {

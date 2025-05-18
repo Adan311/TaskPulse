@@ -1,533 +1,192 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/frontend/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/frontend/components/ui/tabs';
-import { Button } from '@/frontend/components/ui/button';
-import { Check, X, CalendarIcon, CheckSquareIcon, LucideIcon, Loader2, Tag } from 'lucide-react';
-import { useToast } from '@/frontend/hooks/use-toast';
-import { format } from 'date-fns';
-import { Badge } from '@/frontend/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
+import React, { useEffect, useState, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client'; // Corrected path
+import { User } from '@supabase/supabase-js';
 import { 
-  getTaskSuggestions, 
-  getEventSuggestions, 
-  updateTaskSuggestionStatus, 
-  updateEventSuggestionStatus,
-  findProjectIdByName,
-  TaskSuggestion,
-  EventSuggestion
+    getTaskSuggestions, 
+    getEventSuggestions, 
+    updateTaskSuggestionStatus, 
+    updateEventSuggestionStatus,
+    TaskSuggestion,
+    EventSuggestion
 } from '@/backend/api/services/ai/suggestionService';
+import SuggestionItem from '@/frontend/features/ai/components/SuggestionItem'; // Import the new component
+import { Button } from '@/frontend/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/frontend/components/ui/tabs" // Assuming Tabs component exists
+import { useToast } from "@/frontend/hooks/use-toast";
+import { Separator } from '@/frontend/components/ui/separator';
+import { Loader2 } from 'lucide-react';
+import { useSidebar } from "@/frontend/components/ui/sidebar/sidebar";
 
-// Task service imports for accepting suggestions
-import { createTask } from '@/backend/api/services/task.service';
-import { createEvent } from '@/backend/api/services/eventService';
-import { AppLayout } from '@/frontend/components/layout/AppLayout';
-
-const SuggestionsPage: React.FC = () => {
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('tasks');
+const SuggestionsPage = () => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [taskSuggestions, setTaskSuggestions] = useState<TaskSuggestion[]>([]);
   const [eventSuggestions, setEventSuggestions] = useState<EventSuggestion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState<{[key: string]: boolean}>({});
-  const [user, setUser] = useState<{ id: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("tasks"); // "tasks" or "events"
+  const { toast } = useToast();
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
+
+  const fetchSuggestions = useCallback(async (user: User) => {
+    setIsLoading(true);
+    try {
+      const [tasks, events] = await Promise.all([
+        getTaskSuggestions(user.id),
+        getEventSuggestions(user.id)
+      ]);
+      setTaskSuggestions(tasks || []);
+      setEventSuggestions(events || []);
+    } catch (error) {
+      console.error("Error fetching suggestions:", error);
+      toast({ title: "Error", description: "Could not fetch suggestions.", variant: "destructive" });
+      setTaskSuggestions([]);
+      setEventSuggestions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
-    // Get the current user
     const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data.user) {
-        setUser({ id: data.user.id });
-        loadSuggestions(data.user.id);
-      } else {
-        setLoading(false);
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+      if (user) {
+        fetchSuggestions(user);
       }
     };
-    
     getUser();
-  }, []);
 
-  const loadSuggestions = async (userId: string) => {
-    setLoading(true);
-    try {
-      const tasks = await getTaskSuggestions(userId);
-      const events = await getEventSuggestions(userId);
-      
-      setTaskSuggestions(tasks);
-      setEventSuggestions(events);
-      
-      // Set the initial tab to the one with suggestions, or default to tasks
-      if (tasks.length === 0 && events.length > 0) {
-        setActiveTab('events');
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user ?? null;
+      setCurrentUser(user);
+      if (user) {
+        fetchSuggestions(user);
+      } else {
+        setTaskSuggestions([]);
+        setEventSuggestions([]);
       }
-    } catch (error) {
-      console.error('Error loading suggestions:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load suggestions. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
 
-  const handleAcceptTask = async (suggestion: TaskSuggestion) => {
-    if (!user) return;
-    
-    // Mark as processing
-    setProcessing(prev => ({ ...prev, [suggestion.id]: true }));
-    
-    try {
-      // If suggestion has project_name, try to find matching project
-      let projectId = null;
-      if (suggestion.projectName) {
-        projectId = await findProjectIdByName(user.id, suggestion.projectName);
-      }
-      
-      // Create the actual task with enhanced fields
-      await createTask({
-        title: suggestion.title,
-        description: suggestion.description || undefined,
-        due_date: suggestion.dueDate || undefined,
-        priority: suggestion.priority || undefined,
-        status: 'todo',
-        project: projectId || undefined,
-        labels: suggestion.labels || [],
-        reminder_at: suggestion.dueDate ? new Date(suggestion.dueDate).toISOString() : undefined,
-      });
-      
-      // Delete suggestion by updating its status
-      await updateTaskSuggestionStatus(user.id, suggestion.id, 'accepted');
-      
-      // Update the UI by removing the suggestion
-      setTaskSuggestions(prev => prev.filter(item => item.id !== suggestion.id));
-      
-      toast({
-        title: 'Task Created',
-        description: 'The task has been added to your task list.',
-      });
-    } catch (error) {
-      console.error('Error accepting task suggestion:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to create task. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      // Remove processing state
-      setProcessing(prev => {
-        const newState = { ...prev };
-        delete newState[suggestion.id];
-        return newState;
-      });
-    }
-  };
-
-  const handleAcceptEvent = async (suggestion: EventSuggestion) => {
-    if (!user) return;
-    
-    // Mark as processing
-    setProcessing(prev => ({ ...prev, [suggestion.id]: true }));
-    
-    try {
-      // If suggestion has project_name, try to find matching project
-      let projectId = null;
-      if (suggestion.projectName) {
-        projectId = await findProjectIdByName(user.id, suggestion.projectName);
-      }
-      
-      // Create the actual event with required properties
-      await createEvent({
-        title: suggestion.title,
-        description: suggestion.description || undefined,
-        startTime: suggestion.startTime,
-        endTime: suggestion.endTime,
-        source: 'app',
-        project: projectId || undefined,
-        participants: [], // Required by the Event type
-      });
-      
-      // Delete suggestion by updating its status
-      await updateEventSuggestionStatus(user.id, suggestion.id, 'accepted');
-      
-      // Update the UI by removing the suggestion
-      setEventSuggestions(prev => prev.filter(item => item.id !== suggestion.id));
-      
-      toast({
-        title: 'Event Created',
-        description: 'The event has been added to your calendar.',
-      });
-    } catch (error) {
-      console.error('Error accepting event suggestion:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to create event. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      // Remove processing state
-      setProcessing(prev => {
-        const newState = { ...prev };
-        delete newState[suggestion.id];
-        return newState;
-      });
-    }
-  };
-
-  const handleRejectTask = async (suggestion: TaskSuggestion) => {
-    if (!user) return;
-    
-    // Mark as processing
-    setProcessing(prev => ({ ...prev, [suggestion.id]: true }));
-    
-    try {
-      // Update suggestion status (which now deletes it)
-      await updateTaskSuggestionStatus(user.id, suggestion.id, 'rejected');
-      
-      // Update the UI
-      setTaskSuggestions(prev => prev.filter(item => item.id !== suggestion.id));
-      
-      toast({
-        title: 'Suggestion Rejected',
-        description: 'The task suggestion has been removed.',
-      });
-    } catch (error) {
-      console.error('Error rejecting task suggestion:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to reject suggestion. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      // Remove processing state
-      setProcessing(prev => {
-        const newState = { ...prev };
-        delete newState[suggestion.id];
-        return newState;
-      });
-    }
-  };
-
-  const handleRejectEvent = async (suggestion: EventSuggestion) => {
-    if (!user) return;
-    
-    // Mark as processing
-    setProcessing(prev => ({ ...prev, [suggestion.id]: true }));
-    
-    try {
-      // Update suggestion status (which now deletes it)
-      await updateEventSuggestionStatus(user.id, suggestion.id, 'rejected');
-      
-      // Update the UI
-      setEventSuggestions(prev => prev.filter(item => item.id !== suggestion.id));
-      
-      toast({
-        title: 'Suggestion Rejected',
-        description: 'The event suggestion has been removed.',
-      });
-    } catch (error) {
-      console.error('Error rejecting event suggestion:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to reject suggestion. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      // Remove processing state
-      setProcessing(prev => {
-        const newState = { ...prev };
-        delete newState[suggestion.id];
-        return newState;
-      });
-    }
-  };
-
-  // Helper to render priority badge
-  const renderPriority = (priority: string | undefined) => {
-    if (!priority) return null;
-    
-    const colorMap: Record<string, string> = {
-      low: 'bg-green-100 text-green-800',
-      medium: 'bg-yellow-100 text-yellow-800',
-      high: 'bg-red-100 text-red-800',
+    return () => {
+      authListener.subscription.unsubscribe();
     };
-    
-    return (
-      <Badge className={`text-xs ${colorMap[priority] || ''}`}>
-        {priority.charAt(0).toUpperCase() + priority.slice(1)}
-      </Badge>
-    );
+  }, [fetchSuggestions]);
+
+  const handleSuggestionStatusChange = async (suggestionId: string, type: 'task' | 'event', status: 'accepted' | 'rejected') => {
+    if (!currentUser) return;
+    try {
+      if (type === 'task') {
+        await updateTaskSuggestionStatus(currentUser.id, suggestionId, status);
+        setTaskSuggestions(prev => prev.filter(s => s.id !== suggestionId));
+        
+        if (status === 'accepted') {
+          toast({ 
+            title: "Task Created", 
+            description: "The task has been created successfully and added to your tasks list.", 
+          });
+        } else {
+          toast({ 
+            title: "Suggestion Rejected", 
+            description: "The task suggestion has been rejected and removed.", 
+          });
+        }
+      } else {
+        await updateEventSuggestionStatus(currentUser.id, suggestionId, status);
+        setEventSuggestions(prev => prev.filter(s => s.id !== suggestionId));
+        
+        if (status === 'accepted') {
+          toast({ 
+            title: "Event Created", 
+            description: "The event has been created successfully and added to your calendar.", 
+          });
+        } else {
+          toast({ 
+            title: "Suggestion Rejected", 
+            description: "The event suggestion has been rejected and removed.", 
+          });
+        }
+      }
+      // Remove the comment to refresh all suggestions if needed
+      // fetchSuggestions(currentUser);
+    } catch (error) {
+      console.error(`Error updating ${type} suggestion status:`, error);
+      toast({ title: "Error", description: `Failed to update ${type} suggestion.`, variant: "destructive" });
+    }
   };
 
-  // Helper to render labels
-  const renderLabels = (labels: string[] | undefined) => {
-    if (!labels || labels.length === 0) return null;
-    
+  if (!currentUser) {
     return (
-      <div className="flex flex-wrap gap-1 mt-2">
-        {labels.map((label, index) => (
-          <Badge key={index} variant="outline" className="text-xs flex items-center">
-            <Tag className="h-3 w-3 mr-1" />
-            {label}
-          </Badge>
-        ))}
+      <div className={`p-6 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+        <h1 className="text-2xl font-bold mb-4">AI Suggestions</h1>
+        <p>Please log in to see your suggestions.</p>
       </div>
-    );
-  };
-
-  // Helper to format date
-  const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return 'No date set';
-    try {
-      return format(new Date(dateString), 'PPP');
-    } catch (e) {
-      return 'Invalid date';
-    }
-  };
-
-  // Helper to format time
-  const formatTime = (dateString: string | undefined) => {
-    if (!dateString) return '';
-    try {
-      return format(new Date(dateString), 'p');
-    } catch (e) {
-      return '';
-    }
-  };
-
-  const handleRefresh = async () => {
-    if (!user) return;
-    
-    setLoading(true);
-    await loadSuggestions(user.id);
-  };
-
-  if (loading) {
-    return (
-      <AppLayout>
-        <div className="flex flex-col items-center justify-center h-full p-8">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">Loading suggestions...</p>
-        </div>
-      </AppLayout>
-    );
-  }
-
-  if (taskSuggestions.length === 0 && eventSuggestions.length === 0) {
-    return (
-      <AppLayout>
-        <div className="container max-w-4xl mx-auto p-4">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">AI Suggestions</h1>
-            <Button variant="outline" onClick={handleRefresh}>
-              <Loader2 className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
-          </div>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center justify-center p-8 text-center">
-                <div className="bg-secondary rounded-full p-3 mb-4">
-                  <CheckSquareIcon className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-medium mb-2">No suggestions yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Chat with the AI assistant to get suggestions for tasks and events.
-                </p>
-                <Button onClick={() => window.location.href = '/chat'}>
-                  Go to AI Chat
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </AppLayout>
     );
   }
 
   return (
-    <AppLayout>
-      <div className="container max-w-4xl mx-auto p-4">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">AI Suggestions</h1>
-          <Button variant="outline" onClick={handleRefresh} disabled={loading}>
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Loader2 className="h-4 w-4 mr-2" />
-            )}
-            Refresh
-          </Button>
-        </div>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="tasks" className="relative">
-              Tasks
-              {taskSuggestions.length > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {taskSuggestions.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="events" className="relative">
-              Events
-              {eventSuggestions.length > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {eventSuggestions.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="tasks">
-            {taskSuggestions.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex flex-col items-center justify-center p-6 text-center">
-                    <p className="text-muted-foreground">No task suggestions available</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4">
-                {taskSuggestions.map((suggestion) => (
-                  <Card key={suggestion.id}>
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="text-lg">{suggestion.title}</CardTitle>
-                          {suggestion.priority && (
-                            <div className="mt-1">
-                              {renderPriority(suggestion.priority)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="h-8 w-8 p-0" 
-                            onClick={() => handleRejectTask(suggestion)}
-                            disabled={processing[suggestion.id]}
-                          >
-                            {processing[suggestion.id] ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <X className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            className="h-8 w-8 p-0" 
-                            onClick={() => handleAcceptTask(suggestion)}
-                            disabled={processing[suggestion.id]}
-                          >
-                            {processing[suggestion.id] ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Check className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {suggestion.description && (
-                        <p className="text-sm text-muted-foreground mb-2">{suggestion.description}</p>
-                      )}
-                      <div className="flex flex-col gap-2">
-                        {suggestion.projectName && (
-                          <div className="flex items-center text-xs text-muted-foreground">
-                            <span>Project: {suggestion.projectName}</span>
-                          </div>
-                        )}
-                        {suggestion.dueDate && (
-                          <div className="flex items-center text-xs text-muted-foreground">
-                            <span>Due: {formatDate(suggestion.dueDate)}</span>
-                          </div>
-                        )}
-                        {renderLabels(suggestion.labels)}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="events">
-            {eventSuggestions.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex flex-col items-center justify-center p-6 text-center">
-                    <p className="text-muted-foreground">No event suggestions available</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4">
-                {eventSuggestions.map((suggestion) => (
-                  <Card key={suggestion.id}>
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between">
-                        <CardTitle className="text-lg">{suggestion.title}</CardTitle>
-                        <div className="flex space-x-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="h-8 w-8 p-0" 
-                            onClick={() => handleRejectEvent(suggestion)}
-                            disabled={processing[suggestion.id]}
-                          >
-                            {processing[suggestion.id] ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <X className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            className="h-8 w-8 p-0" 
-                            onClick={() => handleAcceptEvent(suggestion)}
-                            disabled={processing[suggestion.id]}
-                          >
-                            {processing[suggestion.id] ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Check className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {suggestion.description && (
-                        <p className="text-sm text-muted-foreground mb-3">{suggestion.description}</p>
-                      )}
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <CalendarIcon className="h-3 w-3 mr-2" />
-                          <span>
-                            {formatDate(suggestion.startTime)} at {formatTime(suggestion.startTime)}
-                            {suggestion.endTime && ` - ${formatTime(suggestion.endTime)}`}
-                          </span>
-                        </div>
-                        {suggestion.projectName && (
-                          <div className="flex items-center text-xs text-muted-foreground">
-                            <span>Project: {suggestion.projectName}</span>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+    <div className={`p-6 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">AI Suggestions</h1>
+        <Button onClick={() => currentUser && fetchSuggestions(currentUser)} disabled={isLoading} variant="outline">
+          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          Refresh Suggestions
+        </Button>
       </div>
-    </AppLayout>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="tasks">Task Suggestions ({taskSuggestions.length})</TabsTrigger>
+          <TabsTrigger value="events">Event Suggestions ({eventSuggestions.length})</TabsTrigger>
+        </TabsList>
+        <Separator className="my-4" />
+
+        {isLoading && (
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="ml-2">Loading suggestions...</p>
+          </div>
+        )}
+
+        {!isLoading && (
+          <>
+            <TabsContent value="tasks">
+              {taskSuggestions.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">No task suggestions at the moment.</p>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {taskSuggestions.map(suggestion => (
+                    <SuggestionItem 
+                      key={suggestion.id} 
+                      suggestion={suggestion} 
+                      type="task" 
+                      userId={currentUser.id}
+                      onStatusChange={handleSuggestionStatusChange} 
+                    />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+            <TabsContent value="events">
+              {eventSuggestions.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">No event suggestions at the moment.</p>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {eventSuggestions.map(suggestion => (
+                    <SuggestionItem 
+                      key={suggestion.id} 
+                      suggestion={suggestion} 
+                      type="event" 
+                      userId={currentUser.id}
+                      onStatusChange={handleSuggestionStatusChange} 
+                    />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </>
+        )}
+      </Tabs>
+    </div>
   );
 };
 
