@@ -5,7 +5,11 @@ import { analyzeConversation, saveTaskSuggestions, saveEventSuggestions, Clarify
 import { 
   detectCommandIntent, 
   createTaskFromCommand, 
-  createEventFromCommand, 
+  createEventFromCommand,
+  deleteTaskFromCommand,
+  deleteEventFromCommand,
+  deleteProjectFromCommand,
+  updateTaskFromCommand,
   CommandDetectionResult 
 } from "./commandService";
 import { getUserEvents, getUserTasks, formatDateForUser, formatTimeForUser, getUserProjects, getProjectItems } from "./userDataService";
@@ -318,6 +322,11 @@ export const sendMessage = async (
   newSuggestions?: {type: 'task'|'event', id: string, title: string}[]; // This might be complex to populate accurately without more info from suggestion service
   hasOverallSuggestions?: boolean;
   clarifyingQuestions?: ClarifyingQuestion[];
+  pendingConfirmation?: {
+    type: string;
+    entities: any;
+    message: string;
+  };
 } | null> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -360,10 +369,197 @@ export const sendMessage = async (
       createdAt: msg.created_at
     }));
 
+    // Check if this is a confirmation for a pending operation
+    // Enhanced pattern to catch more variations of confirmation responses
+    const confirmationMatch = message.match(/^(?:yes|yea|confirm|ok|sure|go ahead|proceed|y|yep|yeah|do it|fine|agreed|alright|let's do it|i confirm|approved|i agree|absolutely|definitely)$/i);
+    // Enhanced pattern to catch more variations of rejection responses
+    const rejectionMatch = message.match(/^(?:no|na|cancel|don't|abort|stop|dont|nope|n|nevermind|decline|reject|negative|i don't want to|don't do it|i decline)$/i);
+    
+    const lastAssistantMessage = history
+      .filter(msg => msg.role === 'assistant')
+      .pop();
+      
+    // Check for pending confirmation based on message content
+    const hasPendingConfirmation = lastAssistantMessage?.content.includes("Are you sure you want to delete");
+    
+    if (hasPendingConfirmation && (confirmationMatch || rejectionMatch)) {
+      // Extract the stored command from the previous message
+      let commandInfo: { type: string; entities: any } | null = null;
+      
+      try {
+        // Get command info from the metadata field if the message content suggests a deletion confirmation
+        if (lastAssistantMessage && 
+            lastAssistantMessage.content.includes("Are you sure you want to delete")) {
+          
+          // Query for the metadata field that contains the command info
+          const { data, error } = await supabase
+            .from('ai_messages')
+            .select('metadata')
+            .eq('id', lastAssistantMessage.id)
+            .single();
+          
+          if (error) {
+            console.error("Error retrieving message metadata:", error);
+          } else if (data && data.metadata) {
+            // Get command info from the metadata
+            commandInfo = data.metadata;
+          } else {
+            // Fallback for older messages that might still use HTML comments
+            const jsonMatch = lastAssistantMessage.content.match(/<!-- COMMAND_DATA: (.*?) -->/);
+            if (jsonMatch && jsonMatch[1]) {
+              try {
+                commandInfo = JSON.parse(jsonMatch[1]);
+              } catch (parseError) {
+                console.error("Failed to parse legacy command info:", parseError);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to retrieve command info:", error);
+      }
+      
+      if (rejectionMatch) {
+        // User canceled the operation
+        const aiResponseMessage: ChatMessage = {
+          id: uuidv4(),
+          conversationId,
+          userId: user.id,
+          content: "Operation canceled.",
+          role: 'assistant',
+          createdAt: new Date().toISOString(),
+        };
+        
+        await supabase.from('ai_messages').insert({
+          id: aiResponseMessage.id,
+          conversation_id: conversationId,
+          user_id: user.id,
+          content: aiResponseMessage.content,
+          role: 'assistant',
+          created_at: aiResponseMessage.createdAt
+        });
+        
+        return { userMessage, aiMessage: aiResponseMessage };
+      }
+      
+      if (confirmationMatch && commandInfo) {
+        // User confirmed, proceed with the operation
+        let commandResponseText = "";
+        
+        switch (commandInfo.type) {
+          case 'delete_task':
+            const taskResult = await deleteTaskFromCommand(user.id, commandInfo.entities);
+            commandResponseText = taskResult.success 
+              ? `✅ Deleted task: "${taskResult.title}"`
+              : `❌ Failed to delete task: ${taskResult.error}`;
+            break;
+            
+          case 'delete_event':
+            const eventResult = await deleteEventFromCommand(user.id, commandInfo.entities);
+            commandResponseText = eventResult.success 
+              ? `✅ Deleted event: "${eventResult.title}"`
+              : `❌ Failed to delete event: ${eventResult.error}`;
+            break;
+            
+          case 'delete_project':
+            const projectResult = await deleteProjectFromCommand(user.id, commandInfo.entities);
+            commandResponseText = projectResult.success 
+              ? `✅ Deleted project: "${projectResult.title}"`
+              : `❌ Failed to delete project: ${projectResult.error}`;
+            break;
+            
+          default:
+            commandResponseText = "Unknown command type. Operation canceled.";
+        }
+        
+        const aiResponseMessage: ChatMessage = {
+          id: uuidv4(),
+          conversationId,
+          userId: user.id,
+          content: commandResponseText,
+          role: 'assistant',
+          createdAt: new Date().toISOString(),
+        };
+        
+        await supabase.from('ai_messages').insert({
+          id: aiResponseMessage.id,
+          conversation_id: conversationId,
+          user_id: user.id,
+          content: commandResponseText,
+          role: 'assistant',
+          created_at: aiResponseMessage.createdAt
+        });
+        
+        return { userMessage, aiMessage: aiResponseMessage };
+      }
+    }
+
     // Handle explicit commands first
     const commandResult = await detectCommandIntent(message, history);
     
     if (commandResult.hasCommand && commandResult.commandType) {
+      // If the command requires confirmation (e.g., delete operations)
+      if (commandResult.requiresConfirmation) {
+        let itemType = "item";
+        let itemName = "unknown";
+        
+        if (commandResult.entities.item_name) {
+          itemName = commandResult.entities.item_name;
+        }
+        
+        if (commandResult.commandType === 'delete_task') {
+          itemType = "task";
+        } else if (commandResult.commandType === 'delete_event') {
+          itemType = "event";
+        } else if (commandResult.commandType === 'delete_project') {
+          itemType = "project";
+        }
+        
+        // Store command info in a hidden comment
+        const commandInfo = JSON.stringify({
+          type: commandResult.commandType,
+          entities: commandResult.entities
+        });
+        
+        // Create confirmation message with the data stored in a special format
+        // We'll use a separate field in the database rather than embedded HTML comments
+        const visibleMessage = `Are you sure you want to delete the ${itemType} "${itemName}"? Please confirm with "yes" or cancel with "no".`;
+        
+        // Store command info as a separate metadata property in memory
+        const pendingCommandInfo = commandInfo;
+        
+        const aiConfirmationMessage: ChatMessage = {
+          id: uuidv4(),
+          conversationId,
+          userId: user.id,
+          content: visibleMessage, // Only store the visible message
+          role: 'assistant',
+          createdAt: new Date().toISOString(),
+        };
+        
+        // Store command data in the metadata column that won't be shown in the UI
+        await supabase.from('ai_messages').insert({
+          id: aiConfirmationMessage.id,
+          conversation_id: conversationId,
+          user_id: user.id,
+          content: visibleMessage, // Only the visible message here
+          role: 'assistant',
+          created_at: aiConfirmationMessage.createdAt,
+          metadata: JSON.parse(pendingCommandInfo) // Store command info in metadata
+        });
+        
+        return { 
+          userMessage, 
+          aiMessage: aiConfirmationMessage,
+          pendingConfirmation: {
+            type: commandResult.commandType,
+            entities: commandResult.entities,
+            message: visibleMessage // Just use the visible message here
+          }
+        };
+      }
+      
+      // For non-confirmation commands, process immediately
       let commandResponseText = "";
       if (commandResult.commandType === 'create_task') {
         const taskResult = await createTaskFromCommand(user.id, commandResult.entities);
@@ -377,6 +573,15 @@ export const sendMessage = async (
           : `❌ Failed to create event: ${eventResult.error}`;
       } else if (commandResult.commandType === 'set_reminder') {
         commandResponseText = "Setting reminders directly is not fully implemented yet. You can create a task with a due date instead.";
+      } else if (commandResult.commandType === 'update_task') {
+        const updateResult = await updateTaskFromCommand(user.id, commandResult.entities);
+        commandResponseText = updateResult.success 
+          ? `✅ Updated task: "${updateResult.title}"`
+          : `❌ Failed to update task: ${updateResult.error}`;
+      } else if (commandResult.commandType === 'update_event') {
+        commandResponseText = "Updating events is not fully implemented yet. You can delete and recreate the event instead.";
+      } else if (commandResult.commandType === 'update_project') {
+        commandResponseText = "Updating projects is not fully implemented yet. Please use the project settings page.";
       }
 
       const aiCommandResponseMessage: ChatMessage = {
@@ -534,9 +739,24 @@ export const handleUserDataQuery = async (
     ];
 
     // Check if query is about items linked to a project
-    const projectItemsPattern = /(?:what|which|list|show|get|any|all|items?|tasks?|events?|notes?).*(?:(?:linked|related|connected|assigned|attached|associated) to|for|in|on) (?:project|the project|my project)(?:[: ]+)?(.*?)(?:\?|$|\.|,)/i;
+    // Pattern to detect various ways of asking about project items
+    const projectItemsPattern = /(?:what|which|list|show|get|any|all)?\s*(?:items?|tasks?|events?|notes?|files?).*(?:(?:linked|related|connected|assigned|attached|associated|belong|belonging) to|for|in|on|of)\s+(?:(?:project|the project|my project)[\s:]+)?([\w\s'-]+?)(?:\?|$|\.|,)/i;
     const projectItemsMatch = query.match(projectItemsPattern);
-    const projectNameFromQuery = projectItemsMatch ? projectItemsMatch[1].trim() : null;
+    
+    // Check for queries like "what tasks are in the auto project" or "what tasks are linked to the new project"
+    const projectNameInQueryPattern = /(?:what|which|list|show|any|all)?\s+(?:items?|tasks?|events?|notes?|files?)\s+(?:are|is|that are|that is)?\s+(?:in|for|linked to|related to|connected to|assigned to|of|from)\s+(?:the\s+)?([\w\s'-]+?)(?:\s+project|\s+Project|\?|$|\.|,)/i;
+    const projectNameInQueryMatch = query.match(projectNameInQueryPattern);
+    
+    // Also check queries with project mentioned first, like "in the auto project, what tasks do I have"
+    const projectFirstPattern = /(?:in|for|about)\s+(?:the\s+)?([\w\s'-]+?)\s+project\b.*?(?:what|which|list|show|any|all)?\s+(?:items?|tasks?|events?|notes?|files?)/i;
+    const projectFirstMatch = query.match(projectFirstPattern);
+    
+    // Get project name from any of the pattern matches
+    const projectNameFromQuery = projectItemsMatch 
+        ? projectItemsMatch[1].trim() 
+        : (projectNameInQueryMatch 
+            ? projectNameInQueryMatch[1].trim() 
+            : (projectFirstMatch ? projectFirstMatch[1].trim() : null));
 
     // Check if query is specifically about status
     const todoStatusKeywords = ['to do', 'todo', 'to-do list', 'pending', 'not done'];
@@ -734,14 +954,15 @@ export const handleUserDataQuery = async (
       try {
         const projectItems = await getProjectItems(userId, projectNameFromQuery);
         
-        if (!projectItems.tasks.length && !projectItems.events.length && !projectItems.notes.length) {
+        if (!projectItems.tasks.length && !projectItems.events.length && !projectItems.notes.length && !projectItems.files.length) {
           return `I couldn't find any items linked to project "${projectNameFromQuery}".`;
         }
         
         const hasMultipleTypes = 
           (projectItems.tasks.length > 0 ? 1 : 0) + 
           (projectItems.events.length > 0 ? 1 : 0) + 
-          (projectItems.notes.length > 0 ? 1 : 0) > 1;
+          (projectItems.notes.length > 0 ? 1 : 0) + 
+          (projectItems.files.length > 0 ? 1 : 0) > 1;
         
         let response = `Here are the items linked to project "${projectNameFromQuery}":\n\n`;
         
@@ -778,6 +999,18 @@ export const handleUserDataQuery = async (
             const notePreview = note.content ? note.content.substring(0, 50) + (note.content.length > 50 ? '...' : '') : 'No content';
             response += `- Note: ${notePreview}\n`;
           });
+          if (hasMultipleTypes) {
+            response += '\n';
+          }
+        }
+        
+        if (projectItems.files.length > 0) {
+          if (hasMultipleTypes) {
+            response += `Files:\n`;
+          }
+          projectItems.files.forEach(file => {
+            response += `- File: ${file.name} (${formatFileSize(file.size)})\n`;
+          });
         }
         
         return response;
@@ -792,4 +1025,17 @@ export const handleUserDataQuery = async (
     console.error("Error handling user data query:", error);
     return null;
   }
+};
+
+/**
+ * Format file size to a human-readable string
+ */
+export const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };

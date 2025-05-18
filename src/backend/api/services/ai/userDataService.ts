@@ -347,14 +347,14 @@ export const getUserProjects = async (
 };
 
 /**
- * Get all items (tasks, events, notes) related to a specific project
+ * Get all items (tasks, events, notes, files) related to a specific project
  * @param userId User ID
  * @param projectId Project ID or name
  */
 export const getProjectItems = async (
   userId: string,
   projectId: string
-): Promise<{tasks: any[], events: any[], notes: any[]}> => {
+): Promise<{tasks: any[], events: any[], notes: any[], files: any[]}> => {
   try {
     // Verify the user making the request
     const { data: { user } } = await supabase.auth.getUser();
@@ -381,7 +381,7 @@ export const getProjectItems = async (
     }
     
     // Now fetch all related items
-    const [tasksResult, eventsResult, notesResult] = await Promise.all([
+    const [tasksResult, eventsResult, notesResult, filesResult] = await Promise.all([
       // Get tasks for this project
       supabase
         .from('tasks')
@@ -401,24 +401,34 @@ export const getProjectItems = async (
         .from('notes')
         .select('*')
         .eq('user', user.id)
-        .eq('project', actualProjectId)
+        .eq('project', actualProjectId),
+        
+      // Get files for this project
+      supabase
+        .from('files')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('project_id', actualProjectId)
     ]);
     
     const tasks = tasksResult.data || [];
     const events = eventsResult.data || [];
     const notes = notesResult.data || [];
+    const files = filesResult.data || [];
     
     return {
       tasks,
       events,
-      notes
+      notes,
+      files
     };
   } catch (error) {
     console.error("Error fetching project items:", error);
     return {
       tasks: [],
       events: [],
-      notes: []
+      notes: [],
+      files: []
     };
   }
 };

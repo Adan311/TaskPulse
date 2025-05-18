@@ -64,7 +64,7 @@ This file tracks the status of all AI-related features in MotionMingle, includin
 - [✅] Suggestion Actions
   - [✅] Accept suggestion flow
   - [✅] Reject suggestion flow
-  - [❌] Modify before accepting
+  - [✅] Modify before accepting
   - [❌] Batch actions on multiple suggestions
 - [✅] Feedback Loop
   - [✅] Tracking acceptance/rejection rates
@@ -74,6 +74,7 @@ This file tracks the status of all AI-related features in MotionMingle, includin
   - [✅] Accept/reject buttons
   - [✅] Confirmation dialogs
   - [✅] Success/error indicators
+  - [✅] Modification interface
 - [❌] Testing
   - [❌] Unit tests for accept/reject flows
   - [❌] Integration tests for database updates
@@ -88,13 +89,15 @@ This file tracks the status of all AI-related features in MotionMingle, includin
 - [✅] Command Execution
   - [✅] Task creation from NL
   - [✅] Event scheduling from NL
-  - [❌] Reminder setting from NL
   - [✅] Project creation/assignment from NL
+  - [✅] Task/Event/Project deletion with confirmation
+  - [✅] Task/Event updating
 - [✅] User Interface
   - [✅] Natural language input component
   - [✅] Command execution feedback
   - [❌] Command suggestions/examples
   - [✅] Error handling for invalid commands
+  - [✅] Confirmation dialogs for destructive actions
 - [❌] Testing
   - [❌] Unit tests for command parsing
   - [❌] Test corpus of sample commands
@@ -115,7 +118,7 @@ This file tracks the status of all AI-related features in MotionMingle, includin
   - [✅] Query user projects with filtering
   - [✅] Retrieve items linked to specific projects
   - [✅] Project status information
-  - [✅] Combined view of tasks, events, and notes per project
+  - [✅] Combined view of tasks, events, notes, and files per project
 - [✅] Natural language query understanding
   - [✅] Parse project-related queries
   - [✅] Extract project names from queries

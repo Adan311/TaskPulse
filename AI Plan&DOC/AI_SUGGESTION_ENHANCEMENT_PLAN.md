@@ -583,4 +583,106 @@ const projectItemsPattern = /(?:what|which|list|show|get|any|all|items?|tasks?|e
 1. **Advanced natural language time understanding**: Implement more sophisticated parsing of relative time expressions ("end of Q2", "next quarter", etc.)
 2. **Multi-project filtering**: Support queries like "show tasks in projects X and Y"
 3. **Conversation context memory**: Remember which project a user was discussing to improve follow-up queries
-4. **Personalized default filters**: Learn user preferences for how they prefer tasks to be filtered 
+4. **Personalized default filters**: Learn user preferences for how they prefer tasks to be filtered
+
+## Recent Command and Suggestion Enhancements (June 2025)
+
+### 1. Advanced Command Features 
+
+#### Problem Statement
+The original AI command system was limited to creating tasks and events but lacked the ability to:
+1. Delete or update existing items (tasks, events, projects)
+2. Implement confirmation flows for destructive actions
+3. Handle project-related queries in a comprehensive way
+
+#### Implemented Solutions
+
+##### Enhanced Command Detection and Execution
+- **Expanded Command Types**: Added support for `delete_task`, `delete_event`, `delete_project`, `update_task`, `update_event`, and `update_project` command types
+- **Confirmation Flow**: Implemented a two-step confirmation process for all deletion operations
+  ```typescript
+  // Example confirmation message
+  const confirmationMessage = `Are you sure you want to delete the ${itemType} "${itemName}"? Please confirm with "yes" or cancel with "no".`;
+  ```
+- **Command State Management**: Used hidden HTML comments to store command data between confirmation steps
+  ```typescript
+  const commandInfo = JSON.stringify({
+    type: commandResult.commandType, 
+    entities: commandResult.entities
+  });
+  // Store in message
+  `<!-- COMMAND_DATA: ${commandInfo} -->`
+  ```
+- **Item Identification**: Added the ability to find items by name or ID, making commands more natural
+  ```typescript
+  // Find by name (title)
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("user", userId)
+    .ilike("title", `%${entities.item_name}%`)
+    .limit(1);
+  ```
+
+##### Command Status Handling
+- **Success/Error Messages**: Added formatted success and error messages
+  ```typescript
+  commandResponseText = taskResult.success 
+    ? `✅ Deleted task: "${taskResult.title}"`
+    : `❌ Failed to delete task: ${taskResult.error}`;
+  ```
+- **Data Validation**: Added validation before performing operations (e.g., checking if a project has associated items before deletion)
+
+### 2. Modifiable Suggestions
+
+#### Problem Statement
+The original suggestion system only allowed for accepting or rejecting suggestions as-is, without the ability to modify them before accepting.
+
+#### Implemented Solutions
+
+##### Suggestion Modification API
+- **Task Modification**: Created `createTaskFromSuggestion` function to allow modifications before accepting
+  ```typescript
+  export const createTaskFromSuggestion = async (
+    userId: string,
+    suggestionId: string,
+    modifications: {
+      title?: string;
+      description?: string;
+      due_date?: string;
+      priority?: string;
+      project_name?: string;
+      labels?: string[];
+    }
+  )
+  ```
+- **Event Modification**: Added `createEventFromSuggestion` function with similar capabilities
+- **Project Assignment**: Added ability to link suggestions to projects during modification
+- **Clean Deletion**: Implemented automatic deletion of suggestions after processing
+
+##### Data Integration
+- **File Support for Projects**: Enhanced project queries to include associated files
+  ```typescript
+  // Get files for this project
+  supabase
+    .from('files')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('project_id', actualProjectId)
+  ```
+- **File Display**: Added formatted file information in query responses, including human-readable file sizes
+
+### Benefits of These Enhancements
+
+1. **Better User Control**: Users can now modify AI suggestions to fit their specific needs
+2. **Data Safety**: Confirmation flow for deletions prevents accidental data loss
+3. **Complete Project View**: Users can see all items (tasks, events, notes, and files) linked to a project
+4. **More Natural Commands**: Enhanced detection allows for more intuitive command phrasing
+5. **Comprehensive Data Management**: Full CRUD operations (Create, Read, Update, Delete) now supported through natural language
+
+### Future Improvements
+
+1. **Batch Suggestion Processing**: Add support for modifying and accepting multiple suggestions at once
+2. **Conversational Updates**: Enhance the update flow to allow for multi-turn conversations when updating items
+3. **Advanced Confirmation UX**: Implement richer confirmation interfaces with previews of the items to be deleted
+4. **Project Relationship Management**: Allow for transferring items between projects via natural language commands 
