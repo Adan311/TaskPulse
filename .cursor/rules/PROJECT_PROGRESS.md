@@ -2,7 +2,7 @@
 
 This file tracks the status of all major features in your project, including what's done, what's left, and suggestions for improvement. Use ✅ for completed and ❌ for pending/incomplete items.
 
-**Last Updated: May 11, 2025**
+**Last Updated: June 26, 2024**
 
 ---
 
@@ -134,6 +134,51 @@ This file tracks the status of all major features in your project, including wha
 - [✅] Backend processing system for generating instances
 - [✅] Error handling for recurrence operations
 
+### 10. AI Features (FR-6, FR-28, FR-29, FR-30) 🤖
+- [✅] **Core Chat Interface**
+  - [✅] Chat window component with conversation management
+  - [✅] Message display with user/AI avatars and proper formatting
+  - [✅] Conversation history tracking and persistence
+  - [✅] Multi-conversation support with titles
+  - [✅] Error handling and API key management
+  - [✅] Settings integration for Gemini API key
+- [✅] **Natural Language Processing**
+  - [✅] Command detection and intent classification
+  - [✅] Entity extraction (dates, titles, descriptions, priorities)
+  - [✅] Task creation from natural language ("create task to...")
+  - [✅] Event scheduling from natural language ("schedule meeting...")
+  - [✅] Deletion commands with confirmation dialogs
+  - [✅] Task update commands
+  - [✅] Project-aware command processing
+- [✅] **Data Querying Capabilities**
+  - [✅] Query user events by date ranges
+  - [✅] Filter events by project, upcoming/past status
+  - [✅] Query user tasks by status, priority, due dates
+  - [✅] Project information retrieval
+  - [✅] Combined project views (tasks, events, notes, files)
+  - [✅] Natural language query understanding
+- [✅] **Suggestion System**
+  - [✅] Passive analysis of conversations for task/event suggestions
+  - [✅] Task and event suggestion storage and metadata
+  - [✅] Suggestion UI components (badges, lists, detailed views)
+  - [✅] Accept/reject suggestion workflows
+  - [✅] Feedback tracking for suggestion quality
+  - [✅] Suggestion creation from accepted items
+- [❌] **Missing AI Features**
+  - [❌] **Text Formatting**: Markdown rendering (bold, italic, lists, etc.) - currently shows ** as asterisks
+  - [❌] **Advanced Project Queries**: "Show me all events in [project]", "What tasks are in progress for [project]"
+  - [❌] **Comprehensive Event Creation**: AI should handle project assignment during event creation
+  - [❌] **Project Creation via AI**: "Create a new project called..."
+  - [❌] **Smart Date Parsing**: Better understanding of relative dates ("next week", "in 3 days")
+  - [❌] **Bulk Operations**: "Mark all overdue tasks as done", "Delete all past events"
+  - [❌] **Context Memory**: Remember user preferences and patterns across conversations
+  - [❌] **Streaming Responses**: Real-time message streaming instead of waiting for complete response
+  - [❌] **File Integration**: Query and manage files via AI ("show me files from last week")
+  - [❌] **Advanced Analytics**: "Show me my productivity this month", "What are my most overdue tasks"
+  - [❌] **Meeting Integration**: Smarter calendar integration and meeting scheduling
+  - [❌] **Notification Integration**: AI-triggered reminders and smart notifications
+  - [❌] **Export/Import**: AI-assisted data export and project templates
+
 ---
 
 ## 🛠️ General Improvements
@@ -185,11 +230,11 @@ This file tracks the status of all major features in your project, including wha
 [✅] FR-24: Create Projects  
 [✅] FR-25: Assign to Projects (Project details view)  
 [✅] FR-27: Display Project Contents  
+[✅] FR-6: AI Chat Feature ✅ (Core functionality complete)
+[✅] FR-28: AI Suggest Tasks/Events ✅ (Basic implementation complete)
 
 ## ❌ Must-Have Requirements Left to Do
-[❌] FR-6: AI Chat Feature 🔴 (High Effort/Dependencies)  
 [❌] FR-17: Real-Time Sync 🔴 (High Effort)  
-[❌] FR-28: AI Suggest Tasks/Events 🔴 (Depends on FR-6)  
 [❌] NFR-4: GDPR Compliance 🟠 (Medium Effort)  
 
 ## 🟡 Should-Have Functional Requirements
@@ -198,8 +243,18 @@ This file tracks the status of all major features in your project, including wha
 [✅] FR-21: Event Reminders 
 [❌] FR-23: Log Time Spent 🟢 (Low Effort)  
 [✅] FR-31: Track Task Completion  
-[❌] FR-29: Accept/Reject Suggestions 🔴 (Depends on FR-6)  
-[❌] FR-30: Natural Language Creation 🔴 (Depends on FR-6)  
+[❌] FR-29: AI Accept/Reject Suggestions 🟡 (Partially implemented - needs UI polish)
+[❌] FR-30: AI Natural Language Creation 🟡 (Partially implemented - needs enhancement)
+
+## 🔧 AI System Improvements Needed
+1. **Text Formatting**: Implement markdown rendering for AI responses
+2. **Enhanced Project Integration**: Better project-aware commands and queries
+3. **Smart Date Processing**: Improve relative date understanding
+4. **File System Integration**: AI access to user files and documents
+5. **Advanced Analytics**: AI-powered insights and productivity reports
+6. **Streaming Interface**: Real-time response streaming for better UX
+7. **Context Awareness**: Remember user patterns and preferences
+8. **Bulk Operations**: Handle multiple items in single commands
 
 ## 🟡 Should-Have Non-Functional Requirements
 [❌] NFR-1: Real-Time Sync 🔴 (High Effort)  

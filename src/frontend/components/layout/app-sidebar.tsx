@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/frontend/components/ui/av
 import { useTheme } from "@/frontend/components/theme/theme-provider";
 import { ModeToggle } from "@/frontend/components/theme/mode-toggle";
 import { useUser } from "@/frontend/components/ui/user-context";
-import { getSuggestionCounts } from "@/backend/api/services/ai/suggestionService";
+import { getSuggestionCounts } from "@/backend/api/services/ai/suggestions/suggestionService";
 import { Badge } from "@/frontend/components/ui/badge";
 
 const mainItems = [

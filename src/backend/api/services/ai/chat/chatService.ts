@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
-import { getGeminiApiKey, callGeminiApiDirectly, FormattedMessage } from "./geminiService";
-import { analyzeConversation, saveTaskSuggestions, saveEventSuggestions, ClarifyingQuestion } from "./suggestionService";
+import { getGeminiApiKey, callGeminiApiDirectly, FormattedMessage } from "../core/geminiService";
+import { analyzeConversation, saveTaskSuggestions, saveEventSuggestions, ClarifyingQuestion } from "../suggestions/suggestionService";
 import { 
   detectCommandIntent, 
   createTaskFromCommand, 
@@ -11,8 +11,8 @@ import {
   deleteProjectFromCommand,
   updateTaskFromCommand,
   CommandDetectionResult 
-} from "./commandService";
-import { getUserEvents, getUserTasks, formatDateForUser, formatTimeForUser, getUserProjects, getProjectItems } from "./userDataService";
+} from "../commands/commandService";
+import { getUserEvents, getUserTasks, formatDateForUser, formatTimeForUser, getUserProjects, getProjectItems } from "../core/userDataService";
 
 /**
  * Types for chat messages

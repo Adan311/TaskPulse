@@ -4,7 +4,7 @@ import { AppLayout } from "@/frontend/components/layout/AppLayout";
 import { ChatWindow } from "@/frontend/features/ai/components/ChatWindow";
 import { Button } from "@/frontend/components/ui/button";
 import { Plus, Loader2, Trash2 } from "lucide-react";
-import { getConversations, ChatConversation, createConversation, deleteConversation } from "@/backend/api/services/ai/chatService";
+import { getConversations, ChatConversation, createConversation, deleteConversation } from "@/backend/api/services/ai/chat/chatService";
 import { useToast } from "@/frontend/hooks/use-toast";
 
 export default function Chat() {

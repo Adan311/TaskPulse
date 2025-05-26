@@ -8,7 +8,7 @@ import { Loader2, InfoIcon, KeyIcon, ExternalLinkIcon } from "lucide-react";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert";
 import { useToast } from "@/frontend/hooks/use-toast";
-import { saveGeminiApiKey, getAiSettings, updateAiSettings } from "@/backend/api/services/ai/geminiService";
+import { saveGeminiApiKey, getAiSettings, updateAiSettings } from "@/backend/api/services/ai/core/geminiService";
 
 export default function AiSettings() {
   const [apiKey, setApiKey] = useState("");

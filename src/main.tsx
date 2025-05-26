@@ -16,7 +16,7 @@ import NotesPage from "./frontend/pages/Notes";
 import Settings from "./frontend/pages/Settings";
 import ProjectDetailPage from "./frontend/pages/ProjectDetailPage";
 import Chat from "./frontend/pages/Chat";
-import Suggestions from "./frontend/pages/suggestions";
+import Suggestions from "./frontend/pages/Suggestions";
 import "./index.css";
 import { ThemeProvider } from "./frontend/components/theme/theme-provider";
 import { Toaster } from "./frontend/components/ui/toaster";

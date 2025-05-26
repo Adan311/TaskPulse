@@ -2,7 +2,7 @@
 
 This file tracks the status of all AI-related features in MotionMingle, including what's done, what's left, and implementation priorities. Use ✅ for completed and ❌ for pending/incomplete items.
 
-**Last Updated: June 16, 2025**
+**Last Updated: June 26, 2025**
 
 ---
 
@@ -103,7 +103,7 @@ This file tracks the status of all AI-related features in MotionMingle, includin
   - [❌] Test corpus of sample commands
   - [❌] User testing for command recognition
 
-### 5. Data Querying and Filtering (New)
+### 5. Data Querying and Filtering (COMPLETED ✅)
 - [✅] Event filtering
   - [✅] Properly filter upcoming vs past events
   - [✅] Default to upcoming events when not specified
@@ -124,6 +124,97 @@ This file tracks the status of all AI-related features in MotionMingle, includin
   - [✅] Extract project names from queries
   - [✅] Handle status-specific queries
   - [✅] Improved date extraction
+
+---
+
+## 🔗 Advanced AI Features (MISSING/INCOMPLETE)
+
+### 6. Text Formatting and Display
+- [❌] **Markdown Rendering** 🔴 HIGH PRIORITY
+  - [❌] Parse **bold** text (currently shows as asterisks)
+  - [❌] Parse *italic* text
+  - [❌] Parse lists (- item, * item, 1. item)
+  - [❌] Parse code blocks (```code```)
+  - [❌] Parse headers (# ## ###)
+  - [❌] Parse links [text](url)
+  - [❌] Parse line breaks and paragraphs properly
+- [❌] **Rich Message Display**
+  - [❌] Syntax highlighting for code
+  - [❌] Proper table rendering
+  - [❌] Quote block styling
+  - [❌] Emoji support
+
+### 7. Enhanced Project Integration
+- [❌] **Advanced Project Queries** 🟡 MEDIUM PRIORITY
+  - [❌] "Show me all events in [project name]"
+  - [❌] "What tasks are in progress for [project]"
+  - [❌] "List files in my [project] project"
+  - [❌] "What's the status of [project]?"
+  - [❌] "Show me overdue tasks in [project]"
+- [❌] **Project Creation via AI**
+  - [❌] "Create a new project called [name]"
+  - [❌] "Make a project for [description]"
+  - [❌] Auto-assign items to projects during creation
+- [❌] **Project-Aware Context**
+  - [❌] Remember current project context in conversation
+  - [❌] Default new items to current project context
+  - [❌] Project-specific AI personality/knowledge
+
+### 8. Smart Date and Time Processing
+- [❌] **Relative Date Understanding** 🟡 MEDIUM PRIORITY
+  - [❌] "next week", "in 3 days", "tomorrow"
+  - [❌] "this Friday", "next Monday", "end of month"
+  - [❌] "in 2 hours", "at 3pm tomorrow"
+  - [❌] "before my meeting", "after lunch"
+- [❌] **Time Zone Handling**
+  - [❌] User timezone detection and storage
+  - [❌] Multi-timezone event scheduling
+  - [❌] Smart time format detection (12hr/24hr)
+
+### 9. File System Integration
+- [❌] **File Queries** 🟢 LOW PRIORITY
+  - [❌] "Show me files from last week"
+  - [❌] "Find my PDF files"
+  - [❌] "What files are in [project]?"
+  - [❌] "Upload this file to [project]"
+- [❌] **File Management Commands**
+  - [❌] "Delete old files"
+  - [❌] "Move file to [project]"
+  - [❌] "Share file with..."
+
+### 10. Advanced Analytics and Insights
+- [❌] **Productivity Analytics** 🟢 LOW PRIORITY
+  - [❌] "Show me my productivity this month"
+  - [❌] "What are my most overdue tasks?"
+  - [❌] "How many tasks did I complete this week?"
+  - [❌] "What projects am I behind on?"
+- [❌] **Trend Analysis**
+  - [❌] Task completion patterns
+  - [❌] Time usage analysis
+  - [❌] Project progress trends
+  - [❌] Productivity recommendations
+
+### 11. Bulk Operations and Batch Commands
+- [❌] **Multi-Item Operations** 🟡 MEDIUM PRIORITY
+  - [❌] "Mark all overdue tasks as done"
+  - [❌] "Delete all past events"
+  - [❌] "Move all [project] tasks to [new project]"
+  - [❌] "Set priority high for all urgent tasks"
+- [❌] **Smart Batch Processing**
+  - [❌] Batch confirmation dialogs
+  - [❌] Undo functionality for bulk operations
+  - [❌] Progress indicators for large operations
+
+### 12. Context Memory and Learning
+- [❌] **User Preference Learning** 🟢 LOW PRIORITY
+  - [❌] Remember preferred task priorities
+  - [❌] Learn typical meeting durations
+  - [❌] Understand user's work patterns
+  - [❌] Personalized suggestion improvement
+- [❌] **Conversation Context**
+  - [❌] Remember previous conversations
+  - [❌] Cross-conversation context awareness
+  - [❌] Long-term user relationship building
 
 ---
 
@@ -161,7 +252,7 @@ This approach allows you to create a tailored solution while leveraging the best
 
 ---
 
-## 🔁 Recurring Tasks & Events Implementation
+## 🔁 Recurring Tasks & Events Implementation (COMPLETED ✅)
 
 ### 1. Database Schema and Types
 - [✅] Task Table Schema
@@ -328,6 +419,34 @@ This approach allows you to create a tailored solution while leveraging the best
 4. Performance Monitoring ❌
 5. UI Refinements ✅
 
+### Phase 4: Enhanced User Experience (NEW - HIGH PRIORITY)
+1. **Text Formatting Implementation** 🔴 CRITICAL
+   - Markdown rendering for AI responses
+   - Rich text display components
+   - Proper message formatting
+2. **Advanced Project Integration** 🟡 MEDIUM
+   - Project-specific queries and commands
+   - Enhanced project context awareness
+   - Project creation via AI
+3. **Smart Date Processing** 🟡 MEDIUM
+   - Relative date understanding
+   - Better time parsing
+   - Timezone handling
+
+### Phase 5: Advanced Features (NEW - MEDIUM PRIORITY)
+1. **File System Integration** 🟢 LOW
+   - File queries and management
+   - Project-file associations
+   - File upload/organization commands
+2. **Analytics and Insights** 🟢 LOW
+   - Productivity analytics
+   - Trend analysis
+   - Smart recommendations
+3. **Bulk Operations** 🟡 MEDIUM
+   - Multi-item commands
+   - Batch processing
+   - Undo functionality
+
 ---
 
 ## 📝 Additional Notes
@@ -338,5 +457,58 @@ This approach allows you to create a tailored solution while leveraging the best
 - **User Education**: Clear instructions in UI for obtaining and entering API keys
 - **User Data Access**: AI can now query user calendar events and tasks directly when asked about specific dates or requirements
 - **File Structure**: Improved organization with feature-based directory structure for better maintainability
+
+---
+
+## 🔥 Critical Issues to Address
+
+### From User Feedback:
+1. **Text Formatting Bug** 🔴 IMMEDIATE FIX NEEDED
+   - AI responses show `**text**` instead of **bold text**
+   - Need to implement markdown parser in ChatWindow component
+   - Should support bold, italic, lists, code blocks, headers
+
+2. **Missing Advanced Project Queries**
+   - Users want: "Show me all events in [project]"
+   - Users want: "What tasks are in progress for [project]" 
+   - Currently only basic project queries work
+
+3. **Incomplete Command Coverage**
+   - Need project creation: "Create a new project called..."
+   - Need better event-project linking during AI creation
+   - Need file management commands
+
+4. **Context Limitations**
+   - AI doesn't remember preferences across conversations
+   - No project context persistence
+   - Limited cross-conversation awareness
+
+---
+
+## 🚀 Next Steps Recommendations
+
+### Immediate (This Week):
+1. Fix markdown rendering in chat messages
+2. Enhance project-specific query handling
+3. Add project creation commands
+4. Improve date parsing for relative dates
+
+### Short Term (Next 2 Weeks):
+1. Add file system integration
+2. Implement bulk operations
+3. Add streaming response support
+4. Create better error handling
+
+### Medium Term (Next Month):
+1. Add analytics and insights
+2. Implement user preference learning
+3. Add advanced time zone handling
+4. Create comprehensive testing suite
+
+### Long Term (Future Sprints):
+1. Google Calendar deep integration
+2. Advanced AI performance monitoring
+3. GDPR compliance features
+4. Mobile-responsive AI interface
 
 ---

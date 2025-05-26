@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/frontend/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/frontend/components/ui/card';
 import { ThumbsUp, ThumbsDown, MessageSquare, Check, X, Loader2 } from 'lucide-react';
-import { TaskSuggestion, EventSuggestion, SuggestionFeedback, recordSuggestionFeedback } from '@/backend/api/services/ai/suggestionService';
+import { TaskSuggestion, EventSuggestion, SuggestionFeedback, recordSuggestionFeedback } from '@/backend/api/services/ai/suggestions/suggestionService';
 import { useToast } from '@/frontend/hooks/use-toast';
 import { Textarea } from '@/frontend/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/frontend/components/ui/dialog';

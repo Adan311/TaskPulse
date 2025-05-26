@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client'; // Corrected path
+import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { 
     getTaskSuggestions, 
@@ -8,24 +8,25 @@ import {
     updateEventSuggestionStatus,
     TaskSuggestion,
     EventSuggestion
-} from '@/backend/api/services/ai/suggestionService';
-import SuggestionItem from '@/frontend/features/ai/components/SuggestionItem'; // Import the new component
+} from '@/backend/api/services/ai/suggestions/suggestionService';
+import SuggestionItem from '@/frontend/features/ai/components/SuggestionItem';
 import { Button } from '@/frontend/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/frontend/components/ui/tabs" // Assuming Tabs component exists
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/frontend/components/ui/tabs";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { Separator } from '@/frontend/components/ui/separator';
 import { Loader2 } from 'lucide-react';
-import { useSidebar } from "@/frontend/components/ui/sidebar/sidebar";
 
-const SuggestionsPage = () => {
+interface SuggestionListProps {
+  className?: string;
+}
+
+const SuggestionList: React.FC<SuggestionListProps> = ({ className }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [taskSuggestions, setTaskSuggestions] = useState<TaskSuggestion[]>([]);
   const [eventSuggestions, setEventSuggestions] = useState<EventSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("tasks"); // "tasks" or "events"
   const { toast } = useToast();
-  const { state } = useSidebar();
-  const isCollapsed = state === "collapsed";
 
   const fetchSuggestions = useCallback(async (user: User) => {
     setIsLoading(true);
@@ -106,8 +107,6 @@ const SuggestionsPage = () => {
           });
         }
       }
-      // Remove the comment to refresh all suggestions if needed
-      // fetchSuggestions(currentUser);
     } catch (error) {
       console.error(`Error updating ${type} suggestion status:`, error);
       toast({ title: "Error", description: `Failed to update ${type} suggestion.`, variant: "destructive" });
@@ -116,7 +115,7 @@ const SuggestionsPage = () => {
 
   if (!currentUser) {
     return (
-      <div className={`p-6 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+      <div className={className}>
         <h1 className="text-2xl font-bold mb-4">AI Suggestions</h1>
         <p>Please log in to see your suggestions.</p>
       </div>
@@ -124,7 +123,7 @@ const SuggestionsPage = () => {
   }
 
   return (
-    <div className={`p-6 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+    <div className={className}>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">AI Suggestions</h1>
         <Button onClick={() => currentUser && fetchSuggestions(currentUser)} disabled={isLoading} variant="outline">
@@ -190,4 +189,4 @@ const SuggestionsPage = () => {
   );
 };
 
-export default SuggestionsPage; 
+export default SuggestionList; 

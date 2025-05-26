@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
-import { getGeminiApiKey, callGeminiApiDirectly, FormattedMessage } from "./geminiService";
-import { createTask, deleteTask, updateTask } from "../task.service";
-import { createEvent, deleteEvent, updateEvent } from "../eventService";
+import { getGeminiApiKey, callGeminiApiDirectly, FormattedMessage } from "../core/geminiService";
+import { createTask, deleteTask, updateTask } from "../../task.service";
+import { createEvent, deleteEvent, updateEvent } from "../../eventService";
 
 /**
  * Interface for command detection results
