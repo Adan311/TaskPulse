@@ -2,13 +2,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { getGeminiApiKey, callGeminiApiDirectly, FormattedMessage } from "../core/geminiService";
 import { createTask, deleteTask, updateTask } from "../../task.service";
 import { createEvent, deleteEvent, updateEvent } from "../../eventService";
+import { createProject, deleteProject, updateProject } from "../../project.service";
 
 /**
  * Interface for command detection results
  */
 export interface CommandDetectionResult {
   hasCommand: boolean;
-  commandType: 'create_task' | 'create_event' | 'set_reminder' | 'delete_task' | 'delete_event' | 'delete_project' | 'update_task' | 'update_event' | 'update_project' | null;
+  commandType: 'create_task' | 'create_event' | 'create_project' | 'set_reminder' | 'delete_task' | 'delete_event' | 'delete_project' | 'update_task' | 'update_event' | 'update_project' | null;
   entities: any;
   requiresConfirmation?: boolean;
 }
@@ -48,7 +49,7 @@ export const detectCommandIntent = async (
       Return ONLY a JSON object with the following structure:
       {
         "hasCommand": true/false,
-        "commandType": one of ["create_task", "create_event", "set_reminder", "delete_task", "delete_event", "delete_project", "update_task", "update_event", "update_project"] or null,
+        "commandType": one of ["create_task", "create_event", "create_project", "set_reminder", "delete_task", "delete_event", "delete_project", "update_task", "update_event", "update_project"] or null,
         "requiresConfirmation": true/false (set to true for all delete operations),
         "entities": {
           // For tasks:
@@ -79,6 +80,13 @@ export const detectCommandIntent = async (
           "context": "Information from recent conversation that provides context",
           "date": "YYYY-MM-DD date extracted from conversation",
           
+          // For projects:
+          "name": "Project name",
+          "description": "Project description",
+          "due_date": "YYYY-MM-DD",
+          "priority": "low/medium/high",
+          "status": "active/completed/on-hold",
+          
           // For reminders:
           "task_id": null, // This will be filled in later
           "reminder_time": "YYYY-MM-DDTHH:MM:SS"
@@ -97,6 +105,9 @@ export const detectCommandIntent = async (
       - "Make a reminder for the presentation on Monday"
       - "Schedule a call with the team next week"
       - "Create the event" (when context mentions an event)
+      - "Create a new project called Website Redesign"
+      - "Make a project for the marketing campaign"
+      - "Set up a new project with deadline next month"
       - "Delete the task about research"
       - "Remove the meeting with John"
       - "Update the project deadline to next Friday"
@@ -284,6 +295,45 @@ export const createEventFromCommand = async (
     return { 
       success: false, 
       error: error instanceof Error ? error.message : "Unknown error creating event" 
+    };
+  }
+};
+
+/**
+ * Create a project from command entities
+ */
+export const createProjectFromCommand = async (
+  userId: string, 
+  entities: any
+): Promise<{ success: boolean; name?: string; error?: string }> => {
+  try {
+    // First check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+    
+    // Ensure the user ID matches
+    if (user.id !== userId) throw new Error("User ID mismatch");
+    
+    // Check for required fields
+    if (!entities.name) {
+      return { success: false, error: "Project name is required" };
+    }
+    
+    // Create the project
+    const project = await createProject({
+      name: entities.name,
+      description: entities.description || "",
+      due_date: entities.due_date || null,
+      priority: entities.priority || "medium",
+      status: entities.status || "active",
+    });
+    
+    return { success: true, name: project.name };
+  } catch (error) {
+    console.error("Error creating project from command:", error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "Unknown error creating project" 
     };
   }
 };

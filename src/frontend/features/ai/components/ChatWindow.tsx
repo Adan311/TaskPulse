@@ -3,7 +3,7 @@ import { Button } from "@/frontend/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/frontend/components/ui/card";
 import { Input } from "@/frontend/components/ui/input";
 import { Textarea } from "@/frontend/components/ui/textarea";
-import { Loader2, Send, Plus, KeyIcon, ExternalLinkIcon, Lightbulb, User, Bot } from "lucide-react";
+import { Loader2, Send, Plus, KeyIcon, ExternalLinkIcon, Lightbulb, User, Bot, RefreshCw, Settings, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { ChatMessage, sendMessage, createConversation, getConversation } from "@/backend/api/services/ai/chat/chatService";
@@ -11,12 +11,25 @@ import { getAiSettings } from "@/backend/api/services/ai/core/geminiService";
 import { getSuggestionCounts, requestSuggestions, ClarifyingQuestion } from "@/backend/api/services/ai/suggestions/suggestionService";
 import { useNavigate } from "react-router-dom";
 import SuggestionBadge from './SuggestionBadge';
+import { MarkdownRenderer } from './MarkdownRenderer';
 import { supabase } from "@/integrations/supabase/client";
 import { useSidebar } from "@/frontend/components/ui/sidebar/sidebar";
+import { 
+  validateUserInput, 
+  getErrorMessageWithAction, 
+  createErrorFromException,
+  AIError 
+} from "@/backend/api/services/ai/core/errorService";
 
 interface ChatWindowProps {
   conversationId?: string;
   onNewConversation?: (conversationId: string) => void;
+}
+
+interface ErrorState {
+  error: AIError | null;
+  retryAction?: () => Promise<void>;
+  showError: boolean;
 }
 
 export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProps) {
@@ -26,6 +39,7 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
   const [initialLoad, setInitialLoad] = useState(true);
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
   const [requestingSuggestions, setRequestingSuggestions] = useState(false);
+  const [errorState, setErrorState] = useState<ErrorState>({ error: null, showError: false });
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -35,6 +49,76 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
   
+  // Enhanced error handling helper
+  const handleError = (error: Error | string, operation: string, retryAction?: () => Promise<void>) => {
+    const aiError = createErrorFromException(error, operation, {
+      userId: 'current-user',
+      conversationId: conversationId
+    });
+    
+    setErrorState({
+      error: aiError,
+      retryAction,
+      showError: true
+    });
+    
+    const errorInfo = getErrorMessageWithAction(aiError);
+    
+    // Show toast notification
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: errorInfo.message,
+      action: errorInfo.action ? (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleErrorAction(errorInfo.actionType!, retryAction)}
+        >
+          {errorInfo.action}
+        </Button>
+      ) : undefined
+    });
+  };
+  
+  // Handle error action buttons
+  const handleErrorAction = async (actionType: string, retryAction?: () => Promise<void>) => {
+    switch (actionType) {
+      case 'retry':
+        if (retryAction) {
+          setErrorState(prev => ({ ...prev, showError: false }));
+          try {
+            await retryAction();
+          } catch (error) {
+            handleError(error as Error, 'retry_operation');
+          }
+        }
+        break;
+      case 'navigate':
+        if (errorState.error?.code === 'API_KEY_MISSING' || errorState.error?.code === 'API_KEY_INVALID') {
+          navigate('/settings');
+        } else if (errorState.error?.code === 'AUTH_NO_USER') {
+          navigate('/auth/login');
+        }
+        break;
+      case 'reload':
+        window.location.reload();
+        break;
+      case 'contact':
+        // You could implement a support contact form here
+        toast({
+          title: "Contact Support",
+          description: "Please contact our support team for assistance."
+        });
+        break;
+    }
+  };
+  
+  // Dismiss error
+  const dismissError = () => {
+    setErrorState({ error: null, showError: false });
+  };
+  
   // Check if user has API key
   useEffect(() => {
     const checkApiKey = async () => {
@@ -42,7 +126,7 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
         const settings = await getAiSettings();
         setHasApiKey(!!settings?.gemini_api_key);
       } catch (error) {
-        console.error("Error checking API key:", error);
+        handleError(error as Error, 'check_api_key');
         setHasApiKey(false);
       }
     };
@@ -72,12 +156,7 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
           await checkForSuggestions();
         }
       } catch (error) {
-        console.error("Error loading conversation:", error);
-        toast({
-          variant: "destructive",
-          title: "Failed to load conversation",
-          description: "There was a problem loading the conversation."
-        });
+        handleError(error as Error, 'load_conversation', () => loadConversation());
       } finally {
         setLoading(false);
         setInitialLoad(false);
@@ -85,7 +164,7 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
     };
     
     loadConversation();
-  }, [conversationId, toast]);
+  }, [conversationId]);
   
   // Check for suggestion updates periodically
   useEffect(() => {
@@ -104,11 +183,7 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
   
   const handleStartNewConversation = async () => {
     if (!hasApiKey) {
-      toast({
-        variant: "destructive",
-        title: "API Key Required",
-        description: "You need to add your Gemini API key in settings first."
-      });
+      handleError('API key is required', 'start_conversation');
       return;
     }
     
@@ -129,28 +204,31 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
         throw new Error("Failed to create conversation");
       }
     } catch (error) {
-      console.error("Error creating conversation:", error);
-      toast({
-        variant: "destructive",
-        title: "Failed to start conversation",
-        description: "There was a problem starting a new conversation."
-      });
+      handleError(error as Error, 'create_conversation', handleStartNewConversation);
     } finally {
       setLoading(false);
     }
   };
   
   const handleSendMessage = async () => {
-    if (!input.trim()) return;
-    
-    if (!hasApiKey) {
-      toast({
-        variant: "destructive",
-        title: "API Key Required",
-        description: "You need to add your Gemini API key in settings first."
+    // Validate input first
+    const inputValidation = validateUserInput(input);
+    if (inputValidation) {
+      setErrorState({
+        error: inputValidation,
+        showError: true
       });
       return;
     }
+    
+    if (!hasApiKey) {
+      handleError('API key is required', 'send_message');
+      return;
+    }
+    
+    const retryFunction = async () => {
+      return handleSendMessage();
+    };
     
     try {
       setLoading(true);
@@ -160,12 +238,7 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
       if (!currentConversationId) {
         const conversation = await createConversation();
         if (!conversation) {
-          toast({
-            variant: "destructive",
-            title: "Conversation Error",
-            description: "Failed to create a new conversation. Please try again."
-          });
-          return;
+          throw new Error("Failed to create a new conversation");
         }
         currentConversationId = conversation.id;
         if (onNewConversation) {
@@ -201,73 +274,32 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
             result.aiMessage
           ]);
           
-          // Check if the message has suggestions
+          // Handle suggestions
           if (result.hasOverallSuggestions) {
-            // Add this message to the set of messages with suggestions
-            setMessagesWithSuggestions(prev => new Set(prev).add(result.aiMessage.id));
-            
-            // Show toast notification
-            toast({
-              title: "AI Suggestions Available",
-              description: "The AI has identified tasks or events in this message. Click the suggestion icon to view them.",
-            });
-            
-            // Update suggestion counts
-            await checkForSuggestions();
+            const newSuggestionsSet = new Set(messagesWithSuggestions);
+            newSuggestionsSet.add(result.aiMessage.id);
+            setMessagesWithSuggestions(newSuggestionsSet);
+            await checkForSuggestions(); // Refresh suggestion counts
           }
-
+          
+          // Handle clarifying questions
           if (result.clarifyingQuestions && result.clarifyingQuestions.length > 0) {
             setClarifyingQuestions(result.clarifyingQuestions);
-            // Optionally, add these questions as AI messages to the chat display
-            const questionMessages: ChatMessage[] = result.clarifyingQuestions.map((q, index) => ({
-              id: `clarifying-${Date.now()}-${index}`,
-              conversationId: currentConversationId,
-              userId: 'system',
-              content: q.question_text,
-              role: 'assistant', // Displayed as if AI is asking
-              createdAt: new Date().toISOString(),
-              isClarifyingQuestion: true // Custom flag for styling/handling
-            }));
-            setMessages(prev => [...prev, ...questionMessages]);
           }
+          
+          // Clear any previous errors
+          setErrorState({ error: null, showError: false });
+        } else {
+          throw new Error("No response received from AI service");
         }
       } catch (error) {
-        console.error("Error sending message:", error);
-        
-        // Check if this is an API key error
-        const errorMessage = error instanceof Error ? error.message : "Failed to get AI response";
-        const isApiKeyError = errorMessage.includes("API key") || errorMessage.includes("settings");
-        
-        // Keep the user message but add an error message
-        const errorMsg: ChatMessage = {
-          id: 'error-' + Date.now(),
-          conversationId: currentConversationId,
-          userId: 'system',
-          content: `Error: ${errorMessage}`,
-          role: 'assistant',
-          createdAt: new Date().toISOString()
-        };
-        
-        setMessages(prev => [...prev, errorMsg]);
-        
-        // If it's an API key error, update our state
-        if (isApiKeyError) {
-          setHasApiKey(false);
-        }
-        
-        toast({
-          variant: "destructive",
-          title: "AI Response Error",
-          description: errorMessage
-        });
+        // Remove the temporary message and restore the input
+        setMessages(prev => prev.filter(msg => msg.id !== tempUserMsg.id));
+        setInput(userInputMessage);
+        throw error;
       }
     } catch (error) {
-      console.error("Error in message flow:", error);
-      toast({
-        variant: "destructive",
-        title: "Chat Error",
-        description: error instanceof Error ? error.message : "There was a problem with your chat. Please try again."
-      });
+      handleError(error as Error, 'send_message', retryFunction);
     } finally {
       setLoading(false);
     }
@@ -300,27 +332,24 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
       // Log for debugging
       console.log(`Found ${totalSuggestions} suggestions: ${counts.tasks} tasks, ${counts.events} events`);
     } catch (error) {
-      console.error("Error checking for suggestions:", error);
+      handleError(error as Error, 'check_suggestions');
     }
   };
   
   const handleGetSuggestions = async () => {
     if (!conversationId) {
-      toast({
-        title: "No conversation",
-        description: "Start a conversation before requesting suggestions.",
-      });
+      handleError('No conversation available', 'get_suggestions');
       return;
     }
 
     if (!hasApiKey) {
-      toast({
-        variant: "destructive",
-        title: "API Key Required",
-        description: "You need to add your Gemini API key in settings first."
-      });
+      handleError('API key is required', 'get_suggestions');
       return;
     }
+
+    const retryFunction = async () => {
+      return handleGetSuggestions();
+    };
 
     try {
       setRequestingSuggestions(true);
@@ -342,9 +371,8 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
         // Update suggestion counts
         await checkForSuggestions();
         
-        // Update the messages with suggestions flags
-        // This would require a more complex approach to know which message triggered suggestions
-        // For now, we'll just notify the user that suggestions are available
+        // Clear any previous errors
+        setErrorState({ error: null, showError: false });
       } else {
         toast({
           title: "No Suggestions Found",
@@ -352,12 +380,7 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
         });
       }
     } catch (error) {
-      console.error("Error getting suggestions:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to get suggestions. Please try again."
-      });
+      handleError(error as Error, 'get_suggestions', retryFunction);
     } finally {
       setRequestingSuggestions(false);
     }
@@ -376,7 +399,11 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
   }
   
   const formatMessage = (message: ChatMessage) => {
-    // Simple formatting - could be enhanced with markdown processing
+    // Enhanced formatting with markdown processing
+    if (message.role === 'assistant') {
+      return <MarkdownRenderer content={message.content} />;
+    }
+    // For user messages, keep simple formatting
     return message.content.split("\n").map((line, index) => (
       <p key={index} className={index > 0 ? "mt-2" : ""}>{line}</p>
     ));
@@ -461,6 +488,55 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
           </Button>
         </div>
       </div>
+
+      {/* Enhanced Error Display */}
+      {errorState.showError && errorState.error && (
+        <div className="mb-4">
+          <Alert variant="destructive" className="relative">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle className="flex items-center justify-between">
+              Error
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={dismissError}
+                className="h-6 w-6 p-0"
+              >
+                ×
+              </Button>
+            </AlertTitle>
+            <AlertDescription className="mt-2">
+              <div className="space-y-2">
+                <p>{errorState.error.userMessage}</p>
+                <div className="flex space-x-2">
+                  {errorState.error.retryable && errorState.retryAction && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleErrorAction('retry', errorState.retryAction)}
+                      className="flex items-center"
+                    >
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                      Try Again
+                    </Button>
+                  )}
+                  {(errorState.error.code === 'API_KEY_MISSING' || errorState.error.code === 'API_KEY_INVALID') && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleErrorAction('navigate')}
+                      className="flex items-center"
+                    >
+                      <Settings className="h-3 w-3 mr-1" />
+                      Go to Settings
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
       
       <div className="flex-1 overflow-y-auto mb-4 rounded-lg bg-background/50 p-4">
         {hasApiKey === false ? (
