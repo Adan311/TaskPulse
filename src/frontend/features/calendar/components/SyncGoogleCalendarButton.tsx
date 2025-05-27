@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/frontend/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { useToast } from "@/frontend/hooks/use-toast";
-import { syncWithGoogleCalendar } from "@/backend/api/services/googleCalendarService";
+import { syncWithGoogleCalendar } from "@/backend/api/services/googleCalendar/googleCalendarService";
 
 interface SyncGoogleCalendarButtonProps {
   onSuccess?: () => void;

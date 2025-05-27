@@ -26,5 +26,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "src/frontend/features/notes"]
+  "include": ["src", "src/frontend/features/notes", "AI Plan&DOC/task.service_ORIGINAL_BACKUP.ts", "AI Plan&DOC/userDataService_ORIGINAL_BACKUP.ts"]
 }

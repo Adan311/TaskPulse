@@ -5,10 +5,10 @@ import { Card } from "@/frontend/components/ui/card";
 import { CheckCircle, ChevronDown, ChevronUp, RefreshCw, LogOut, Calendar as CalendarIcon } from "lucide-react";
 import { GoogleCalendarButton } from "@/frontend/features/calendar/components/GoogleCalendarButton";
 import { DisconnectGoogleCalendarButton } from "@/frontend/features/calendar/components/DisconnectGoogleCalendarButton";
-import { getConnectedCalendars } from "@/backend/api/services/googleCalendarService";
+import { getConnectedCalendars } from "@/backend/api/services/googleCalendar/googleCalendarService";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/frontend/hooks/use-toast";
-import { syncWithGoogleCalendar } from "@/backend/api/services/googleCalendarService";
+import { syncWithGoogleCalendar } from "@/backend/api/services/googleCalendar/googleCalendarService";
 import { SyncGoogleCalendarButton } from "@/frontend/features/calendar/components/SyncGoogleCalendarButton";
 
 interface CalendarSidebarProps {

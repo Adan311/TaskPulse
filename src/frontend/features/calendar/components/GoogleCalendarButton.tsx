@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/frontend/components/ui/button";
 import { Calendar, ExternalLink } from "lucide-react";
 import { useToast } from "@/frontend/hooks/use-toast";
-import { initiateGoogleCalendarAuth } from "@/backend/api/services/googleCalendarService";
+import { initiateGoogleCalendarAuth } from "@/backend/api/services/googleCalendar/googleCalendarService";
 import { supabase } from "@/integrations/supabase/client";
 
 interface GoogleCalendarButtonProps {

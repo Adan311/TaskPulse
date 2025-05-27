@@ -1,7 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { GoogleCalendarAuth } from './googleCalendar/googleCalendarAuth';
-import { GoogleCalendarSync } from './googleCalendar/googleCalendarSync';
+import { GoogleCalendarAuth } from './googleCalendarAuth';
+import { GoogleCalendarSync } from './googleCalendarSync';
 
 /**
  * Checks if the user has connected their Google Calendar
@@ -137,4 +136,4 @@ export const {
 export const {
   saveEventToGoogleCalendar,
   deleteEventFromGoogleCalendar
-} = GoogleCalendarSync;
+} = GoogleCalendarSync; 

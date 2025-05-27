@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { DatabaseEvent } from '@/backend/types/supabaseSchema';
-import { hasGoogleCalendarConnected } from '../googleCalendarService';
+import { hasGoogleCalendarConnected } from './googleCalendarService';
 
 /**
  * Event synchronization functions for Google Calendar

@@ -15,7 +15,7 @@ import { ColorPickerField } from "./FormFields/ColorPickerField";
 import { ProjectSelectField } from "./FormFields/ProjectSelectField";
 import { ReminderDateTimeField } from "./FormFields/ReminderDateTimeField";
 import { RecurrenceField } from "./FormFields/RecurrenceField";
-import { hasGoogleCalendarConnected } from "@/backend/api/services/googleCalendarService";
+import { hasGoogleCalendarConnected } from "@/backend/api/services/googleCalendar/googleCalendarService";
 import { CalendarClock, AlertCircle, Repeat, InfoIcon, Trash2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert";
 import { Badge } from "@/frontend/components/ui/badge";
