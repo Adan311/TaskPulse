@@ -135,15 +135,33 @@ export const deleteAccount = async (password: string) => {
     // should be handled in application code, not through RLS
     const userId = userData.user.id;
     
-    // Delete data from each relevant table
-    // Using type assertion to ensure these are valid table names
-    const tablesToCleanup = ['notes', 'tasks', 'events', 'projects', 'files'] as const;
+    // Delete data from each relevant table - now including all AI and system tables
+    // Different tables use different column names for user identification
+    const tablesToCleanup = [
+      // Core productivity tables (use 'user' column)
+      { table: 'notes', userColumn: 'user' },
+      { table: 'tasks', userColumn: 'user' },
+      { table: 'events', userColumn: 'user' },
+      { table: 'projects', userColumn: 'user' },
+      { table: 'files', userColumn: 'user' },
+      { table: 'ai_metadata', userColumn: 'user' },
+      // AI and system tables (use 'user_id' column)
+      { table: 'ai_conversations', userColumn: 'user_id' },
+      { table: 'ai_messages', userColumn: 'user_id' },
+      { table: 'event_suggestions', userColumn: 'user_id' },
+      { table: 'task_suggestions', userColumn: 'user_id' },
+      { table: 'suggestion_feedback', userColumn: 'user_id' },
+      { table: 'task_activity_log', userColumn: 'user_id' },
+      { table: 'google_calendar_tokens', userColumn: 'user_id' },
+      { table: 'user_settings', userColumn: 'user_id' },
+      { table: 'user_consent', userColumn: 'user_id' }
+    ];
     
-    for (const table of tablesToCleanup) {
+    for (const { table, userColumn } of tablesToCleanup) {
       const { error: deleteError } = await supabase
         .from(table)
         .delete()
-        .eq('user', userId);
+        .eq(userColumn, userId);
       
       if (deleteError) {
         console.error(`Error deleting from ${table}:`, deleteError);

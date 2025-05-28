@@ -17,6 +17,8 @@ import Settings from "./frontend/pages/Settings";
 import ProjectDetailPage from "./frontend/pages/ProjectDetailPage";
 import Chat from "./frontend/pages/Chat";
 import Suggestions from "./frontend/pages/Suggestions";
+import PrivacyPolicy from "./frontend/pages/legal/PrivacyPolicy";
+import TermsOfService from "./frontend/pages/legal/TermsOfService";
 import "./index.css";
 import { ThemeProvider } from "./frontend/components/theme/theme-provider";
 import { Toaster } from "./frontend/components/ui/toaster";
@@ -83,6 +85,14 @@ const router = createBrowserRouter([
       {
         path: "suggestions",
         element: <Suggestions />,
+      },
+      {
+        path: "privacy-policy",
+        element: <PrivacyPolicy />,
+      },
+      {
+        path: "terms-of-service",
+        element: <TermsOfService />,
       },
     ],
   },

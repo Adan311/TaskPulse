@@ -7,6 +7,7 @@ import { UserProvider } from "@/frontend/components/ui/user-context";
 import { useReminders } from './frontend/hooks/useReminders';
 import { initRecurrenceProcessing } from './backend/api/services/recurrence.service';
 import { useEffect, useRef } from 'react';
+import CookieConsentBanner from "@/frontend/components/legal/CookieConsentBanner";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => {
             <div className="flex-1">
               <SonnerToast />
               <Outlet />
+              <CookieConsentBanner />
             </div>
           </div>
         </UserProvider>

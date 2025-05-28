@@ -7,6 +7,7 @@ import ProfileSettings from "@/frontend/features/settings/components/ProfileSett
 import PasswordSettings from "@/frontend/features/settings/components/PasswordSettings";
 import DeleteAccount from "@/frontend/features/settings/components/DeleteAccount";
 import AiSettings from "@/frontend/features/settings/components/AiSettings";
+import DataExport from "@/frontend/features/settings/components/DataExport";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -63,6 +64,7 @@ export default function Settings() {
           
           <TabsContent value="data" className="space-y-4">
             <div className="grid gap-6">
+              <DataExport />
               <DeleteAccount />
             </div>
           </TabsContent>
