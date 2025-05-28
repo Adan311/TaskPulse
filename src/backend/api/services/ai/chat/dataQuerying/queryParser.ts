@@ -39,14 +39,15 @@ export const QUERY_KEYWORDS = {
   ],
   taskQuery: [
     'task', 'tasks', 'todo', 'todos', 'to-do', 'to-dos', 'assignment', 'assignments',
-    'work', 'job', 'complete', 'completed', 'done', 'pending', 'overdue', 'due'
+    'work', 'job', 'complete', 'completed', 'done', 'pending', 'overdue', 'due',
+    'finished', 'accomplish', 'accomplished', 'completion', 'finished tasks', 'completed tasks'
   ]
 };
 
 export const STATUS_KEYWORDS = {
-  todo: ['to do', 'todo', 'to-do list', 'pending', 'not done'],
-  inProgress: ['in progress', 'ongoing', 'working on', 'started'],
-  done: ['done', 'completed', 'finished']
+  todo: ['to do', 'todo', 'to-do list', 'pending', 'not done', 'upcoming', 'incomplete', 'unfinished'],
+  inProgress: ['in progress', 'ongoing', 'working on', 'started', 'in-progress', 'active', 'current'],
+  done: ['done', 'completed', 'finished', 'complete', 'completion', 'accomplished', 'finished tasks', 'completed tasks', 'done tasks']
 };
 
 // Question words that should NOT be treated as project names

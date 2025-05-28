@@ -16,8 +16,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { DayView } from "@/frontend/features/calendar/components/DayView";
 
-// Import test - this will automatically run and show YES/NO in console
-import "@/backend/api/services/events/eventService.test";
 
 export default function Calendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
