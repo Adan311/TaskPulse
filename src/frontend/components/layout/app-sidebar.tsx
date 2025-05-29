@@ -21,6 +21,7 @@ import { ModeToggle } from "@/frontend/components/theme/mode-toggle";
 import { useUser } from "@/frontend/components/ui/user-context";
 import { getSuggestionCounts } from "@/backend/api/services/ai/suggestions/suggestionService";
 import { Badge } from "@/frontend/components/ui/badge";
+import { GlobalTimerStatusBadge } from "@/frontend/components/timer/GlobalTimerStatusBadge";
 
 const mainItems = [
   {
@@ -140,6 +141,14 @@ export function AppSidebar() {
           >
             {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
           </Button>
+        </div>
+        
+        {/* Global Timer Status - Always visible when active */}
+        <div className={`${isCollapsed ? 'px-2' : 'px-4'} mb-2`}>
+          <GlobalTimerStatusBadge 
+            compact={isCollapsed} 
+            showControls={!isCollapsed}
+          />
         </div>
         
         <div className="mt-4" />

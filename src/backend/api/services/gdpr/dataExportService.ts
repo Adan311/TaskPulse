@@ -18,6 +18,7 @@ export interface UserDataExport {
   taskActivityLog: any[];
   googleCalendarTokens: any[];
   userSettings: any[];
+  timeLogs: any[];
 }
 
 export const exportUserData = async (): Promise<UserDataExport> => {
@@ -46,7 +47,8 @@ export const exportUserData = async (): Promise<UserDataExport> => {
       suggestionFeedback,
       taskActivityLog,
       googleCalendarTokens,
-      userSettings
+      userSettings,
+      timeLogs
     ] = await Promise.all([
       // Core productivity data (use 'user' column)
       supabase.from('tasks').select('*').eq('user', userId),
@@ -70,7 +72,8 @@ export const exportUserData = async (): Promise<UserDataExport> => {
       // Activity and settings (use 'user_id' column)
       supabase.from('task_activity_log').select('*').eq('user_id', userId),
       supabase.from('google_calendar_tokens').select('*').eq('user_id', userId),
-      supabase.from('user_settings').select('*').eq('user_id', userId)
+      supabase.from('user_settings').select('*').eq('user_id', userId),
+      supabase.from('time_logs').select('*').eq('user_id', userId)
     ]);
 
     // Check for errors in any of the queries
@@ -78,7 +81,8 @@ export const exportUserData = async (): Promise<UserDataExport> => {
       tasks.error, events.error, notes.error, projects.error, files.error,
       aiConversations.error, aiMessages.error, aiMetadata.error,
       eventSuggestions.error, taskSuggestions.error, suggestionFeedback.error,
-      taskActivityLog.error, googleCalendarTokens.error, userSettings.error
+      taskActivityLog.error, googleCalendarTokens.error, userSettings.error,
+      timeLogs.error
     ].filter(Boolean);
 
     if (errors.length > 0) {
@@ -114,7 +118,8 @@ export const exportUserData = async (): Promise<UserDataExport> => {
       suggestionFeedback: suggestionFeedback.data || [],
       taskActivityLog: taskActivityLog.data || [],
       googleCalendarTokens: googleCalendarTokens.data || [],
-      userSettings: userSettings.data || []
+      userSettings: userSettings.data || [],
+      timeLogs: timeLogs.data || []
     };
 
     return exportData;

@@ -1,4 +1,3 @@
-
 import { format, parseISO } from "date-fns";
 import { MoreHorizontal, Trash, Edit, Clock } from "lucide-react";
 import { useToast } from "@/frontend/hooks/use-toast";
@@ -14,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/frontend/components/ui/dropdown-menu";
 import { Event, deleteEvent } from "@/backend/api/services/eventService";
+import { EventTimeTracker } from "./EventTimeTracker";
 
 interface EventItemProps {
   event: Event;
@@ -78,6 +78,11 @@ export function EventItem({ event, onEdit, onDelete }: EventItemProps) {
             </span>
           </div>
           {event.description && <p className="mt-1">{event.description}</p>}
+        </div>
+
+        {/* Add compact event time tracking */}
+        <div className="mt-3 pt-3 border-t">
+          <EventTimeTracker event={event} compact={true} />
         </div>
       </CardContent>
     </Card>

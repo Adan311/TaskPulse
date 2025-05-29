@@ -6,6 +6,7 @@ import { Badge } from '@/frontend/components/ui/badge';
 import { Checkbox } from '@/frontend/components/ui/checkbox';
 import { Edit, Trash2, Calendar, Archive } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { TaskTimeTracker } from './TaskTimeTracker';
 
 interface TaskCardProps {
   task: Task;
@@ -141,6 +142,12 @@ export function TaskCard({
             )}
           </div>
         </div>
+
+        {!task.archived && (
+          <div className="mt-3 pt-3 border-t">
+            <TaskTimeTracker task={task} compact={true} />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

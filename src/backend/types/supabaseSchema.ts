@@ -19,6 +19,9 @@ export interface Task {
   updated_at?: string | null;
   reminder_at?: string | null;
   reminder_sent?: boolean | null;
+  // Time tracking fields
+  estimated_time_minutes?: number | null;
+  total_time_logged_minutes?: number | null;
   // Recurrence fields
   is_recurring?: boolean | null;
   recurrence_pattern?: 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
@@ -43,6 +46,9 @@ export interface Project {
   updated_at?: string;
   auto_progress?: boolean;
   manual_progress?: number | null;
+  // Time tracking fields
+  estimated_time_hours?: number | null;
+  total_time_logged_hours?: number | null;
 }
 
 // Make sure Event interface matches the database schema
@@ -61,6 +67,8 @@ export interface Event {
   updated_at?: string;
   reminder_at?: string | null;
   reminder_sent?: boolean | null;
+  // Time tracking fields
+  actual_duration_minutes?: number | null;
   // Recurrence fields
   is_recurring?: boolean | null;
   recurrence_pattern?: 'daily' | 'weekly' | 'monthly' | 'yearly' | null;

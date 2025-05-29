@@ -401,7 +401,7 @@ export const sendMessage = async (
     try {
       const updatedHistoryWithAiResponse = [...history, aiMessage]; // Use history *including* the latest AI response
       console.log("Analyzing conversation for passive suggestions after AI response...");
-      const extractionResult = await analyzeConversation(updatedHistoryWithAiResponse);
+      const extractionResult = await analyzeConversation(user.id, updatedHistoryWithAiResponse);
       
       if (extractionResult) {
         console.log(`Passive extraction found ${extractionResult.tasks?.length || 0} tasks, ${extractionResult.events?.length || 0} events, ${extractionResult.clarifying_questions?.length || 0} questions.`);

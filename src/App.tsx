@@ -12,8 +12,8 @@ import CookieConsentBanner from "@/frontend/components/legal/CookieConsentBanner
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Initialize reminder checking system
-  useReminders(60000); // Check every minute
+  // Global hooks for app-wide functionality
+  useReminders();
   
   // Use ref instead of state to prevent re-renders
   const recurrenceInitializedRef = useRef(false);

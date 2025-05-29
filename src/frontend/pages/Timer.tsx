@@ -1,34 +1,61 @@
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/frontend/components/layout/AppLayout";
-import { TimerDisplay } from "@/frontend/features/timer/components/TimerDisplay";
-import { TimerControls } from "@/frontend/features/timer/components/TimerControls";
-import TimerHistory from "@/frontend/features/timer/components/TimerHistory";
 import { CircularProgress } from "@/frontend/features/timer/components/CircularProgress";
 import { DayView } from "@/frontend/features/calendar/components/DayView";
 import { TimerSettings } from "@/frontend/features/timer/components/TimerSettings";
-import { Eye, Play, Pause, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/frontend/components/ui/button"; // Import the Button component
+import { ActiveTimeTracker } from "@/frontend/features/timer/components/ActiveTimeTracker";
+import { TimeStatsDashboard } from "@/frontend/features/timer/components/TimeStatsDashboard";
+import { TimerContextSelector, TimerContext } from "@/frontend/features/timer/components/TimerContextSelector";
+import { Play, Pause, RotateCcw, ChevronLeft, ChevronRight, Clock, BarChart3, Settings } from "lucide-react";
+import { Button } from "@/frontend/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/frontend/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/frontend/components/ui/card";
 import { getEvents, Event as CalendarEvent } from "@/backend/api/services/eventService";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addDays, subDays } from "date-fns";
+import { useTimeTracking } from "@/frontend/hooks/useTimeTracking";
+import { usePomodoroTimer } from "@/frontend/hooks/usePomodoroTimer";
 
 export default function Timer() {
-  // Timer state
-  const [mode, setMode] = useState<string>("focus");
-  const [duration, setDuration] = useState<number>(1500); // 25 min default
-  const [shortBreak, setShortBreak] = useState<number>(300); // 5 min
-  const [longBreak, setLongBreak] = useState<number>(900); // 15 min
-  const [sessionsBeforeLongBreak, setSessionsBeforeLongBreak] = useState<number>(4);
-  const [timeLeft, setTimeLeft] = useState<number>(duration);
-  const [isRunning, setIsRunning] = useState<boolean>(false);
+  // Global Pomodoro timer state
+  const {
+    mode,
+    timeLeft,
+    isRunning,
+    sessionCount,
+    timerContext,
+    settings,
+    start,
+    pause,
+    reset,
+    updateSettings,
+    setTimerContext,
+    formattedTime,
+    displayModeText,
+    sessionDescription,
+    progressValue,
+    currentDuration
+  } = usePomodoroTimer();
+
+  // Local UI state
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [sessionCount, setSessionCount] = useState<number>(0);
-  const [lastMode, setLastMode] = useState<string>("focus");
+  const [activeTab, setActiveTab] = useState<string>("pomodoro");
 
   // Calendar events state
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [user, setUser] = useState<any>(null);
+
+  // Time tracking hook
+  const { 
+    activeTimeLog, 
+    isActive: isTimeTrackingActive, 
+    startTracking, 
+    stopTracking,
+    pauseTracking,
+    resumeTracking,
+    refreshStats 
+  } = useTimeTracking();
 
   // Fetch user and events like Calendar page
   useEffect(() => {
@@ -64,72 +91,36 @@ export default function Timer() {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
+  // Simple sync: Start time tracking when Pomodoro focus starts
   useEffect(() => {
-    let interval: number | null = null;
-    if (isRunning) {
-      interval = window.setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            setIsRunning(false);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isRunning]);
-
-  useEffect(() => {
-    if (mode === "focus") setTimeLeft(duration);
-    else if (mode === "shortBreak") setTimeLeft(shortBreak);
-    else if (mode === "longBreak") setTimeLeft(longBreak);
-  }, [duration, shortBreak, longBreak, mode]);
-
-  useEffect(() => {
-    if (!isRunning && timeLeft === 0) {
-      // When a session ends, auto-switch modes and count sessions
-      if (mode === "focus") {
-        setSessionCount((prev) => prev + 1);
-        if ((sessionCount + 1) % sessionsBeforeLongBreak === 0) {
-          setMode("longBreak");
-        } else {
-          setMode("shortBreak");
+    if (isRunning && mode === "focus" && !isTimeTrackingActive) {
+      const startTimeTracking = async () => {
+        try {
+          const trackingData = {
+            description: timerContext?.title || `Timer Session`,
+            sessionType: 'work' as const,
+            ...(timerContext?.type === 'task' && { taskId: timerContext.id }),
+            ...(timerContext?.type === 'event' && { eventId: timerContext.id }),
+            ...(timerContext?.type === 'project' && { projectId: timerContext.id })
+          };
+          await startTracking(trackingData);
+        } catch (error) {
+          console.error('Failed to start time tracking:', error);
         }
-      } else {
-        setMode("focus");
-      }
+      };
+      startTimeTracking();
     }
     // eslint-disable-next-line
-  }, [isRunning, timeLeft]);
-
-  useEffect(() => {
-    if (mode === "focus" && lastMode !== "focus") {
-      setLastMode("focus");
-    } else if (mode !== "focus" && lastMode === "focus") {
-      setLastMode(mode);
-    }
-    // Reset session count if settings change
-  }, [mode]);
-
-  useEffect(() => {
-    setSessionCount(0);
-  }, [sessionsBeforeLongBreak, duration]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
+  }, [isRunning, mode, isTimeTrackingActive]);
 
   // Settings save handler
-  const handleSettingsChange = (settings: { focusDuration: number; shortBreak: number; longBreak: number; sessionsBeforeLongBreak: number; }) => {
-    setDuration(settings.focusDuration * 60);
-    setShortBreak(settings.shortBreak * 60);
-    setLongBreak(settings.longBreak * 60);
-    setSessionsBeforeLongBreak(settings.sessionsBeforeLongBreak);
+  const handleSettingsChange = (newSettings: { focusDuration: number; shortBreak: number; longBreak: number; sessionsBeforeLongBreak: number; }) => {
+    updateSettings({
+      focusDuration: newSettings.focusDuration * 60,
+      shortBreak: newSettings.shortBreak * 60,
+      longBreak: newSettings.longBreak * 60,
+      sessionsBeforeLongBreak: newSettings.sessionsBeforeLongBreak
+    });
   };
 
   // Date navigation handlers
@@ -142,126 +133,167 @@ export default function Timer() {
       <TimerSettings
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
-        focusDuration={duration / 60}
-        shortBreak={shortBreak / 60}
-        longBreak={longBreak / 60}
-        sessionsBeforeLongBreak={sessionsBeforeLongBreak}
+        focusDuration={settings.focusDuration / 60}
+        shortBreak={settings.shortBreak / 60}
+        longBreak={settings.longBreak / 60}
+        sessionsBeforeLongBreak={settings.sessionsBeforeLongBreak}
         onChange={handleSettingsChange}
       />
-      <div className="flex flex-col md:flex-row h-full min-h-screen bg-gradient-to-br from-background/90 to-background/70 text-white">
-        {/* Timer Section */}
-        <div className="flex-1 flex flex-col items-center justify-center p-8">
-          <div className="w-full max-w-md mx-auto space-y-10 rounded-3xl bg-gradient-to-br from-background/90 to-background/70 shadow-2xl p-10 border border-white/10">
-            <div className="flex flex-col items-center justify-center">
-              <div className="relative">
-                <CircularProgress value={(timeLeft / (mode === "focus" ? duration : mode === "shortBreak" ? shortBreak : longBreak)) * 100} size={260} color="var(--color-primary, #ff4b2b)" trailColor="var(--color-ring-bg, #373757)">
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <span className="block text-gray-400 mb-1"><Eye className="w-6 h-6" /></span>
-                    <span className="text-5xl font-mono font-bold tracking-widest mb-1" style={{letterSpacing: '0.1em'}}>{formatTime(timeLeft)}</span>
-                    <span className="text-base font-semibold tracking-widest uppercase text-primary mb-2">{mode === "focus" ? "Focus" : mode === "shortBreak" ? "Short Break" : "Long Break"}</span>
-                    <div className="flex gap-4 mt-2">
-                      {!isRunning ? (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/40"
-                          onClick={() => setIsRunning(true)}
-                          aria-label="Start"
-                        >
-                          <Play className="h-6 w-6 text-primary" />
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/40"
-                          onClick={() => setIsRunning(false)}
-                          aria-label="Pause"
-                        >
-                          <Pause className="h-6 w-6 text-primary" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/40"
-                        onClick={() => setTimeLeft(mode === "focus" ? duration : mode === "shortBreak" ? shortBreak : longBreak)}
-                        aria-label="Reset"
-                      >
-                        <RotateCcw className="h-6 w-6 text-primary" />
-                      </Button>
-                    </div>
+      
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Timer & Time Tracking</h1>
+            <p className="text-muted-foreground">Focus with Pomodoro technique and track your time</p>
+          </div>
+        </div>
+
+        {/* Active Time Tracker - shown if there's an active session */}
+        {activeTimeLog && (
+          <ActiveTimeTracker className="mb-6" />
+        )}
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="pomodoro" className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Pomodoro Timer
+            </TabsTrigger>
+            <TabsTrigger value="stats" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Time Stats
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="flex items-center gap-2">
+              <ChevronLeft className="h-4 w-4" />
+              Schedule
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="pomodoro" className="space-y-6">
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* Pomodoro Timer */}
+              <Card className="flex-1">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-xl">Timer</CardTitle>
+                  <CardDescription>
+                    {sessionDescription}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center space-y-6">
+                  <TimerContextSelector 
+                    context={timerContext}
+                    onContextChange={setTimerContext}
+                    className="w-full max-w-md"
+                    focusDuration={settings.focusDuration / 60}
+                    shortBreak={settings.shortBreak / 60}
+                    longBreak={settings.longBreak / 60}
+                    onSettingsChange={handleSettingsChange}
+                  />
+
+                  <div className="relative">
+                    <CircularProgress 
+                      value={progressValue} 
+                      size={260} 
+                      color="var(--color-primary, #ff4b2b)" 
+                      trailColor="var(--color-ring-bg, #373757)"
+                    >
+                      <div className="flex flex-col items-center justify-center h-full">
+                        <span className="text-5xl font-mono font-bold tracking-widest mb-1" style={{letterSpacing: '0.1em'}}>
+                          {formattedTime}
+                        </span>
+                        <span className="text-base font-semibold tracking-widest uppercase text-primary mb-2">
+                          {displayModeText}
+                        </span>
+                        <div className="flex gap-4 mt-2">
+                          {!isRunning ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/40"
+                              onClick={start}
+                              aria-label="Start"
+                            >
+                              <Play className="h-6 w-6 text-primary" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/40"
+                              onClick={pause}
+                              aria-label="Pause"
+                            >
+                              <Pause className="h-6 w-6 text-primary" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/40"
+                            onClick={reset}
+                            aria-label="Reset"
+                          >
+                            <RotateCcw className="h-6 w-6 text-primary" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CircularProgress>
                   </div>
-                </CircularProgress>
-              </div>
+
+                  <div className="text-center text-sm text-muted-foreground">
+                    {isTimeTrackingActive && timerContext && (
+                      <p>⏱️ Tracking time for: {timerContext.title}</p>
+                    )}
+                    {isTimeTrackingActive && !timerContext && (
+                      <p>⏱️ Time tracking active</p>
+                    )}
+                    {!isTimeTrackingActive && (
+                      <p>Start timer to begin time tracking</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              
             </div>
-            <div className="flex justify-center gap-4 text-sm mt-4">
-              <span className="rounded-lg px-3 py-1 bg-primary/10 text-primary font-semibold">
-                Session {sessionCount % sessionsBeforeLongBreak + 1} / {sessionsBeforeLongBreak}
-              </span>
-              {mode === "longBreak" && (
-                <span className="rounded-lg px-3 py-1 bg-green-500/10 text-green-400 font-semibold">Long Break!</span>
-              )}
-            </div>
-            <TimerControls
-              mode={mode}
-              onModeChange={setMode}
-              duration={mode === "focus" ? duration : mode === "shortBreak" ? shortBreak : longBreak}
-              onDurationChange={(val) => {
-                if (mode === "focus") setDuration(val);
-                else if (mode === "shortBreak") setShortBreak(val);
-                else setLongBreak(val);
-              }}
-            />
-            <Button className="w-full mt-2 py-2 rounded-lg border border-primary text-primary hover:bg-primary/10 transition font-semibold text-lg tracking-wide" onClick={() => setSettingsOpen(true)}>
-              Settings
-            </Button>
-          </div>
-          <div className="mt-8 w-full max-w-md">
-            {/* Removed TimerHistory component */}
-          </div>
-        </div>
-        {/* Calendar Day View Section */}
-        <div className="w-full md:w-96 border-t md:border-t-0 md:border-l bg-gradient-to-br from-background/90 to-background/70 border-white/10 p-0 flex flex-col h-full max-h-[100vh] min-h-0 rounded-b-none mb-0" style={{borderBottomLeftRadius: 0, borderBottomRightRadius: 0}}>
-          {/* Date navigation header - compact, single row */}
-          <div className="flex items-center justify-between px-4 py-4 border-b border-muted-foreground/10 bg-background sticky top-0 z-20 gap-2">
-            <button
-              className="rounded-full p-2 hover:bg-accent border bg-muted"
-              onClick={handlePrevDay}
-              aria-label="Previous day"
-              type="button"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <div className="flex flex-col items-center flex-1 min-w-0">
-              <span className="text-xs font-semibold tracking-widest text-primary uppercase truncate">{format(selectedDate, 'EEE')}</span>
-              <span className="text-base font-bold text-primary truncate">{format(selectedDate, 'MMMM d, yyyy')}</span>
-            </div>
-            <button
-              className="rounded-full p-2 hover:bg-accent border bg-muted"
-              onClick={handleNextDay}
-              aria-label="Next day"
-              type="button"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-            <button
-              className="ml-2 px-3 py-1 rounded-full text-xs font-semibold border bg-background hover:bg-accent whitespace-nowrap"
-              onClick={handleToday}
-              type="button"
-            >
-              Today
-            </button>
-          </div>
-          <div className="flex-1 min-h-0">
-            <DayView
-              date={selectedDate}
-              events={events}
-              onEditEvent={() => {}}
-              hideHeader={true}
-            />
-          </div>
-        </div>
+          </TabsContent>
+
+          <TabsContent value="stats" className="space-y-6">
+            <TimeStatsDashboard />
+          </TabsContent>
+
+          <TabsContent value="calendar" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Today's Schedule</CardTitle>
+                    <CardDescription>{format(selectedDate, 'EEEE, MMMM d, yyyy')}</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={handlePrevDay}>
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleToday}>
+                      Today
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleNextDay}>
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <DayView 
+                  events={events} 
+                  date={selectedDate} 
+                  onEditEvent={() => {}}
+                  hideHeader={true}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </AppLayout>
   );

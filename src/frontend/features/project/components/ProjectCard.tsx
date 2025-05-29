@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { format, differenceInDays } from 'date-fns';
 import { Project } from '@/backend/types/supabaseSchema';
 import { Card, CardContent } from '@/frontend/components/ui/card';
 import { Badge } from '@/frontend/components/ui/badge';
 import { cn } from '@/frontend/lib/utils';
-import { MoreVertical, Edit, Trash2 } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, Clock, Play, Square } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -12,6 +12,8 @@ import {
   DropdownMenuTrigger 
 } from '@/frontend/components/ui/dropdown-menu';
 import { Button } from '@/frontend/components/ui/button';
+import { useTimeTracking } from '@/frontend/hooks/useTimeTracking';
+import { getProjectTimeStats } from '@/backend/api/services/timeTracking/timeTrackingService';
 
 interface ProjectCardProps {
   project: Project;
@@ -26,12 +28,39 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onEdit,
   onDelete 
 }) => {
+  const [projectTimeStats, setProjectTimeStats] = useState<{ totalMinutes: number } | null>(null);
+  const {
+    activeTimeLog,
+    isActive,
+    startTracking,
+    stopTracking,
+    isLoading,
+    formattedElapsedTime
+  } = useTimeTracking();
+
   const daysRemaining = project.due_date 
     ? differenceInDays(new Date(project.due_date), new Date())
     : null;
 
   // Default color if not provided
   const borderColor = project.color || '#3b82f6'; // blue-500
+
+  // Check if currently tracking this project
+  const isTrackingThisProject = activeTimeLog?.project_id === project.id;
+
+  // Load project time stats
+  useEffect(() => {
+    const loadProjectStats = async () => {
+      try {
+        const stats = await getProjectTimeStats(project.id);
+        setProjectTimeStats(stats);
+      } catch (error) {
+        console.error('Error loading project stats:', error);
+      }
+    };
+
+    loadProjectStats();
+  }, [project.id, activeTimeLog]);
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -41,6 +70,31 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onDelete) onDelete(project);
+  };
+
+  const handleTimerClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (isTrackingThisProject) {
+      // Stop tracking this project
+      await stopTracking();
+    } else {
+      // Start tracking this project
+      await startTracking({
+        projectId: project.id,
+        description: `Project: ${project.name}`,
+        sessionType: 'work'
+      });
+    }
+  };
+
+  const formatHours = (minutes: number): string => {
+    if (minutes < 60) {
+      return `${minutes}m`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
   };
 
   return (
@@ -90,7 +144,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           <p className="text-muted-foreground text-sm mb-3">No description</p>
         )}
 
-        <div className="flex gap-2 mb-4">
+        <div className="flex flex-wrap gap-2 mb-4">
           <Badge 
             variant={
               project.status === 'active' ? 'default' : 
@@ -118,6 +172,45 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           >
             {project.priority} priority
           </Badge>
+
+          {/* Time Spent Badge */}
+          {projectTimeStats && projectTimeStats.totalMinutes > 0 && (
+            <Badge variant="secondary" className="text-xs">
+              <Clock className="h-3 w-3 mr-1" />
+              {formatHours(projectTimeStats.totalMinutes)} spent
+            </Badge>
+          )}
+
+          {/* Active Timer Badge */}
+          {isTrackingThisProject && (
+            <Badge variant="default" className="text-xs bg-blue-600">
+              <div className="h-2 w-2 rounded-full bg-white animate-pulse mr-1" />
+              {formattedElapsedTime}
+            </Badge>
+          )}
+
+          {/* Quick Timer Start/Stop Button */}
+          {project.status === 'active' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleTimerClick}
+              disabled={isLoading || (activeTimeLog !== null && !isTrackingThisProject)}
+              className="h-6 px-2 text-xs hover:bg-primary/10"
+            >
+              {isTrackingThisProject ? (
+                <>
+                  <Square className="h-3 w-3 mr-1" />
+                  Stop
+                </>
+              ) : (
+                <>
+                  <Play className="h-3 w-3 mr-1" />
+                  Start Timer
+                </>
+              )}
+            </Button>
+          )}
         </div>
 
         <div className="mb-4">

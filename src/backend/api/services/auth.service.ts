@@ -154,7 +154,8 @@ export const deleteAccount = async (password: string) => {
       { table: 'task_activity_log', userColumn: 'user_id' },
       { table: 'google_calendar_tokens', userColumn: 'user_id' },
       { table: 'user_settings', userColumn: 'user_id' },
-      { table: 'user_consent', userColumn: 'user_id' }
+      { table: 'user_consent', userColumn: 'user_id' },
+      { table: 'time_logs', userColumn: 'user_id' },
     ];
     
     for (const { table, userColumn } of tablesToCleanup) {
