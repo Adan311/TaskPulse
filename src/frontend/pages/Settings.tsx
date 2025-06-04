@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/frontend/components/ui/tabs";
 import { AppLayout } from "@/frontend/components/layout/AppLayout";
-import { AlertCircle, User, Lock, Database } from "lucide-react";
+import { AlertCircle, User, Lock, Database, HelpCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert";
 import ProfileSettings from "@/frontend/features/settings/components/ProfileSettings";
 import PasswordSettings from "@/frontend/features/settings/components/PasswordSettings";
 import DeleteAccount from "@/frontend/features/settings/components/DeleteAccount";
 import AiSettings from "@/frontend/features/settings/components/AiSettings";
 import DataExport from "@/frontend/features/settings/components/DataExport";
+import HelpSupport from "@/frontend/features/settings/components/HelpSupport";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -31,7 +32,7 @@ export default function Settings() {
         </Alert>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid grid-cols-4 w-full md:w-[540px]">
+          <TabsList className="grid grid-cols-5 w-full md:w-[675px]">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               <span>Profile</span>
@@ -47,6 +48,10 @@ export default function Settings() {
             <TabsTrigger value="ai" className="flex items-center gap-2">
               <span role="img" aria-label="AI">🤖</span>
               <span>AI</span>
+            </TabsTrigger>
+            <TabsTrigger value="help" className="flex items-center gap-2">
+              <HelpCircle className="h-4 w-4" />
+              <span>Help</span>
             </TabsTrigger>
           </TabsList>
           
@@ -72,6 +77,12 @@ export default function Settings() {
           <TabsContent value="ai" className="space-y-4">
             <div className="grid gap-6">
               <AiSettings />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="help" className="space-y-4">
+            <div className="grid gap-6">
+              <HelpSupport />
             </div>
           </TabsContent>
         </Tabs>

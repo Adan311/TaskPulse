@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/frontend/components/ui/button';
 import { Badge } from '@/frontend/components/ui/badge';
 import { Clock, Play, Square } from 'lucide-react';
-import { useTimeTracking } from '@/frontend/hooks/useTimeTracking';
+import { useGlobalTimer } from '@/frontend/context/TimerContext';
 import { Task } from '@/backend/types/supabaseSchema';
 import { cn } from '@/frontend/lib/utils';
 
@@ -19,12 +19,13 @@ export const TaskTimeTracker: React.FC<TaskTimeTrackerProps> = ({
 }) => {
   const {
     activeTimeLog,
-    isActive,
-    startTracking,
-    stopTracking,
+    isTimeTrackingActive,
+    startTimeTracking,
+    stopTimeTracking,
     isLoading,
-    formattedElapsedTime
-  } = useTimeTracking();
+    formattedTimeTrackingTime,
+    hasActiveTimer
+  } = useGlobalTimer();
 
   const isTrackingThisTask = activeTimeLog?.task_id === task.id;
   const totalLoggedMinutes = task.total_time_logged_minutes || 0;
@@ -32,7 +33,7 @@ export const TaskTimeTracker: React.FC<TaskTimeTrackerProps> = ({
 
   const handleStartTracking = async () => {
     try {
-      await startTracking({
+      await startTimeTracking({
         taskId: task.id,
         projectId: task.project || undefined,
         description: `Working on: ${task.title}`,
@@ -45,7 +46,7 @@ export const TaskTimeTracker: React.FC<TaskTimeTrackerProps> = ({
 
   const handleStopTracking = async () => {
     try {
-      await stopTracking();
+      await stopTimeTracking();
     } catch (error) {
       console.error('Failed to stop tracking:', error);
     }
@@ -80,7 +81,7 @@ export const TaskTimeTracker: React.FC<TaskTimeTrackerProps> = ({
         {isTrackingThisTask && (
           <Badge variant="default" className="text-xs bg-green-600">
             <div className="h-2 w-2 rounded-full bg-white animate-pulse mr-1" />
-            {formattedElapsedTime}
+            {formattedTimeTrackingTime}
           </Badge>
         )}
         
@@ -100,7 +101,7 @@ export const TaskTimeTracker: React.FC<TaskTimeTrackerProps> = ({
             size="sm"
             variant="ghost"
             onClick={handleStartTracking}
-            disabled={isLoading || (activeTimeLog !== null && !isTrackingThisTask)}
+            disabled={isLoading || (hasActiveTimer && !isTrackingThisTask)}
             className="h-6 w-6 p-0"
           >
             <Play className="h-3 w-3" />
@@ -156,7 +157,7 @@ export const TaskTimeTracker: React.FC<TaskTimeTrackerProps> = ({
               <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
               <span className="text-sm font-medium">Actively tracking</span>
             </div>
-            <span className="text-sm font-mono">{formattedElapsedTime}</span>
+            <span className="text-sm font-mono">{formattedTimeTrackingTime}</span>
           </div>
         </div>
       )}
@@ -179,7 +180,7 @@ export const TaskTimeTracker: React.FC<TaskTimeTrackerProps> = ({
             variant="outline"
             size="sm"
             onClick={handleStartTracking}
-            disabled={isLoading || (activeTimeLog !== null && !isTrackingThisTask)}
+            disabled={isLoading || (hasActiveTimer && !isTrackingThisTask)}
             className="flex items-center gap-2"
           >
             <Play className="h-4 w-4" />
@@ -189,7 +190,7 @@ export const TaskTimeTracker: React.FC<TaskTimeTrackerProps> = ({
       </div>
 
       {/* Disabled state hint */}
-      {activeTimeLog !== null && !isTrackingThisTask && (
+      {hasActiveTimer && !isTrackingThisTask && (
         <p className="text-xs text-muted-foreground">
           Stop current tracking session to track time for this task
         </p>

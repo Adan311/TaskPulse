@@ -2,60 +2,59 @@ import { useState, useEffect } from "react";
 import { AppLayout } from "@/frontend/components/layout/AppLayout";
 import { CircularProgress } from "@/frontend/features/timer/components/CircularProgress";
 import { DayView } from "@/frontend/features/calendar/components/DayView";
-import { TimerSettings } from "@/frontend/features/timer/components/TimerSettings";
 import { ActiveTimeTracker } from "@/frontend/features/timer/components/ActiveTimeTracker";
 import { TimeStatsDashboard } from "@/frontend/features/timer/components/TimeStatsDashboard";
 import { TimerContextSelector, TimerContext } from "@/frontend/features/timer/components/TimerContextSelector";
-import { Play, Pause, RotateCcw, ChevronLeft, ChevronRight, Clock, BarChart3, Settings } from "lucide-react";
+import { Play, Pause, RotateCcw, ChevronLeft, ChevronRight, Clock, BarChart3 } from "lucide-react";
 import { Button } from "@/frontend/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/frontend/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/frontend/components/ui/card";
 import { getEvents, Event as CalendarEvent } from "@/backend/api/services/eventService";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addDays, subDays } from "date-fns";
-import { useTimeTracking } from "@/frontend/hooks/useTimeTracking";
-import { usePomodoroTimer } from "@/frontend/hooks/usePomodoroTimer";
+import { useGlobalTimer } from "@/frontend/context/TimerContext";
 
 export default function Timer() {
-  // Global Pomodoro timer state
+  // Global Timer state from context
   const {
-    mode,
-    timeLeft,
-    isRunning,
-    sessionCount,
-    timerContext,
-    settings,
-    start,
-    pause,
-    reset,
-    updateSettings,
-    setTimerContext,
-    formattedTime,
-    displayModeText,
-    sessionDescription,
-    progressValue,
-    currentDuration
-  } = usePomodoroTimer();
+    // Pomodoro state
+    pomodoroMode,
+    pomodoroTimeLeft,
+    pomodoroIsRunning,
+    pomodoroSessionCount,
+    pomodoroSettings,
+    pomodoroContext,
+    
+    // Time tracking state
+    activeTimeLog,
+    isTimeTrackingActive,
+    formattedTimeTrackingTime,
+    
+    // Actions
+    startPomodoro,
+    pausePomodoro,
+    resetPomodoro,
+    setPomodoroContext,
+    updatePomodoroSettings,
+    startSynchronizedSession,
+    stopAllTimers,
+    pauseAllTimers,
+    resumeAllTimers,
+    
+    // Computed
+    isSynchronized,
+    hasActiveTimer,
+    getCurrentContext,
+    formattedPomodoroTime
+  } = useGlobalTimer();
 
   // Local UI state
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState<string>("pomodoro");
 
   // Calendar events state
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [user, setUser] = useState<any>(null);
-
-  // Time tracking hook
-  const { 
-    activeTimeLog, 
-    isActive: isTimeTrackingActive, 
-    startTracking, 
-    stopTracking,
-    pauseTracking,
-    resumeTracking,
-    refreshStats 
-  } = useTimeTracking();
 
   // Fetch user and events like Calendar page
   useEffect(() => {
@@ -91,31 +90,26 @@ export default function Timer() {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
-  // Simple sync: Start time tracking when Pomodoro focus starts
-  useEffect(() => {
-    if (isRunning && mode === "focus" && !isTimeTrackingActive) {
-      const startTimeTracking = async () => {
-        try {
-          const trackingData = {
-            description: timerContext?.title || `Timer Session`,
-            sessionType: 'work' as const,
-            ...(timerContext?.type === 'task' && { taskId: timerContext.id }),
-            ...(timerContext?.type === 'event' && { eventId: timerContext.id }),
-            ...(timerContext?.type === 'project' && { projectId: timerContext.id })
-          };
-          await startTracking(trackingData);
-        } catch (error) {
-          console.error('Failed to start time tracking:', error);
-        }
-      };
-      startTimeTracking();
-    }
-    // eslint-disable-next-line
-  }, [isRunning, mode, isTimeTrackingActive]);
+  // Handle timer actions with global context
+  const handlePomodoroStart = () => {
+    startPomodoro();
+  };
 
-  // Settings save handler
+  const handlePomodoroPause = () => {
+    pausePomodoro();
+  };
+
+  const handlePomodoroReset = () => {
+    resetPomodoro();
+  };
+
+  const handleSynchronizedStart = async (context: TimerContext | null) => {
+    await startSynchronizedSession(context);
+  };
+
+  // Settings save handler for TimerContextSelector
   const handleSettingsChange = (newSettings: { focusDuration: number; shortBreak: number; longBreak: number; sessionsBeforeLongBreak: number; }) => {
-    updateSettings({
+    updatePomodoroSettings({
       focusDuration: newSettings.focusDuration * 60,
       shortBreak: newSettings.shortBreak * 60,
       longBreak: newSettings.longBreak * 60,
@@ -128,172 +122,228 @@ export default function Timer() {
   const handleNextDay = () => setSelectedDate(prev => addDays(prev, 1));
   const handleToday = () => setSelectedDate(new Date());
 
+  // Calculate progress for circular progress
+  const currentDuration = pomodoroMode === 'focus' ? pomodoroSettings.focusDuration :
+                         pomodoroMode === 'shortBreak' ? pomodoroSettings.shortBreak :
+                         pomodoroSettings.longBreak;
+  const progressValue = currentDuration > 0 ? ((currentDuration - pomodoroTimeLeft) / currentDuration) * 100 : 0;
+
+  // Session description for display
+  const sessionDescription = pomodoroMode === 'focus' ? 'Focus Session' :
+                           pomodoroMode === 'shortBreak' ? 'Short Break' :
+                           'Long Break';
+
+  const displayModeText = `${sessionDescription}${pomodoroSessionCount > 0 ? ` (${pomodoroSessionCount})` : ''}`;
+
   return (
     <AppLayout>
-      <TimerSettings
-        open={settingsOpen}
-        onOpenChange={setSettingsOpen}
-        focusDuration={settings.focusDuration / 60}
-        shortBreak={settings.shortBreak / 60}
-        longBreak={settings.longBreak / 60}
-        sessionsBeforeLongBreak={settings.sessionsBeforeLongBreak}
-        onChange={handleSettingsChange}
-      />
-      
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Timer & Time Tracking</h1>
-            <p className="text-muted-foreground">Focus with Pomodoro technique and track your time</p>
-          </div>
-        </div>
+      <div className="container mx-auto px-4 py-6 max-w-6xl">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left Column - Timer */}
+          <div className="flex-1 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold">Focus Timer</h1>
+                <p className="text-muted-foreground">Stay productive with the Pomodoro technique</p>
+              </div>
+            </div>
 
-        {/* Active Time Tracker - shown if there's an active session */}
-        {activeTimeLog && (
-          <ActiveTimeTracker className="mb-6" />
-        )}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="pomodoro">Timer</TabsTrigger>
+                <TabsTrigger value="tracking">Time Tracking</TabsTrigger>
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              </TabsList>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="pomodoro" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Pomodoro Timer
-            </TabsTrigger>
-            <TabsTrigger value="stats" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Time Stats
-            </TabsTrigger>
-            <TabsTrigger value="calendar" className="flex items-center gap-2">
-              <ChevronLeft className="h-4 w-4" />
-              Schedule
-            </TabsTrigger>
-          </TabsList>
+              <TabsContent value="pomodoro" className="space-y-6">
+                {/* Main Timer Card */}
+                <Card>
+                  <CardHeader className="text-center">
+                    <CardTitle className="text-2xl">
+                      {displayModeText}
+                      {isSynchronized && (
+                        <span className="ml-2 text-sm text-blue-500">• Synchronized</span>
+                      )}
+                    </CardTitle>
+                    {pomodoroContext && (
+                      <CardDescription>
+                        Working on: {pomodoroContext.title}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Circular Progress */}
+                    <div className="flex justify-center">
+                      <CircularProgress 
+                        value={progressValue}
+                        size={200}
+                        strokeWidth={8}
+                      >
+                        <div className="flex flex-col items-center justify-center">
+                          <span className="text-4xl font-mono font-bold">{formattedPomodoroTime}</span>
+                          <span className="text-sm text-muted-foreground">{sessionDescription}</span>
+                        </div>
+                      </CircularProgress>
+                    </div>
 
-          <TabsContent value="pomodoro" className="space-y-6">
-            <div className="flex flex-col lg:flex-row gap-6">
-              {/* Pomodoro Timer */}
-              <Card className="flex-1">
-                <CardHeader className="text-center">
-                  <CardTitle className="text-xl">Timer</CardTitle>
-                  <CardDescription>
-                    {sessionDescription}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col items-center space-y-6">
-                  <TimerContextSelector 
-                    context={timerContext}
-                    onContextChange={setTimerContext}
-                    className="w-full max-w-md"
-                    focusDuration={settings.focusDuration / 60}
-                    shortBreak={settings.shortBreak / 60}
-                    longBreak={settings.longBreak / 60}
-                    onSettingsChange={handleSettingsChange}
-                  />
+                    {/* Timer Controls */}
+                    <div className="flex justify-center gap-4">
+                      {pomodoroIsRunning ? (
+                        <Button size="lg" onClick={handlePomodoroPause} variant="outline">
+                          <Pause className="h-5 w-5 mr-2" />
+                          Pause
+                        </Button>
+                      ) : (
+                        <Button size="lg" onClick={handlePomodoroStart}>
+                          <Play className="h-5 w-5 mr-2" />
+                          {pomodoroTimeLeft === currentDuration ? 'Start' : 'Resume'}
+                        </Button>
+                      )}
+                      
+                      <Button size="lg" variant="outline" onClick={handlePomodoroReset}>
+                        <RotateCcw className="h-5 w-5 mr-2" />
+                        Reset
+                      </Button>
+                    </div>
 
-                  <div className="relative">
-                    <CircularProgress 
-                      value={progressValue} 
-                      size={260} 
-                      color="var(--color-primary, #ff4b2b)" 
-                      trailColor="var(--color-ring-bg, #373757)"
-                    >
-                      <div className="flex flex-col items-center justify-center h-full">
-                        <span className="text-5xl font-mono font-bold tracking-widest mb-1" style={{letterSpacing: '0.1em'}}>
-                          {formattedTime}
-                        </span>
-                        <span className="text-base font-semibold tracking-widest uppercase text-primary mb-2">
-                          {displayModeText}
-                        </span>
-                        <div className="flex gap-4 mt-2">
-                          {!isRunning ? (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/40"
-                              onClick={start}
-                              aria-label="Start"
-                            >
-                              <Play className="h-6 w-6 text-primary" />
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/40"
-                              onClick={pause}
-                              aria-label="Pause"
-                            >
-                              <Pause className="h-6 w-6 text-primary" />
-                            </Button>
-                          )}
+                    {/* Context Selector with Integrated Settings */}
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-medium">Choose Your Focus</h3>
+                      <TimerContextSelector
+                        context={pomodoroContext}
+                        onContextChange={setPomodoroContext}
+                        focusDuration={Math.round(pomodoroSettings.focusDuration / 60)}
+                        shortBreak={Math.round(pomodoroSettings.shortBreak / 60)}
+                        longBreak={Math.round(pomodoroSettings.longBreak / 60)}
+                        onSettingsChange={handleSettingsChange}
+                        onStartWithContext={handleSynchronizedStart}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Session Summary */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Session Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Sessions Completed</p>
+                        <p className="text-2xl font-bold">{pomodoroSessionCount}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Current Mode</p>
+                        <p className="text-lg font-medium">{sessionDescription}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="tracking" className="space-y-6">
+                <ActiveTimeTracker />
+                
+                {/* Global Timer Status */}
+                {hasActiveTimer && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Clock className="h-5 w-5" />
+                        Active Timer Status
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Current Context</span>
+                          <span className="font-medium">{getCurrentContext()}</span>
+                        </div>
+                        
+                        {isTimeTrackingActive && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">Time Tracked</span>
+                            <span className="font-mono">{formattedTimeTrackingTime}</span>
+                          </div>
+                        )}
+                        
+                        {isSynchronized && (
+                          <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                            <p className="text-sm text-blue-700 dark:text-blue-300">
+                              ✓ Pomodoro and time tracking are synchronized
+                            </p>
+                          </div>
+                        )}
+                        
+                        <div className="flex gap-2">
                           <Button
-                            variant="ghost"
-                            size="icon"
-                            className="rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/40"
-                            onClick={reset}
-                            aria-label="Reset"
+                            size="sm"
+                            variant="outline"
+                            onClick={pauseAllTimers}
                           >
-                            <RotateCcw className="h-6 w-6 text-primary" />
+                            Pause All
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={resumeAllTimers}
+                          >
+                            Resume All
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={stopAllTimers}
+                          >
+                            Stop All
                           </Button>
                         </div>
                       </div>
-                    </CircularProgress>
-                  </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
 
-                  <div className="text-center text-sm text-muted-foreground">
-                    {isTimeTrackingActive && timerContext && (
-                      <p>⏱️ Tracking time for: {timerContext.title}</p>
-                    )}
-                    {isTimeTrackingActive && !timerContext && (
-                      <p>⏱️ Time tracking active</p>
-                    )}
-                    {!isTimeTrackingActive && (
-                      <p>Start timer to begin time tracking</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <TabsContent value="analytics" className="space-y-6">
+                <TimeStatsDashboard />
+              </TabsContent>
+            </Tabs>
+          </div>
 
-              
-            </div>
-          </TabsContent>
-
-          <TabsContent value="stats" className="space-y-6">
-            <TimeStatsDashboard />
-          </TabsContent>
-
-          <TabsContent value="calendar" className="space-y-6">
+          {/* Right Column - Calendar */}
+          <div className="lg:w-96 space-y-4">
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Today's Schedule</CardTitle>
-                    <CardDescription>{format(selectedDate, 'EEEE, MMMM d, yyyy')}</CardDescription>
-                  </div>
+                  <CardTitle className="text-lg">Today's Schedule</CardTitle>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={handlePrevDay}>
+                    <Button variant="ghost" size="sm" onClick={handlePrevDay}>
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={handleToday}>
+                    <Button variant="ghost" size="sm" onClick={handleToday}>
                       Today
                     </Button>
-                    <Button variant="outline" size="sm" onClick={handleNextDay}>
+                    <Button variant="ghost" size="sm" onClick={handleNextDay}>
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
+                <CardDescription>
+                  {format(selectedDate, "EEEE, MMMM d, yyyy")}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <DayView 
-                  events={events} 
                   date={selectedDate} 
+                  events={events}
                   onEditEvent={() => {}}
                   hideHeader={true}
                 />
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
     </AppLayout>
   );

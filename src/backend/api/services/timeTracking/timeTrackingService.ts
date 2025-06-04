@@ -52,9 +52,16 @@ export const startTimeTracking = async (params: {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
 
-    // Check if there's already an active session
-    const activeSession = await getActiveTimeLog();
-    if (activeSession) {
+    // Check if there are ANY active sessions (improved duplicate prevention)
+    const { data: activeSessions, error: checkError } = await supabase
+      .from('time_logs')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('status', 'active');
+
+    if (checkError) throw checkError;
+    
+    if (activeSessions && activeSessions.length > 0) {
       throw new Error("There is already an active time tracking session. Please stop it first.");
     }
 
@@ -119,16 +126,38 @@ export const pauseTimeTracking = async (): Promise<TimeLog> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
 
+    // First, get the most recent active session
+    const { data: activeSessions, error: selectError } = await supabase
+      .from('time_logs')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .order('start_time', { ascending: false })
+      .limit(1);
+
+    if (selectError) throw selectError;
+    
+    if (!activeSessions || activeSessions.length === 0) {
+      throw new Error("No active time tracking sessions found");
+    }
+
+    const sessionToPause = activeSessions[0];
+
+    // Update all active sessions to paused (to clean up duplicates)
     const { data, error } = await supabase
       .from('time_logs')
       .update({ status: 'paused' })
       .eq('user_id', user.id)
       .eq('status', 'active')
-      .select()
-      .single();
+      .select();
 
     if (error) throw error;
-    return data as TimeLog;
+
+    // Return the most recent session that was paused
+    return {
+      ...sessionToPause,
+      status: 'paused'
+    } as TimeLog;
   } catch (error) {
     console.error('Error pausing time tracking:', error);
     throw error;
@@ -143,11 +172,28 @@ export const resumeTimeTracking = async (): Promise<TimeLog> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
 
+    // First, get the most recent paused session
+    const { data: pausedSessions, error: selectError } = await supabase
+      .from('time_logs')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('status', 'paused')
+      .order('start_time', { ascending: false })
+      .limit(1);
+
+    if (selectError) throw selectError;
+    
+    if (!pausedSessions || pausedSessions.length === 0) {
+      throw new Error("No paused time tracking sessions found");
+    }
+
+    const sessionToResume = pausedSessions[0];
+
+    // Update the most recent paused session to active
     const { data, error } = await supabase
       .from('time_logs')
       .update({ status: 'active' })
-      .eq('user_id', user.id)
-      .eq('status', 'paused')
+      .eq('id', sessionToResume.id)
       .select()
       .single();
 
@@ -169,6 +215,21 @@ export const stopTimeTracking = async (): Promise<TimeLog> => {
 
     const endTime = new Date().toISOString();
 
+    // First, get all active/paused sessions
+    const { data: sessionsToStop, error: selectError } = await supabase
+      .from('time_logs')
+      .select('*')
+      .eq('user_id', user.id)
+      .in('status', ['active', 'paused'])
+      .order('start_time', { ascending: false });
+
+    if (selectError) throw selectError;
+    
+    if (!sessionsToStop || sessionsToStop.length === 0) {
+      throw new Error("No active or paused time tracking sessions found");
+    }
+
+    // Update all active/paused sessions to completed
     const { data, error } = await supabase
       .from('time_logs')
       .update({ 
@@ -177,11 +238,24 @@ export const stopTimeTracking = async (): Promise<TimeLog> => {
       })
       .eq('user_id', user.id)
       .in('status', ['active', 'paused'])
-      .select()
-      .single();
+      .select();
 
     if (error) throw error;
-    return data as TimeLog;
+
+    // Return the most recent session (first in the ordered list)
+    const mostRecentSession = sessionsToStop[0];
+    
+    // Calculate duration for the returned session
+    const startTime = new Date(mostRecentSession.start_time);
+    const endTimeDate = new Date(endTime);
+    const durationSeconds = Math.floor((endTimeDate.getTime() - startTime.getTime()) / 1000);
+
+    return {
+      ...mostRecentSession,
+      status: 'completed',
+      end_time: endTime,
+      duration_seconds: durationSeconds
+    } as TimeLog;
   } catch (error) {
     console.error('Error stopping time tracking:', error);
     throw error;

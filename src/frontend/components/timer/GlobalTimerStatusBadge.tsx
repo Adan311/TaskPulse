@@ -1,10 +1,10 @@
 import React from 'react';
 import { Badge } from '@/frontend/components/ui/badge';
 import { Clock, Play, Pause, Square } from 'lucide-react';
-import { useTimeTracking } from '@/frontend/hooks/useTimeTracking';
-import { usePomodoroTimer } from '@/frontend/hooks/usePomodoroTimer';
+import { useGlobalTimer } from '@/frontend/context/TimerContext';
 import { cn } from '@/frontend/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/frontend/components/ui/button';
 
 interface GlobalTimerStatusBadgeProps {
   className?: string;
@@ -18,90 +18,24 @@ export const GlobalTimerStatusBadge: React.FC<GlobalTimerStatusBadgeProps> = ({
   showControls = false
 }) => {
   const {
-    activeTimeLog,
-    isActive,
-    isPaused,
-    formattedElapsedTime,
-    stopTracking,
-    pauseTracking,
-    resumeTracking,
-    isLoading
-  } = useTimeTracking();
-
-  const {
-    mode: pomodoroMode,
-    timeLeft: pomodoroTimeLeft,
-    isRunning: pomodoroIsRunning,
-    formattedTime: pomodoroFormattedTime,
-    displayModeText: pomodoroDisplayText,
-    timerContext,
-    start: pomodoroStart,
-    pause: pomodoroPause,
-    reset: pomodoroReset
-  } = usePomodoroTimer();
+    hasActiveTimer,
+    getCurrentContext,
+    getStatusColor,
+    getDisplayTime,
+    isTimeTrackingPaused,
+    pomodoroIsRunning,
+    isSynchronized,
+    isLoading,
+    stopAllTimers,
+    pauseAllTimers,
+    resumeAllTimers
+  } = useGlobalTimer();
 
   const navigate = useNavigate();
 
-  // Simple logic: Show if time tracking is active OR Pomodoro is running
-  const hasActiveTimer = activeTimeLog || pomodoroIsRunning;
-  
   if (!hasActiveTimer) {
     return null;
   }
-
-  // Priority: Show time tracking if active, otherwise show Pomodoro
-  const isShowingTimeTracking = !!activeTimeLog;
-  const isShowingPomodoro = !activeTimeLog && pomodoroIsRunning;
-
-  const getContextName = () => {
-    if (isShowingTimeTracking && activeTimeLog) {
-      if (activeTimeLog.task_id) {
-        return activeTimeLog.description || 'Task';
-      }
-      if (activeTimeLog.project_id) {
-        return activeTimeLog.description || 'Project';
-      }
-      if (activeTimeLog.event_id) {
-        return activeTimeLog.description || 'Event';
-      }
-      return activeTimeLog.description || 'Timer';
-    }
-    
-    if (isShowingPomodoro) {
-      if (timerContext) {
-        return timerContext.title;
-      }
-      return pomodoroDisplayText;
-    }
-    
-    return 'Timer';
-  };
-
-  const getStatusColor = () => {
-    if (isShowingTimeTracking) {
-      if (isPaused) return 'bg-orange-500';
-      if (isActive) return 'bg-green-500';
-      return 'bg-gray-500';
-    }
-    
-    if (isShowingPomodoro) {
-      if (!pomodoroIsRunning) return 'bg-orange-500'; // Paused
-      if (pomodoroMode === 'focus') return 'bg-blue-500';
-      return 'bg-green-500'; // Break
-    }
-    
-    return 'bg-gray-500';
-  };
-
-  const getDisplayTime = () => {
-    if (isShowingTimeTracking) {
-      return formattedElapsedTime;
-    }
-    if (isShowingPomodoro) {
-      return pomodoroFormattedTime;
-    }
-    return '0:00';
-  };
 
   const handleBadgeClick = () => {
     navigate('/timer');
@@ -109,44 +43,34 @@ export const GlobalTimerStatusBadge: React.FC<GlobalTimerStatusBadgeProps> = ({
 
   const handleStopClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isShowingTimeTracking) {
-      stopTracking();
-    } else if (isShowingPomodoro) {
-      pomodoroReset();
-    }
+    stopAllTimers();
   };
 
   const handlePauseResumeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isShowingTimeTracking) {
-      if (isPaused) {
-        resumeTracking();
-      } else {
-        pauseTracking();
-      }
-    } else if (isShowingPomodoro) {
-      if (pomodoroIsRunning) {
-        pomodoroPause();
-      } else {
-        pomodoroStart();
-      }
+    if (isTimeTrackingPaused || (pomodoroIsRunning === false)) {
+      resumeAllTimers();
+    } else {
+      pauseAllTimers();
     }
   };
 
-  const isTimerPaused = isShowingTimeTracking ? isPaused : !pomodoroIsRunning;
+  const isTimerPaused = isTimeTrackingPaused || (pomodoroIsRunning === false);
 
   if (compact) {
     return (
       <div className={cn("flex items-center gap-1", className)}>
         <div 
           className={cn(
-            "h-2 w-2 rounded-full animate-pulse",
+            "h-2 w-2 rounded-full",
+            isTimerPaused ? "" : "animate-pulse",
             getStatusColor()
           )}
         />
         <span 
-          className="text-xs font-mono cursor-pointer hover:text-primary"
+          className="text-xs font-mono cursor-pointer hover:text-primary transition-colors"
           onClick={handleBadgeClick}
+          title={`Timer: ${getCurrentContext()}`}
         >
           {getDisplayTime()}
         </span>
@@ -162,42 +86,51 @@ export const GlobalTimerStatusBadge: React.FC<GlobalTimerStatusBadgeProps> = ({
         onClick={handleBadgeClick}
       >
         <div className="flex items-center gap-2">
-          <div className={cn(
-            "h-2 w-2 rounded-full",
-            isActive && !isPaused ? "animate-pulse" : "",
-            getStatusColor()
-          )} />
+          <div 
+            className={cn(
+              "h-2 w-2 rounded-full",
+              isTimerPaused ? "" : "animate-pulse",
+              getStatusColor()
+            )}
+          />
           
-          <div className="flex flex-col items-start">
-            <span className="text-xs font-medium truncate max-w-24">
-              {getContextName()}
-            </span>
-            <span className="text-xs font-mono text-muted-foreground">
-              {getDisplayTime()}
-            </span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <Clock className="h-3 w-3" />
+              <span className="text-xs font-medium">{getCurrentContext()}</span>
+            </div>
+            <span className="text-xs font-mono">{getDisplayTime()}</span>
           </div>
         </div>
       </Badge>
 
       {showControls && (
         <div className="flex items-center gap-1">
-          <button
+          <Button
+            size="sm"
+            variant="ghost"
             onClick={handlePauseResumeClick}
             disabled={isLoading}
-            className="h-5 w-5 flex items-center justify-center rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-            title={isTimerPaused ? 'Resume' : 'Pause'}
+            className="h-6 w-6 p-0"
+            title={isTimerPaused ? "Resume timer" : "Pause timer"}
           >
-            {isTimerPaused ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
-          </button>
+            {isTimerPaused ? (
+              <Play className="h-3 w-3" />
+            ) : (
+              <Pause className="h-3 w-3" />
+            )}
+          </Button>
           
-          <button
+          <Button
+            size="sm"
+            variant="ghost"
             onClick={handleStopClick}
             disabled={isLoading}
-            className="h-5 w-5 flex items-center justify-center rounded hover:bg-accent text-destructive hover:text-destructive transition-colors"
-            title="Stop"
+            className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+            title="Stop all timers"
           >
             <Square className="h-3 w-3" />
-          </button>
+          </Button>
         </div>
       )}
     </div>

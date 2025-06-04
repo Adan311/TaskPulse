@@ -42,7 +42,8 @@ import {
   Timer,
   Coffee,
   Users,
-  ClipboardList
+  ClipboardList,
+  Play
 } from 'lucide-react';
 import { Task } from '@/backend/types/supabaseSchema';
 import { Project } from '@/backend/types/supabaseSchema';
@@ -72,6 +73,7 @@ interface TimerContextSelectorProps {
   shortBreak?: number;
   longBreak?: number;
   onSettingsChange?: (settings: { focusDuration: number; shortBreak: number; longBreak: number; sessionsBeforeLongBreak: number }) => void;
+  onStartWithContext?: (context: TimerContext | null) => Promise<void>;
 }
 
 export const TimerContextSelector: React.FC<TimerContextSelectorProps> = ({
@@ -82,7 +84,8 @@ export const TimerContextSelector: React.FC<TimerContextSelectorProps> = ({
   focusDuration,
   shortBreak,
   longBreak,
-  onSettingsChange
+  onSettingsChange,
+  onStartWithContext
 }) => {
   const [open, setOpen] = useState(false);
   const [customDescription, setCustomDescription] = useState('');
@@ -211,7 +214,7 @@ export const TimerContextSelector: React.FC<TimerContextSelectorProps> = ({
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex items-center justify-between">
-        <Label className="text-sm font-medium">Session Context</Label>
+        <Label className="text-sm font-medium">What are you working on?</Label>
         {context && (
           <Button
             variant="ghost"
@@ -252,9 +255,9 @@ export const TimerContextSelector: React.FC<TimerContextSelectorProps> = ({
             </SheetTrigger>
             <SheetContent>
               <SheetHeader>
-                <SheetTitle>Session Context</SheetTitle>
+                <SheetTitle>Setup Your Focus Session</SheetTitle>
                 <SheetDescription>
-                  Choose what you'll be working on during this session
+                  Choose what you'll work on and adjust your timer settings
                 </SheetDescription>
               </SheetHeader>
               <ContextSelector 
@@ -272,6 +275,8 @@ export const TimerContextSelector: React.FC<TimerContextSelectorProps> = ({
                 shortBreak={shortBreak}
                 longBreak={longBreak}
                 onSettingsChange={onSettingsChange}
+                onStartWithContext={onStartWithContext}
+                currentContext={context}
               />
             </SheetContent>
           </Sheet>
@@ -286,9 +291,9 @@ export const TimerContextSelector: React.FC<TimerContextSelectorProps> = ({
           </SheetTrigger>
           <SheetContent>
             <SheetHeader>
-              <SheetTitle>Session Context</SheetTitle>
+              <SheetTitle>Setup Your Focus Session</SheetTitle>
               <SheetDescription>
-                Choose what you'll be working on during this session
+                Choose what you'll work on and adjust your timer settings
               </SheetDescription>
             </SheetHeader>
             <ContextSelector 
@@ -306,6 +311,8 @@ export const TimerContextSelector: React.FC<TimerContextSelectorProps> = ({
               shortBreak={shortBreak}
               longBreak={longBreak}
               onSettingsChange={onSettingsChange}
+              onStartWithContext={onStartWithContext}
+              currentContext={context}
             />
           </SheetContent>
         </Sheet>
@@ -328,6 +335,8 @@ interface ContextSelectorProps {
   shortBreak?: number;
   longBreak?: number;
   onSettingsChange?: (settings: { focusDuration: number; shortBreak: number; longBreak: number; sessionsBeforeLongBreak: number }) => void;
+  onStartWithContext?: (context: TimerContext | null) => Promise<void>;
+  currentContext?: TimerContext | null;
 }
 
 const ContextSelector: React.FC<ContextSelectorProps> = ({
@@ -343,7 +352,9 @@ const ContextSelector: React.FC<ContextSelectorProps> = ({
   focusDuration,
   shortBreak,
   longBreak,
-  onSettingsChange
+  onSettingsChange,
+  onStartWithContext,
+  currentContext
 }) => {
   return (
     <div className="space-y-6 mt-6">
@@ -568,6 +579,36 @@ const ContextSelector: React.FC<ContextSelectorProps> = ({
             </div>
           )}
         </>
+      )}
+
+      {/* Start Focus Session Button */}
+      {onStartWithContext && (
+        <div className="space-y-3 pt-4 border-t">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Ready to Focus?</Label>
+            {currentContext && (
+              <div className="text-xs text-muted-foreground bg-muted/30 p-2 rounded">
+                <strong>Context:</strong> {currentContext.title}
+                <br />
+                <strong>Session:</strong> {sessionType} • {focusDuration || 25}m focus
+              </div>
+            )}
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={async () => {
+                try {
+                  await onStartWithContext(currentContext);
+                } catch (error) {
+                  console.error('Failed to start session:', error);
+                }
+              }}
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Start Focus Session
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );

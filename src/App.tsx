@@ -4,10 +4,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Outlet } from "react-router-dom";
 import { AppSidebar } from "@/frontend/components/layout/app-sidebar";
 import { UserProvider } from "@/frontend/components/ui/user-context";
+import { GlobalTimerProvider } from "@/frontend/context/TimerContext";
 import { useReminders } from './frontend/hooks/useReminders';
 import { initRecurrenceProcessing } from './backend/api/services/recurrence.service';
 import { useEffect, useRef } from 'react';
 import CookieConsentBanner from "@/frontend/components/legal/CookieConsentBanner";
+import { a11y } from "@/frontend/utils/accessibility";
 
 const queryClient = new QueryClient();
 
@@ -40,18 +42,69 @@ const App = () => {
     };
   }, []); // Empty dependency array runs once on mount
 
+  // Add accessibility features on mount
+  useEffect(() => {
+    // Add skip link for keyboard navigation
+    a11y.addSkipLink();
+    
+    // Set up global keyboard shortcuts
+    const handleGlobalKeyboard = (e: KeyboardEvent) => {
+      // Alt + M: Go to main content
+      if (e.altKey && e.key === 'm') {
+        const mainContent = document.getElementById('main-content');
+        mainContent?.focus();
+        e.preventDefault();
+      }
+      
+      // Alt + N: Go to navigation
+      if (e.altKey && e.key === 'n') {
+        const navigation = document.getElementById('app-navigation');
+        navigation?.focus();
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('keydown', handleGlobalKeyboard);
+    
+    return () => {
+      document.removeEventListener('keydown', handleGlobalKeyboard);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <UserProvider>
-          <div className="min-h-screen flex bg-background">
-            <AppSidebar />
-            <div className="flex-1">
-              <SonnerToast />
-              <Outlet />
-              <CookieConsentBanner />
+          <GlobalTimerProvider>
+            <div className="min-h-screen flex bg-background">
+              {/* Navigation landmark */}
+              <nav 
+                id="app-navigation"
+                role="navigation" 
+                aria-label="Main navigation"
+                tabIndex={-1}
+              >
+                <AppSidebar />
+              </nav>
+              
+              {/* Main content area */}
+              <div className="flex-1" role="main">
+                <SonnerToast />
+                
+                {/* Main content landmark with skip target */}
+                <main 
+                  id="main-content" 
+                  tabIndex={-1}
+                  className="focus:outline-none"
+                  aria-label="Main content"
+                >
+                  <Outlet />
+                </main>
+                
+                <CookieConsentBanner />
+              </div>
             </div>
-          </div>
+          </GlobalTimerProvider>
         </UserProvider>
       </TooltipProvider>
     </QueryClientProvider>
