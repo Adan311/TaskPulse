@@ -1,30 +1,40 @@
-import React from "react";
+import React, { Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import App from "./App";
 import Index from "./frontend/pages/Index";
-import Calendar from "./frontend/pages/Calendar";
-import Tasks from "./frontend/pages/Tasks";
-import Projects from "./frontend/pages/Projects";
-import Files from "./frontend/pages/Files";
 import NotFound from "./frontend/pages/NotFound";
-import Components from "./frontend/pages/Components";
-import Timer from "./frontend/pages/Timer";
 import SignIn from "./frontend/pages/auth/SignIn";
 import SignUp from "./frontend/pages/auth/SignUp";
-import NotesPage from "./frontend/pages/Notes";
-import Settings from "./frontend/pages/Settings";
-import ProjectDetailPage from "./frontend/pages/ProjectDetailPage";
-import Chat from "./frontend/pages/Chat";
-import Suggestions from "./frontend/pages/Suggestions";
-import PrivacyPolicy from "./frontend/pages/legal/PrivacyPolicy";
-import TermsOfService from "./frontend/pages/legal/TermsOfService";
+import { GoogleCalendarCallback } from "./frontend/features/calendar/components/GoogleCalendarCallback";
+import { PageLoading } from "./frontend/components/ui/loading";
 import "./index.css";
 import { ThemeProvider } from "./frontend/components/theme/theme-provider";
 import { Toaster } from "./frontend/components/ui/toaster";
-import { GoogleCalendarCallback } from "./frontend/features/calendar/components/GoogleCalendarCallback";
 import { SidebarProvider } from "./frontend/components/ui/sidebar";
 import { ReminderProvider } from "./frontend/components/ReminderProvider";
+
+// Lazy load heavy/feature-rich pages for better performance
+const Calendar = React.lazy(() => import("./frontend/pages/Calendar"));
+const Tasks = React.lazy(() => import("./frontend/pages/Tasks"));
+const Projects = React.lazy(() => import("./frontend/pages/Projects"));
+const Files = React.lazy(() => import("./frontend/pages/Files"));
+const Components = React.lazy(() => import("./frontend/pages/Components"));
+const Timer = React.lazy(() => import("./frontend/pages/Timer"));
+const NotesPage = React.lazy(() => import("./frontend/pages/Notes"));
+const Settings = React.lazy(() => import("./frontend/pages/Settings"));
+const ProjectDetailPage = React.lazy(() => import("./frontend/pages/ProjectDetailPage"));
+const Chat = React.lazy(() => import("./frontend/pages/Chat"));
+const Suggestions = React.lazy(() => import("./frontend/pages/Suggestions"));
+const PrivacyPolicy = React.lazy(() => import("./frontend/pages/legal/PrivacyPolicy"));
+const TermsOfService = React.lazy(() => import("./frontend/pages/legal/TermsOfService"));
+
+// Wrapper component for Suspense boundaries
+const LazyWrapper = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<PageLoading />}>
+    {children}
+  </Suspense>
+);
 
 const router = createBrowserRouter([
   {
@@ -38,61 +48,117 @@ const router = createBrowserRouter([
       },
       {
         path: "calendar",
-        element: <Calendar />,
+        element: (
+          <LazyWrapper>
+            <Calendar />
+          </LazyWrapper>
+        ),
       },
       {
         path: "tasks",
-        element: <Tasks />,
+        element: (
+          <LazyWrapper>
+            <Tasks />
+          </LazyWrapper>
+        ),
       },
       {
         path: "projects",
-        element: <Projects />,
+        element: (
+          <LazyWrapper>
+            <Projects />
+          </LazyWrapper>
+        ),
         children: [
           {
             path: ":id",
-            element: <ProjectDetailPage />,
+            element: (
+              <LazyWrapper>
+                <ProjectDetailPage />
+              </LazyWrapper>
+            ),
           },
         ],
       },
       {
         path: "files",
-        element: <Files />,
+        element: (
+          <LazyWrapper>
+            <Files />
+          </LazyWrapper>
+        ),
       },
       {
         path: "components",
-        element: <Components />,
+        element: (
+          <LazyWrapper>
+            <Components />
+          </LazyWrapper>
+        ),
       },
       {
         path: "timer",
-        element: <Timer />,
+        element: (
+          <LazyWrapper>
+            <Timer />
+          </LazyWrapper>
+        ),
       },
       {
         path: "settings",
-        element: <Settings />,
+        element: (
+          <LazyWrapper>
+            <Settings />
+          </LazyWrapper>
+        ),
       },
       {
         path: "notes",
-        element: <NotesPage />,
+        element: (
+          <LazyWrapper>
+            <NotesPage />
+          </LazyWrapper>
+        ),
       },
       {
         path: "chat",
-        element: <Chat />,
+        element: (
+          <LazyWrapper>
+            <Chat />
+          </LazyWrapper>
+        ),
       },
       {
         path: "chat/:conversationId",
-        element: <Chat />,
+        element: (
+          <LazyWrapper>
+            <Chat />
+          </LazyWrapper>
+        ),
       },
       {
         path: "suggestions",
-        element: <Suggestions />,
+        element: (
+          <LazyWrapper>
+            <Suggestions />
+          </LazyWrapper>
+        ),
       },
       {
         path: "privacy-policy",
-        element: <PrivacyPolicy />,
+        element: (
+          <LazyWrapper>
+            <PrivacyPolicy />
+          </LazyWrapper>
+        ),
       },
       {
         path: "terms-of-service",
-        element: <TermsOfService />,
+        element: (
+          <LazyWrapper>
+            <TermsOfService />
+          </LazyWrapper>
+        ),
       },
     ],
   },

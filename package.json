@@ -7,6 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "build:analyze": "npm run build && (npx vite-bundle-analyzer dist 2>/dev/null || echo 'Bundle analyzer not available, install vite-bundle-analyzer to use this feature')",
+    "performance:test": "node scripts/test-performance.js",
+    "performance:dev": "npm run dev & sleep 5 && npm run performance:test",
+    "test:performance": "node scripts/test-performance.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -101,5 +105,10 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1"
+  },
+  "optionalDependencies": {
+    "puppeteer": "^23.9.0",
+    "rollup-plugin-visualizer": "^5.12.0",
+    "vite-bundle-analyzer": "^0.11.0"
   }
 }

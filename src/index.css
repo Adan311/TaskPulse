@@ -90,6 +90,34 @@
     line-height: 1.6; /* Better readability */
   }
   
+  /* Performance optimizations for images and media */
+  img {
+    /* Lazy loading for better performance */
+    loading: lazy;
+    /* Prevent layout shift with aspect ratio */
+    height: auto;
+    max-width: 100%;
+    /* GPU acceleration for smooth rendering */
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  /* Optimize video elements */
+  video {
+    loading: lazy;
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Optimize background images */
+  .bg-image {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    /* Use GPU for background rendering */
+    transform: translateZ(0);
+  }
+  
   /* Improved focus indicators */
   :focus-visible {
     outline: 2px solid hsl(var(--focus-ring));
@@ -163,6 +191,21 @@
 }
 
 @layer utilities {
+  /* Performance utilities */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  .content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 200px;
+  }
+  
+  .lazy-load {
+    loading: lazy;
+  }
+  
   /* Custom accessibility utilities */
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background;

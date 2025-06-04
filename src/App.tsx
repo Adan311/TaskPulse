@@ -10,6 +10,7 @@ import { initRecurrenceProcessing } from './backend/api/services/recurrence.serv
 import { useEffect, useRef } from 'react';
 import CookieConsentBanner from "@/frontend/components/legal/CookieConsentBanner";
 import { a11y } from "@/frontend/utils/accessibility";
+import { initPerformanceMonitoring } from "@/frontend/utils/performance";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ const App = () => {
   
   // Use ref instead of state to prevent re-renders
   const recurrenceInitializedRef = useRef(false);
+  const performanceMonitorRef = useRef<any>(null);
 
   // Initialize recurrence processing system
   useEffect(() => {
@@ -42,10 +44,13 @@ const App = () => {
     };
   }, []); // Empty dependency array runs once on mount
 
-  // Add accessibility features on mount
+  // Add accessibility features and performance monitoring on mount
   useEffect(() => {
     // Add skip link for keyboard navigation
     a11y.addSkipLink();
+    
+    // Initialize performance monitoring
+    performanceMonitorRef.current = initPerformanceMonitoring();
     
     // Set up global keyboard shortcuts
     const handleGlobalKeyboard = (e: KeyboardEvent) => {
@@ -68,6 +73,11 @@ const App = () => {
     
     return () => {
       document.removeEventListener('keydown', handleGlobalKeyboard);
+      
+      // Clean up performance monitoring
+      if (performanceMonitorRef.current) {
+        performanceMonitorRef.current.destroy();
+      }
     };
   }, []);
 
