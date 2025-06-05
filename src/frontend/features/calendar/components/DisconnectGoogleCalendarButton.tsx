@@ -46,6 +46,7 @@ export function DisconnectGoogleCalendarButton({ calendarId, onSuccess }: Discon
       variant="outline"
       disabled={isLoading}
       onClick={handleDisconnect}
+      className="h-11"
     >
       <LogOut className="mr-2 h-4 w-4" />
       {isLoading ? "Disconnecting..." : "Disconnect Google Calendar"}

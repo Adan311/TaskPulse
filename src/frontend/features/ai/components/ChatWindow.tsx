@@ -3,7 +3,7 @@ import { Button } from "@/frontend/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/frontend/components/ui/card";
 import { Input } from "@/frontend/components/ui/input";
 import { Textarea } from "@/frontend/components/ui/textarea";
-import { Loader2, Send, Plus, KeyIcon, ExternalLinkIcon, Lightbulb, User, Bot, RefreshCw, Settings, AlertTriangle } from "lucide-react";
+import { Loader2, Send, Plus, KeyIcon, ExternalLinkIcon, Lightbulb, User, Bot, RefreshCw, Settings, AlertTriangle, Sparkles, Zap } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { ChatMessage, sendMessage, createConversation, getConversation, ClarifyingQuestion } from "@/backend/api/services/ai/chat/chatService";
@@ -198,114 +198,108 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
         }
         toast({
           title: "New conversation started",
-          description: "You've started a new conversation with the AI."
+          description: "Ready to chat!"
         });
-      } else {
-        throw new Error("Failed to create conversation");
       }
     } catch (error) {
-      handleError(error as Error, 'create_conversation', handleStartNewConversation);
+      handleError(error as Error, 'create_conversation', () => handleStartNewConversation());
     } finally {
       setLoading(false);
     }
   };
   
   const handleSendMessage = async () => {
-    // Validate input first
-    const inputValidation = validateUserInput(input);
-    if (inputValidation) {
-      setErrorState({
-        error: inputValidation,
-        showError: true
+    if (!input.trim() || loading || !hasApiKey) {
+      return;
+    }
+    
+    const messageContent = input.trim();
+    
+    // Validate input
+    const validationError = validateUserInput(messageContent);
+    if (validationError) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Input",
+        description: validationError.userMessage
       });
       return;
     }
     
-    if (!hasApiKey) {
-      handleError('API key is required', 'send_message');
-      return;
-    }
+    setInput("");
     
     const retryFunction = async () => {
-      return handleSendMessage();
-    };
-    
-    try {
-      setLoading(true);
-      
-      // Create a new conversation if we don't have one
-      let currentConversationId = conversationId;
-      if (!currentConversationId) {
-        const conversation = await createConversation();
-        if (!conversation) {
-          throw new Error("Failed to create a new conversation");
-        }
-        currentConversationId = conversation.id;
-        if (onNewConversation) {
-          onNewConversation(conversation.id);
-        }
-      }
-      
-      // Keep a copy of the message
-      const userInputMessage = input;
-      setInput("");
-      
-      // Add user message to UI immediately
-      const tempUserMsg: ChatMessage = {
-        id: 'temp-user-' + Date.now(),
-        conversationId: currentConversationId,
-        userId: 'current-user',
-        content: userInputMessage,
-        role: 'user',
+      // Define userMessage outside the try block so it's accessible in catch
+      const userMessage: ChatMessage = {
+        id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        conversationId: conversationId || "",
+        userId: "current-user",
+        content: messageContent,
+        role: "user",
         createdAt: new Date().toISOString()
       };
       
-      setMessages(prev => [...prev, tempUserMsg]);
-      
-      // Send the message
       try {
-        const result = await sendMessage(currentConversationId, userInputMessage);
+        setLoading(true);
+        
+        // Add user message to state immediately for better UX
+        setMessages(prev => [...prev, userMessage]);
+        
+        // Create a new conversation if we don't have one
+        let currentConversationId = conversationId;
+        if (!currentConversationId) {
+          const conversation = await createConversation();
+          if (!conversation) {
+            throw new Error("Failed to create a new conversation");
+          }
+          currentConversationId = conversation.id;
+          if (onNewConversation) {
+            onNewConversation(conversation.id);
+          }
+        }
+        
+        const result = await sendMessage(currentConversationId, messageContent);
         
         if (result) {
-          // Replace the temporary message with the real one and add the AI response
+          // Replace the temporary message with the actual ones from the server
           setMessages(prev => [
-            ...prev.filter(msg => msg.id !== tempUserMsg.id),
+            ...prev.filter(msg => msg.id !== userMessage.id),
             result.userMessage,
             result.aiMessage
           ]);
           
-          // Handle suggestions
-          if (result.hasOverallSuggestions) {
-            const newSuggestionsSet = new Set(messagesWithSuggestions);
-            newSuggestionsSet.add(result.aiMessage.id);
-            setMessagesWithSuggestions(newSuggestionsSet);
-            await checkForSuggestions(); // Refresh suggestion counts
-          }
+          // Check for new suggestions after message is sent
+          await checkForSuggestions();
           
-          // Handle clarifying questions
+          // Handle clarifying questions if any
           if (result.clarifyingQuestions && result.clarifyingQuestions.length > 0) {
             setClarifyingQuestions(result.clarifyingQuestions);
           }
           
-          // Clear any previous errors
-          setErrorState({ error: null, showError: false });
-        } else {
-          throw new Error("No response received from AI service");
+          // Trigger conversation list refresh after a delay to allow title generation
+          setTimeout(() => {
+            if (onNewConversation && currentConversationId) {
+              onNewConversation(currentConversationId);
+            }
+          }, 2000);
         }
       } catch (error) {
-        // Remove the temporary message and restore the input
-        setMessages(prev => prev.filter(msg => msg.id !== tempUserMsg.id));
-        setInput(userInputMessage);
-        throw error;
+        // Remove the temporary user message on error
+        setMessages(prev => prev.filter(msg => msg.id !== userMessage.id));
+        setInput(messageContent); // Restore input
+        throw error; // Re-throw to be handled by the outer error handler
+      } finally {
+        setLoading(false);
       }
+    };
+    
+    try {
+      await retryFunction();
     } catch (error) {
       handleError(error as Error, 'send_message', retryFunction);
-    } finally {
-      setLoading(false);
     }
   };
   
-  // Handle keyboard shortcut (Enter to send, Shift+Enter for new line)
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -318,127 +312,132 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
   };
   
   const checkForSuggestions = async () => {
+    if (!conversationId) return;
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       
-      // Get current suggestion counts
       const counts = await getSuggestionCounts(user.id);
       setSuggestionCounts(counts);
       
-      // If we have suggestions, update UI
-      const totalSuggestions = counts.tasks + counts.events;
-      
-      // Log for debugging
-      console.log(`Found ${totalSuggestions} suggestions: ${counts.tasks} tasks, ${counts.events} events`);
+      // Mark messages that have suggestions
+      if (counts.tasks > 0 || counts.events > 0) {
+        // Find the last AI message manually (since findLast isn't available)
+        let lastAiMessage = null;
+        for (let i = messages.length - 1; i >= 0; i--) {
+          if (messages[i].role === 'assistant') {
+            lastAiMessage = messages[i];
+            break;
+          }
+        }
+        if (lastAiMessage) {
+          setMessagesWithSuggestions(prev => new Set([...prev, lastAiMessage.id]));
+        }
+      }
     } catch (error) {
-      handleError(error as Error, 'check_suggestions');
+      console.error("Error checking suggestions:", error);
     }
   };
   
   const handleGetSuggestions = async () => {
-    if (!conversationId) {
-      handleError('No conversation available', 'get_suggestions');
-      return;
-    }
-
-    if (!hasApiKey) {
-      handleError('API key is required', 'get_suggestions');
-      return;
-    }
-
+    if (!conversationId || requestingSuggestions) return;
+    
+    setRequestingSuggestions(true);
+    
     const retryFunction = async () => {
-      return handleGetSuggestions();
-    };
-
-    try {
-      setRequestingSuggestions(true);
-      
-      // Show toast to indicate we're analyzing the conversation
-      toast({
-        title: "Analyzing conversation",
-        description: "Looking for potential tasks and events...",
-      });
-      
-      const result = await requestSuggestions(conversationId);
-      
-      if (result.hasSuggestions) {
-        toast({
-          title: "Suggestions Found!",
-          description: "New suggestions have been identified from your conversation. Check the Suggestions page to review them.",
-        });
+      try {
+        const result = await requestSuggestions(conversationId);
         
-        // Update suggestion counts
-        await checkForSuggestions();
-        
-        // Clear any previous errors
-        setErrorState({ error: null, showError: false });
-      } else {
-        toast({
-          title: "No Suggestions Found",
-          description: "No tasks or events were identified in your conversation.",
-        });
+        if (result.hasSuggestions) {
+          toast({
+            title: "Suggestions Generated",
+            description: "New suggestions have been found from your conversation."
+          });
+          
+          // Refresh suggestion counts
+          await checkForSuggestions();
+        } else {
+          toast({
+            title: "No Suggestions Found",
+            description: "No tasks or events were identified in your conversation."
+          });
+        }
+      } catch (error) {
+        throw error;
+      } finally {
+        setRequestingSuggestions(false);
       }
+    };
+    
+    try {
+      await retryFunction();
     } catch (error) {
-      handleError(error as Error, 'get_suggestions', retryFunction);
-    } finally {
+      handleError(error as Error, 'generate_suggestions', retryFunction);
       setRequestingSuggestions(false);
     }
   };
   
   const handleViewSuggestions = () => {
-    navigate("/suggestions");
+    navigate('/suggestions');
   };
   
-  if (initialLoad) {
-    return (
-      <div className={`p-4 ${isCollapsed ? 'ml-16' : 'ml-64'} h-screen flex items-center justify-center`}>
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-  
   const formatMessage = (message: ChatMessage) => {
-    // Enhanced formatting with markdown processing
     if (message.role === 'assistant') {
       return <MarkdownRenderer content={message.content} />;
     }
-    // For user messages, keep simple formatting
+    
+    // For user messages, just render with line breaks
     return message.content.split("\n").map((line, index) => (
       <p key={index} className={index > 0 ? "mt-2" : ""}>{line}</p>
     ));
   };
   
   const renderMessages = () => {
-    return messages.map((message) => (
+    return messages.map((message, index) => (
       <div
         key={message.id}
-        className={`flex ${
-          message.role === "user" ? "justify-end" : "justify-start"
-        } mb-4`}
+        className={`flex items-start gap-3 mb-6 animate-in slide-in-from-bottom-2 duration-300 ${
+          message.role === "user" ? "flex-row-reverse" : "flex-row"
+        }`}
       >
-        {message.role !== "user" && (
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-2">
-            <Bot className="h-4 w-4 text-primary" />
-          </div>
-        )}
-        <div
-          className={`rounded-lg px-4 py-3 max-w-[80%] ${
-            message.role === "user"
-              ? "bg-primary text-primary-foreground"
-              : "bg-accent/30"
-          } shadow-sm`}
-        >
-          {formatMessage(message)}
-          {messagesWithSuggestions.has(message.id) && (
-            <SuggestionBadge messageId={message.id} />
+        {/* Avatar */}
+        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+          message.role === "user" 
+            ? "bg-gradient-to-br from-primary to-primary/80 text-white dark:text-white" 
+            : "bg-gradient-to-br from-violet-500 to-purple-600 text-white"
+        }`}>
+          {message.role === "user" ? (
+            <User className="h-4 w-4" />
+          ) : (
+            <Bot className="h-4 w-4" />
           )}
         </div>
-        {message.role === "user" && (
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center ml-2">
-            <User className="h-4 w-4 text-primary" />
+        
+        {/* Message Bubble */}
+        <div className={`max-w-[70%] ${message.role === "user" ? "text-right" : "text-left"}`}>
+          <div
+            className={`rounded-2xl px-4 py-3 shadow-sm ${
+              message.role === "user"
+                ? "bg-gradient-to-br from-primary to-primary/90 text-white dark:text-white"
+                : "bg-card border border-border text-foreground"
+            }`}
+          >
+            {formatMessage(message)}
+            {messagesWithSuggestions.has(message.id) && (
+              <div className="mt-2">
+                <SuggestionBadge messageId={message.id} />
+              </div>
+            )}
           </div>
-        )}
+          
+          {/* Timestamp */}
+          <div className={`text-xs text-muted-foreground mt-1 ${
+            message.role === "user" ? "text-right" : "text-left"
+          }`}>
+            {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </div>
+        </div>
       </div>
     ));
   };
@@ -446,52 +445,70 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
   const totalSuggestions = suggestionCounts.tasks + suggestionCounts.events;
   
   return (
-    <div className={`flex flex-col h-screen ${isCollapsed ? 'ml-16' : 'ml-64'} p-4`}>
-      <div className="flex justify-between items-center mb-4 p-2 border-b">
-        <h2 className="text-xl font-semibold">AI Assistant</h2>
-        <div className="flex space-x-2">
-          {totalSuggestions > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleViewSuggestions}
-              className="flex items-center"
-            >
-              <Lightbulb className="h-4 w-4 mr-2 text-amber-500" />
-              View Suggestions
-              <span className="ml-1 bg-amber-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                {totalSuggestions}
-              </span>
-            </Button>
-          )}
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleGetSuggestions}
-            disabled={loading || requestingSuggestions || hasApiKey === false || !conversationId || messages.length === 0}
-            className="flex items-center"
-          >
-            {requestingSuggestions ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Lightbulb className="h-4 w-4 mr-2" />
+    <div className="flex flex-col h-full bg-background">
+      {/* Modern Header */}
+      <div className="bg-card border-b border-border px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+              <Bot className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-foreground">AI Assistant</h1>
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span>Online</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {totalSuggestions > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleViewSuggestions}
+                className="relative bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200 text-amber-700 hover:from-amber-100 hover:to-yellow-100"
+              >
+                <Lightbulb className="h-4 w-4 mr-2 text-amber-500" />
+                View Suggestions
+                <span className="ml-1 bg-amber-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-medium">
+                  {totalSuggestions}
+                </span>
+              </Button>
             )}
-            Get Suggestions
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={handleStartNewConversation}
-            disabled={loading || hasApiKey === false}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleGetSuggestions}
+              disabled={loading || requestingSuggestions || hasApiKey === false || !conversationId || messages.length === 0}
+              className="border-primary/20 text-primary hover:bg-primary/5"
+            >
+              {requestingSuggestions ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4 mr-2" />
+              )}
+              Get Suggestions
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleStartNewConversation}
+              disabled={loading || hasApiKey === false}
+              className="hover:bg-primary/10"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Enhanced Error Display */}
       {errorState.showError && errorState.error && (
-        <div className="mb-4">
+        <div className="p-4">
           <Alert variant="destructive" className="relative">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle className="flex items-center justify-between">
@@ -538,65 +555,105 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
         </div>
       )}
       
-      <div className="flex-1 overflow-y-auto mb-4 rounded-lg bg-background/50 p-4">
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto p-6">
         {hasApiKey === false ? (
-          <div className="h-full flex flex-col items-center justify-center p-4">
-            <Alert variant="destructive" className="mb-4">
-              <KeyIcon className="h-4 w-4" />
-              <AlertTitle>API Key Required</AlertTitle>
-              <AlertDescription>
-                You need to add your own Gemini API key to use the AI chat.
-              </AlertDescription>
-            </Alert>
-            <div className="text-center space-y-4">
-              <p className="text-muted-foreground">AI features require your own Google Gemini API key.</p>
-              <div className="rounded-md bg-muted p-4 text-left">
-                <h4 className="text-sm font-medium mb-2">How to get your API key:</h4>
-                <ol className="text-xs text-muted-foreground space-y-2 list-decimal pl-4">
+          <div className="h-full flex flex-col items-center justify-center p-8">
+            <div className="max-w-md text-center">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-100 to-yellow-100 flex items-center justify-center mx-auto mb-6">
+                <KeyIcon className="h-8 w-8 text-amber-600" />
+              </div>
+              
+              <h3 className="text-lg font-semibold mb-2">API Key Required</h3>
+              <p className="text-muted-foreground mb-6">
+                You need to add your own Gemini API key to use the AI chat features.
+              </p>
+              
+              <div className="rounded-xl bg-muted/50 p-4 text-left mb-6">
+                <h4 className="text-sm font-medium mb-3">How to get your API key:</h4>
+                <ol className="text-sm text-muted-foreground space-y-2 list-decimal pl-4">
                   <li>Visit <a href="https://ai.google.dev/" className="text-primary hover:underline inline-flex items-center" target="_blank" rel="noopener noreferrer">Google AI Studio <ExternalLinkIcon className="h-3 w-3 ml-1" /></a></li>
                   <li>Sign in with your Google account</li>
                   <li>Go to the API keys section</li>
                   <li>Create a new API key</li>
                 </ol>
               </div>
-              <Button onClick={handleGoToSettings}>
+              
+              <Button onClick={handleGoToSettings} className="w-full">
+                <Settings className="h-4 w-4 mr-2" />
                 Go to Settings
               </Button>
             </div>
           </div>
         ) : messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-4">
-            <p className="mb-4">Ask me anything about your tasks, projects, or schedule.</p>
-            <p className="text-sm">I can help you organize your work, manage your time, or brainstorm ideas.</p>
+          <div className="h-full flex flex-col items-center justify-center text-center p-8">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center mx-auto mb-6">
+              <Bot className="h-10 w-10 text-violet-600" />
+            </div>
+            
+            <h3 className="text-xl font-semibold mb-2">Ready to help!</h3>
+            <p className="text-muted-foreground mb-8 max-w-md">
+              Ask me anything about your tasks, projects, or schedule. I can help you organize your work, manage your time, or brainstorm ideas.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-lg">
+              <div className="p-3 rounded-lg bg-muted/50 text-sm">
+                <Zap className="h-4 w-4 text-primary mb-1" />
+                "Help me plan my week"
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50 text-sm">
+                <Lightbulb className="h-4 w-4 text-amber-500 mb-1" />
+                "Suggest tasks for my project"
+              </div>
+            </div>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-4">
             {renderMessages()}
+            {loading && (
+              <div className="flex items-start gap-3 mb-6">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+                  <Bot className="h-4 w-4 text-white" />
+                </div>
+                <div className="bg-card border border-border rounded-2xl px-4 py-3">
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
         )}
       </div>
       
-      <div className="sticky bottom-0 bg-background p-3 border rounded-lg shadow-sm">
-        <div className="flex items-center space-x-2">
-          <Textarea
-            placeholder={hasApiKey === false ? "Add your API key in settings to use AI chat" : "Type your message..."}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="flex-1 min-h-[60px] max-h-[120px] border focus:ring-1 focus:ring-primary"
-            disabled={loading || hasApiKey === false}
-          />
+      {/* Modern Input Area */}
+      <div className="border-t border-border bg-card p-4">
+        <div className="flex items-end gap-3 max-w-4xl mx-auto">
+          <div className="flex-1">
+            <Textarea
+              placeholder={hasApiKey === false ? "Add your API key in settings to use AI chat" : "Type your message..."}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="min-h-[56px] max-h-[120px] resize-none rounded-2xl border-2 border-muted focus:border-primary/50 bg-background/50 px-4 py-3"
+              disabled={loading || hasApiKey === false}
+              rows={1}
+            />
+          </div>
+          
           <Button 
             size="icon"
             onClick={handleSendMessage} 
             disabled={loading || !input.trim() || hasApiKey === false}
-            className="h-10 w-10 rounded-full"
+            className="h-12 w-12 rounded-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
           >
             {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
-              <Send className="h-4 w-4" />
+              <Send className="h-5 w-5" />
             )}
           </Button>
         </div>

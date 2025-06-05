@@ -386,8 +386,14 @@ export const sendMessage = async (
 
     if (aiMessageError) throw aiMessageError;
 
-    if (history.length <= 1) {
-      await generateConversationTitle(conversationId, [...history, userMessage, aiMessage]);
+    // Generate title for new conversations (after first AI response)
+    if (history.length <= 2) { // Allow for user message + AI response
+      try {
+        await generateConversationTitle(conversationId, [...history, userMessage, aiMessage]);
+      } catch (error) {
+        console.error("Error generating conversation title:", error);
+        // Don't fail the whole message if title generation fails
+      }
     }
 
     await supabase

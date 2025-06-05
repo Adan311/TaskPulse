@@ -130,7 +130,7 @@ export default function Calendar() {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="container mx-auto p-6 space-y-6">
         <CalendarHeader 
           date={date}
           view={view}

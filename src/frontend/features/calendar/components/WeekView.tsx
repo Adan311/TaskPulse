@@ -35,7 +35,7 @@ export function WeekView({ events, date, onEditEvent, onEventsChange }: WeekView
   });
 
   // Constants for grid layout
-  const HOUR_HEIGHT = 48; // px
+  const HOUR_HEIGHT = 60; // px
   const CAL_START = 0; // 00:00 in minutes
   const CAL_END = 24 * 60; // 24:00 in minutes
   const CAL_TOTAL = CAL_END - CAL_START;
@@ -89,7 +89,7 @@ export function WeekView({ events, date, onEditEvent, onEventsChange }: WeekView
   const nowTop = ((nowMinutes - CAL_START) / CAL_TOTAL) * (HOUR_HEIGHT * hours.length);
 
   return (
-    <div className="bg-background rounded-2xl border shadow p-8 w-full h-full flex flex-col overflow-x-auto overflow-y-auto max-h-[calc(100vh-200px)]">
+    <div className="w-full h-full flex flex-col overflow-x-auto overflow-y-auto max-h-[calc(100vh-200px)]">
       {/* Weekday headers */}
       <div className="grid w-full" style={{ gridTemplateColumns: `44px repeat(7, 1fr)`, columnGap: '16px', rowGap: 0 }}>
         <div />
@@ -113,9 +113,9 @@ export function WeekView({ events, date, onEditEvent, onEventsChange }: WeekView
           height: '100%'
         }}>
           {/* Time labels */}
-          <div className="flex flex-col items-end pr-1 select-none" style={{ minWidth: 0, width: '44px', padding: 0, margin: 0 }}>
+          <div className="flex flex-col items-end pr-3 select-none" style={{ minWidth: 0, width: '44px', padding: 0, margin: 0 }}>
             {hours.map(hour => (
-              <div key={hour} style={{ height: `${HOUR_HEIGHT}px` }} className="text-xs text-muted-foreground flex items-start justify-end">
+              <div key={hour} style={{ height: `${HOUR_HEIGHT}px` }} className="text-xs text-muted-foreground/80 flex items-start justify-end font-mono tracking-wider">
                 {format(new Date(2000, 0, 1, hour), 'HH:mm')}
               </div>
             ))}
@@ -170,7 +170,7 @@ export function WeekView({ events, date, onEditEvent, onEventsChange }: WeekView
                     return (
                       <div
                         key={event.id}
-                        className="absolute rounded-xl shadow-lg flex flex-col justify-start px-3 py-2 cursor-pointer border border-white/30 bg-clip-padding"
+                        className="absolute rounded-xl shadow-lg flex flex-col justify-start px-4 py-3 cursor-pointer border border-white/30 bg-clip-padding"
                         style={{
                           top: `${top}px`,
                           height: `${height}px`,
@@ -193,9 +193,9 @@ export function WeekView({ events, date, onEditEvent, onEventsChange }: WeekView
                         onClick={() => onEditEvent(event)}
                       >
                         {event.title && (
-                          <span className="font-semibold text-base truncate w-full block" style={{fontSize: '0.97em', lineHeight: 1.2, whiteSpace: 'nowrap'}}>{event.title}</span>
+                          <span className="font-medium text-sm truncate w-full block mb-1" style={{fontSize: '0.875rem', lineHeight: 1.3, whiteSpace: 'nowrap'}}>{event.title}</span>
                         )}
-                        <span className="text-xs opacity-80 mt-0.5 w-full block" style={{fontSize: '0.95em', whiteSpace: 'nowrap'}}>
+                        <span className="text-xs opacity-70 w-full block" style={{fontSize: '0.75rem', letterSpacing: '0.025em', whiteSpace: 'nowrap'}}>
                           {format(start, 'HH:mm')} – {format(end, 'HH:mm')}
                         </span>
                       </div>

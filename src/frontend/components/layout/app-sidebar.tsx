@@ -141,7 +141,7 @@ export function AppSidebar() {
             aria-label="TaskPulse - Go to dashboard"
           >
             <div className={`w-9 h-9 rounded-full bg-primary flex items-center justify-center`}>
-              <span className="text-white font-bold text-lg" aria-hidden="true">TP</span>
+              <span className="text-primary-foreground font-bold text-lg" aria-hidden="true">TP</span>
             </div>
             {!isCollapsed && (
               <span className="font-bold text-2xl tracking-tight ml-2">TaskPulse</span>
@@ -151,7 +151,7 @@ export function AppSidebar() {
             variant="ghost" 
             size="icon" 
             onClick={toggleSidebar}
-            className={`mt-2 ${isCollapsed ? 'mx-auto' : ''} h-9 w-9 ${focusRing}`}
+            className={`mt-2 ${isCollapsed ? 'mx-auto' : ''} h-9 w-9 flex items-center justify-center ${focusRing}`}
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-expanded={!isCollapsed}
             aria-controls="sidebar-content"

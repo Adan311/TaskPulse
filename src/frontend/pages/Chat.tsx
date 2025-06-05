@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AppLayout } from "@/frontend/components/layout/AppLayout";
 import { ChatWindow } from "@/frontend/features/ai/components/ChatWindow";
 import { Button } from "@/frontend/components/ui/button";
-import { Plus, Loader2, Trash2 } from "lucide-react";
+import { Plus, Loader2, Trash2, MessageCircle, Clock } from "lucide-react";
 import { getConversations, ChatConversation, createConversation, deleteConversation } from "@/backend/api/services/ai/chat/chatService";
 import { useToast } from "@/frontend/hooks/use-toast";
 
@@ -118,62 +118,84 @@ export default function Chat() {
       navigate(`/chat/${id}`);
     }
   };
+
+  const formatRelativeTime = (date: string) => {
+    const now = new Date();
+    const messageDate = new Date(date);
+    const diffInMinutes = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return "Just now";
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    return messageDate.toLocaleDateString();
+  };
   
   return (
     <AppLayout>
-      <div className="container p-6 max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Sidebar with conversation list */}
-          <div className="w-full md:w-64 flex flex-col gap-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Conversations</h2>
-              <Button
-                size="sm"
-                onClick={handleNewConversation}
-                disabled={loading}
-              >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Plus className="h-4 w-4 mr-2" />
-                )}
-                New
-              </Button>
+      <div className="flex h-screen bg-background">
+        {/* Modern Sidebar */}
+        <div className="w-80 bg-card border-r border-border flex flex-col">
+          {/* Sidebar Header */}
+          <div className="p-6 border-b border-border">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-primary" />
+                <h2 className="text-lg font-semibold text-foreground">Conversations</h2>
+              </div>
             </div>
             
-            <div className="space-y-2 overflow-y-auto max-h-[600px]">
+            <Button
+              onClick={handleNewConversation}
+              disabled={loading}
+              className="w-full rounded-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
+            >
               {loading ? (
-                <div className="flex justify-center py-4">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-              ) : conversations.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground">
-                  <p>No conversations yet</p>
-                  <p className="text-sm mt-2">Start a new conversation to begin</p>
-                </div>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : (
-                conversations.map((conversation) => (
-                  <div
-                    key={conversation.id}
-                    className="flex items-center justify-between"
-                  >
-                    <div
-                      className={`cursor-pointer p-3 rounded-md transition-colors flex-1 ${
-                        conversationId === conversation.id
-                          ? "bg-primary/20"
-                          : "hover:bg-muted"
-                      }`}
-                      onClick={() => handleSelectConversation(conversation.id)}
-                    >
-                      <h3 className="font-medium truncate">{conversation.title}</h3>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(conversation.updatedAt).toLocaleDateString()}
-                      </p>
+                <Plus className="h-4 w-4 mr-2" />
+              )}
+              New Chat
+            </Button>
+          </div>
+          
+          {/* Conversations List */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : conversations.length === 0 ? (
+              <div className="text-center py-12 px-4">
+                <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                <p className="text-muted-foreground font-medium mb-2">No conversations yet</p>
+                <p className="text-sm text-muted-foreground">Start a new conversation to begin chatting with AI</p>
+              </div>
+            ) : (
+              conversations.map((conversation) => (
+                <div
+                  key={conversation.id}
+                  className={`group relative rounded-xl p-4 transition-all duration-200 cursor-pointer hover:bg-accent/50 hover:scale-[1.02] hover:shadow-sm ${
+                    conversationId === conversation.id
+                      ? "bg-primary/10 border-l-4 border-primary shadow-sm"
+                      : "bg-card/50 hover:bg-accent/80"
+                  }`}
+                  onClick={() => handleSelectConversation(conversation.id)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-foreground truncate mb-1">
+                        {conversation.title || "New Conversation"}
+                      </h3>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        <span>{formatRelativeTime(conversation.updatedAt)}</span>
+                      </div>
                     </div>
+                    
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 ml-1"
+                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteConversation(conversation.id);
@@ -184,22 +206,22 @@ export default function Chat() {
                       {isDeleting && conversation.id === conversationId ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                        <Trash2 className="h-4 w-4" />
                       )}
                     </Button>
                   </div>
-                ))
-              )}
-            </div>
+                </div>
+              ))
+            )}
           </div>
-          
-          {/* Main chat area */}
-          <div className="flex-1">
-            <ChatWindow 
-              conversationId={conversationId}
-              onNewConversation={handleConversationUpdate}
-            />
-          </div>
+        </div>
+        
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col">
+          <ChatWindow 
+            conversationId={conversationId}
+            onNewConversation={handleConversationUpdate}
+          />
         </div>
       </div>
     </AppLayout>
