@@ -1,0 +1,59 @@
+{
+  "sampleTasks": [
+    {
+      "id": "task-1",
+      "title": "Complete project documentation",
+      "description": "Write comprehensive documentation for the project",
+      "status": "todo",
+      "priority": "high",
+      "due_date": "2025-02-15T10:00:00Z",
+      "user_id": "test-user-1",
+      "project_id": "project-1",
+      "labels": ["documentation", "urgent"],
+      "created_at": "2025-01-15T10:00:00Z",
+      "updated_at": "2025-01-15T10:00:00Z"
+    },
+    {
+      "id": "task-2",
+      "title": "Review code changes",
+      "description": "Review and approve pending pull requests",
+      "status": "in_progress",
+      "priority": "medium",
+      "due_date": "2025-02-10T15:00:00Z",
+      "user_id": "test-user-1",
+      "project_id": "project-1",
+      "labels": ["review", "code"],
+      "created_at": "2025-01-14T10:00:00Z",
+      "updated_at": "2025-01-16T10:00:00Z"
+    },
+    {
+      "id": "task-3",
+      "title": "Setup CI/CD pipeline",
+      "description": "Configure automated testing and deployment",
+      "status": "done",
+      "priority": "high",
+      "due_date": "2025-01-20T12:00:00Z",
+      "user_id": "test-user-1",
+      "project_id": "project-2",
+      "labels": ["devops", "automation"],
+      "created_at": "2025-01-10T10:00:00Z",
+      "updated_at": "2025-01-18T10:00:00Z"
+    },
+    {
+      "id": "task-4",
+      "title": "Design user interface",
+      "description": "Create wireframes and mockups for new features",
+      "status": "todo",
+      "priority": "low",
+      "due_date": "2025-02-25T14:00:00Z",
+      "user_id": "test-user-2",
+      "project_id": "project-2",
+      "labels": ["design", "ui"],
+      "created_at": "2025-01-12T10:00:00Z",
+      "updated_at": "2025-01-12T10:00:00Z"
+    }
+  ],
+  "taskStatuses": ["todo", "in_progress", "done"],
+  "taskPriorities": ["low", "medium", "high"],
+  "sampleLabels": ["documentation", "urgent", "review", "code", "devops", "automation", "design", "ui"]
+} 
