@@ -93,6 +93,19 @@ describe('TimeTrackingService', () => {
     })
   })
 
+  afterEach(() => {
+    // Ensure all mocks are cleared after each test
+    vi.clearAllMocks()
+    
+    // Reset auth mock to default state to prevent test pollution
+    if (mockSupabase?.auth?.getUser) {
+      mockSupabase.auth.getUser.mockResolvedValue({
+        data: { user: { id: 'test-user-id', email: 'test@example.com' } },
+        error: null
+      })
+    }
+  })
+
   test('startTimeTracking should create new active session', async () => {
     // Arrange
     const params = {

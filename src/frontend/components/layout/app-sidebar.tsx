@@ -130,22 +130,16 @@ export function AppSidebar() {
     return location.pathname.startsWith(url);
   };
 
-  // Check if user is admin
-  const isAdmin = user?.email === 'admin@motionmingle.com' || 
-                  user?.email?.includes('admin') || 
-                  process.env.NODE_ENV === 'development';
-
-  // Add testing dashboard for admin users
-  const navigationItems = isAdmin ? [
+  // Add testing dashboard for all users
+  const navigationItems = [
     ...mainItems,
     {
       title: "Testing Dashboard",
       url: "/testing",
       icon: TestTube,
-      adminOnly: true,
       badge: false,
     }
-  ] : mainItems;
+  ];
 
   return (
     <Sidebar>

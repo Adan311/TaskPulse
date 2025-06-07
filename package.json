@@ -18,12 +18,15 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:unit": "vitest run tests/unit",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
+    "test:integration": "vitest run --config=vitest.integration.config.ts",
+    "test:e2e": "playwright test --config=tests/config/playwright.config.ts",
+    "test:e2e:ui": "playwright test --config=tests/config/playwright.config.ts --ui",
+    "test:e2e:headed": "playwright test --config=tests/config/playwright.config.ts --headed",
+    "test:e2e:debug": "playwright test --config=tests/config/playwright.config.ts --debug",
     "test:accessibility": "vitest run tests/accessibility",
     "test:security": "vitest run tests/security",
     "test:ai": "vitest run tests/ai",
-    "test:all": "npm run test:unit && npm run test:e2e && npm run test:accessibility && npm run test:security && npm run test:ai"
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e && npm run test:accessibility && npm run test:security && npm run test:ai"
   },
   "dependencies": {
     "@directus/sdk": "^19.0.0",

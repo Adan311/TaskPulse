@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/frontend/components/ui/button";
@@ -27,10 +26,11 @@ export default function SignIn() {
       });
       navigate("/");
     } catch (error) {
+      console.error("Sign in error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Invalid credentials. Please try again.",
+        description: error instanceof Error ? error.message : "Invalid credentials. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -38,17 +38,37 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5 p-4">
-      <div className="w-full max-w-md space-y-8 bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-lg">
+    <div 
+      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5 p-4"
+      data-testid="signin-page"
+    >
+      <div 
+        className="w-full max-w-md space-y-8 bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-lg"
+        data-testid="signin-form-container"
+      >
         <div className="text-center space-y-2">
-          <Calendar className="w-12 h-12 mx-auto text-primary" />
-          <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
-          <p className="text-muted-foreground">Sign in to your account to continue</p>
+          <Calendar className="w-12 h-12 mx-auto text-primary" data-testid="signin-logo" />
+          <h1 
+            className="text-3xl font-bold tracking-tight"
+            data-testid="signin-heading"
+          >
+            Welcome back
+          </h1>
+          <p 
+            className="text-muted-foreground"
+            data-testid="signin-description"
+          >
+            Sign in to your account to continue
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form 
+          onSubmit={handleSubmit} 
+          className="space-y-6"
+          data-testid="signin-form"
+        >
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" data-testid="email-label">Email</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -59,12 +79,15 @@ export default function SignIn() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-10"
                 required
+                data-testid="email-input"
+                aria-label="Email Address"
+                autoComplete="email"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" data-testid="password-label">Password</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -74,19 +97,37 @@ export default function SignIn() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10"
                 required
+                data-testid="password-input"
+                aria-label="Password"
+                autoComplete="current-password"
               />
             </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={isLoading}
+            data-testid="signin-submit-button"
+            aria-label={isLoading ? "Signing in..." : "Sign in"}
+          >
             {isLoading ? "Signing in..." : "Sign in"}
           </Button>
         </form>
 
         <div className="text-center space-y-2">
-          <p className="text-sm text-muted-foreground">
+          <p 
+            className="text-sm text-muted-foreground"
+            data-testid="signup-link-text"
+          >
             Don't have an account?{" "}
-            <Button variant="link" className="p-0" onClick={() => navigate("/auth/signup")}>
+            <Button 
+              variant="link" 
+              className="p-0" 
+              onClick={() => navigate("/auth/signup")}
+              data-testid="signup-link-button"
+              aria-label="Go to sign up page"
+            >
               Sign up
             </Button>
           </p>

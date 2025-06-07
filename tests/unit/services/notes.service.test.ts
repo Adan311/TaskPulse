@@ -65,6 +65,16 @@ describe('Notes Service', () => {
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
   });
 
+  afterEach(async () => {
+    vi.clearAllMocks();
+    
+    // Ensure auth mock is reset to authenticated state after each test
+    // This prevents test pollution from unauthenticated user tests
+    if (mockSupabase?.auth?.getUser) {
+      mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
+    }
+  });
+
   describe('getUserNotes', () => {
     it('should fetch all notes for authenticated user', async () => {
       const mockQueryChain = {

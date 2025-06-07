@@ -77,6 +77,19 @@ describe('FileService', () => {
     })
   })
 
+  afterEach(async () => {
+    vi.clearAllMocks()
+    
+    // Ensure auth mock is reset to authenticated state after each test
+    // This prevents test pollution from unauthenticated user tests
+    if (mockSupabase?.auth?.getUser) {
+      mockSupabase.auth.getUser.mockResolvedValue({
+        data: { user: { id: 'test-user-id', email: 'test@example.com' } },
+        error: null
+      })
+    }
+  })
+
   test('fetchFiles should return user files with optional filtering', async () => {
     // Arrange
     const mockFiles = [

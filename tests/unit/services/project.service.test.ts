@@ -63,6 +63,19 @@ describe('ProjectService', () => {
     })
   })
 
+  afterEach(async () => {
+    vi.clearAllMocks()
+    
+    // Ensure auth mock is reset to authenticated state after each test
+    // This prevents test pollution from unauthenticated user tests
+    if (mockSupabase?.auth?.getUser) {
+      mockSupabase.auth.getUser.mockResolvedValue({
+        data: { user: { id: 'test-user-id', email: 'test@example.com' } },
+        error: null
+      })
+    }
+  })
+
   test('fetchProjects should return user projects ordered by creation date', async () => {
     // Arrange
     const mockProjects = [

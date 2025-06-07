@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/frontend/components/ui/button";
@@ -28,10 +27,11 @@ export default function SignUp() {
       });
       navigate("/auth/signin");
     } catch (error) {
+      console.error("Sign up error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Something went wrong. Please try again.",
+        description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -39,17 +39,37 @@ export default function SignUp() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5 p-4">
-      <div className="w-full max-w-md space-y-8 bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-lg">
+    <div 
+      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5 p-4"
+      data-testid="signup-page"
+    >
+      <div 
+        className="w-full max-w-md space-y-8 bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-lg"
+        data-testid="signup-form-container"
+      >
         <div className="text-center space-y-2">
-          <Calendar className="w-12 h-12 mx-auto text-primary" />
-          <h1 className="text-3xl font-bold tracking-tight">Create an account</h1>
-          <p className="text-muted-foreground">Get started with your productivity journey</p>
+          <Calendar className="w-12 h-12 mx-auto text-primary" data-testid="signup-logo" />
+          <h1 
+            className="text-3xl font-bold tracking-tight"
+            data-testid="signup-heading"
+          >
+            Create an account
+          </h1>
+          <p 
+            className="text-muted-foreground"
+            data-testid="signup-description"
+          >
+            Get started with your productivity journey
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form 
+          onSubmit={handleSubmit} 
+          className="space-y-6"
+          data-testid="signup-form"
+        >
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name" data-testid="name-label">Full Name</Label>
             <div className="relative">
               <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -60,12 +80,15 @@ export default function SignUp() {
                 onChange={(e) => setName(e.target.value)}
                 className="pl-10"
                 required
+                data-testid="name-input"
+                aria-label="Full Name"
+                autoComplete="name"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" data-testid="email-label">Email</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -76,12 +99,15 @@ export default function SignUp() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-10"
                 required
+                data-testid="email-input"
+                aria-label="Email Address"
+                autoComplete="email"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" data-testid="password-label">Password</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -91,19 +117,38 @@ export default function SignUp() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10"
                 required
+                data-testid="password-input"
+                aria-label="Password"
+                autoComplete="new-password"
+                minLength={6}
               />
             </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={isLoading}
+            data-testid="signup-submit-button"
+            aria-label={isLoading ? "Creating account..." : "Create account"}
+          >
             {isLoading ? "Creating account..." : "Create account"}
           </Button>
         </form>
 
         <div className="text-center space-y-2">
-          <p className="text-sm text-muted-foreground">
+          <p 
+            className="text-sm text-muted-foreground"
+            data-testid="signin-link-text"
+          >
             Already have an account?{" "}
-            <Button variant="link" className="p-0" onClick={() => navigate("/auth/signin")}>
+            <Button 
+              variant="link" 
+              className="p-0" 
+              onClick={() => navigate("/auth/signin")}
+              data-testid="signin-link-button"
+              aria-label="Go to sign in page"
+            >
               Sign in
             </Button>
           </p>
