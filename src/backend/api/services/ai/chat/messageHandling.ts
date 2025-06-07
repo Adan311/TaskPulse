@@ -5,12 +5,13 @@ import { analyzeConversation, saveTaskSuggestions, saveEventSuggestions } from "
 import { 
   detectCommandIntent, 
   createTaskFromCommand, 
-  createEventFromCommand,
+  createEventFromCommand, 
   createProjectFromCommand,
   deleteTaskFromCommand,
   deleteEventFromCommand,
   deleteProjectFromCommand,
-  updateTaskFromCommand
+  updateTaskFromCommand,
+  updateEventFromCommand
 } from "../commands/commandService";
 import { buildContextualPrompt } from "../core/contextService";
 import { ChatMessage, generateConversationTitle } from "./conversationLifecycle";
@@ -36,6 +37,14 @@ export const sendMessage = async (
   };
 } | null> => {
   try {
+    // Validate inputs to prevent UUID errors
+    if (!conversationId || conversationId.trim() === '') {
+      throw new Error("Invalid conversation ID provided");
+    }
+    if (!message || message.trim() === '') {
+      throw new Error("Message cannot be empty");
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
 
@@ -291,7 +300,10 @@ export const sendMessage = async (
           ? `✅ Updated task: "${updateResult.title}"`
           : `❌ Failed to update task: ${updateResult.error}`;
       } else if (commandResult.commandType === 'update_event') {
-        commandResponseText = "Updating events is not fully implemented yet. You can delete and recreate the event instead.";
+        const updateResult = await updateEventFromCommand(user.id, commandResult.entities);
+        commandResponseText = updateResult.success 
+          ? `✅ Updated event: "${updateResult.title}"${updateResult.time ? ` for ${updateResult.time}` : ''}`
+          : `❌ Failed to update event: ${updateResult.error}`;
       } else if (commandResult.commandType === 'update_project') {
         commandResponseText = "Updating projects is not fully implemented yet. Please use the project settings page.";
       }

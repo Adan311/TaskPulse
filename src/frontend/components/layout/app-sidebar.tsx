@@ -9,7 +9,7 @@ import {
   SidebarFooter,
   useSidebar
 } from "@/frontend/components/ui/sidebar";
-import { Home, Calendar, Clock, ListTodo, FileText, User, LogOut, ChevronLeft, ChevronRight, Files, Settings, Sun, Moon, MessageSquare, Lightbulb } from "lucide-react";
+import { Home, Calendar, Clock, ListTodo, FileText, User, LogOut, ChevronLeft, ChevronRight, Files, Settings, Sun, Moon, MessageSquare, Lightbulb, TestTube } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/frontend/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -130,6 +130,23 @@ export function AppSidebar() {
     return location.pathname.startsWith(url);
   };
 
+  // Check if user is admin
+  const isAdmin = user?.email === 'admin@motionmingle.com' || 
+                  user?.email?.includes('admin') || 
+                  process.env.NODE_ENV === 'development';
+
+  // Add testing dashboard for admin users
+  const navigationItems = isAdmin ? [
+    ...mainItems,
+    {
+      title: "Testing Dashboard",
+      url: "/testing",
+      icon: TestTube,
+      adminOnly: true,
+      badge: false,
+    }
+  ] : mainItems;
+
   return (
     <Sidebar>
       <SidebarContent>
@@ -168,7 +185,7 @@ export function AppSidebar() {
         {/* Main navigation */}
         <SidebarGroupContent id="sidebar-content">
           <SidebarMenu role="list" aria-label="Main navigation">
-            {mainItems.map((item, idx) => {
+            {navigationItems.map((item, idx) => {
               const isCurrent = isCurrentPage(item.url);
               return (
                 <SidebarMenuItem key={item.title} role="listitem">

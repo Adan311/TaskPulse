@@ -112,6 +112,23 @@ export const detectCommandIntent = async (
       - "Remove the meeting with John"
       - "Update the project deadline to next Friday"
       - "Change the task priority to high"
+      - "Change the meeting time to 3pm"
+      - "Update the event for tomorrow at 2pm"
+      - "Move the lunch meeting to 1:30"
+      - "Can you edit this for 3pm?"
+      - "Reschedule it to 4 o'clock"
+      
+      For time parsing, convert common formats to ISO format:
+      - "2pm" or "2 pm" → "14:00:00"
+      - "3:30pm" → "15:30:00"
+      - "9am" → "09:00:00"
+      - "noon" → "12:00:00"
+      - "midnight" → "00:00:00"
+      
+      For event updates, use the "updates" field to specify what changed:
+      - If user says "change time to 3pm", set updates: {"time": "YYYY-MM-DDTHH:MM:SS"}
+      - If user says "update title to Meeting", set updates: {"title": "Meeting"}
+      - If user says "move to tomorrow at 2pm", set updates: {"start_time": "YYYY-MM-DDTHH:MM:SS"}
       
       Examples of statements that should return hasCommand: false (these are just informational):
       - "I need to research topics about cars and make a ppt"
@@ -286,8 +303,8 @@ export const createEventFromCommand = async (
       participants: [],
     });
     
-    // Format time for response
-    const timeStr = `${startTimeObj.toLocaleDateString()} at ${startTimeObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+    // Format time for response with consistent 12-hour format
+    const timeStr = `${startTimeObj.toLocaleDateString()} at ${startTimeObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true})}`;
     
     return { success: true, title: event.title, time: timeStr };
   } catch (error) {
@@ -474,6 +491,138 @@ export const deleteEventFromCommand = async (
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error deleting event"
+    };
+  }
+};
+
+/**
+ * Update an event from command entities
+ */
+export const updateEventFromCommand = async (
+  userId: string,
+  entities: any
+): Promise<{ success: boolean; title?: string; time?: string; error?: string }> => {
+  try {
+    // First check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+    
+    // Ensure the user ID matches
+    if (user.id !== userId) throw new Error("User ID mismatch");
+    
+    // Check for event identification info
+    if (!entities.id && !entities.item_name) {
+      return { success: false, error: "Event ID or name is required for updating" };
+    }
+    
+    // Try to find the event by ID or name
+    let eventToUpdate;
+    
+    if (entities.id) {
+      // Find by ID
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .eq("id", entities.id)
+        .eq("user", userId)
+        .single();
+      
+      if (error) throw error;
+      eventToUpdate = data;
+    } else {
+      // Find by name (title)
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .eq("user", userId)
+        .ilike("title", `%${entities.item_name}%`)
+        .limit(1);
+      
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        return { success: false, error: `Event "${entities.item_name}" not found` };
+      }
+      eventToUpdate = data[0];
+    }
+    
+    if (!eventToUpdate) {
+      return { success: false, error: "Event not found" };
+    }
+    
+    // Check if updates are provided
+    if (!entities.updates && !entities.title && !entities.description && !entities.start_time && !entities.end_time) {
+      return { success: false, error: "No updates provided" };
+    }
+    
+    // Prepare the update object
+    const updateData: any = {};
+    
+    // Apply updates from entities.updates if provided
+    if (entities.updates) {
+      Object.keys(entities.updates).forEach(key => {
+        const value = entities.updates[key];
+        switch (key) {
+          case 'title':
+          case 'description':
+            updateData[key] = value;
+            break;
+          case 'start_time':
+            updateData.start_time = value;
+            break;
+          case 'end_time':
+            updateData.end_time = value;
+            break;
+          case 'time':
+            // Handle "change time to 3pm" - update start time and adjust end time
+            const newStartTime = value;
+            updateData.start_time = newStartTime;
+            // Keep the same duration if possible
+            if (eventToUpdate.start_time && eventToUpdate.end_time) {
+              const originalDuration = new Date(eventToUpdate.end_time).getTime() - new Date(eventToUpdate.start_time).getTime();
+              const newEndTime = new Date(new Date(newStartTime).getTime() + originalDuration);
+              updateData.end_time = newEndTime.toISOString();
+            }
+            break;
+        }
+      });
+    }
+    
+    // Apply direct updates if provided
+    if (entities.title) updateData.title = entities.title;
+    if (entities.description) updateData.description = entities.description;
+    if (entities.start_time) updateData.start_time = entities.start_time;
+    if (entities.end_time) updateData.end_time = entities.end_time;
+    
+    // Handle project assignment if specified
+    if (entities.project_name) {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("user", userId)
+        .ilike("name", `%${entities.project_name}%`)
+        .limit(1);
+      
+      if (!error && data && data.length > 0) {
+        updateData.project = data[0].id;
+      }
+    }
+    
+    // Update the event using the existing updateEvent function
+    const updatedEvent = await updateEvent(eventToUpdate.id, updateData);
+    
+    // Format time for response if time was updated
+    let timeStr = undefined;
+    if (updateData.start_time) {
+      const startTimeObj = new Date(updateData.start_time);
+      timeStr = `${startTimeObj.toLocaleDateString()} at ${startTimeObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true})}`;
+    }
+    
+    return { success: true, title: updatedEvent.title, time: timeStr };
+  } catch (error) {
+    console.error("Error updating event from command:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error updating event"
     };
   }
 };

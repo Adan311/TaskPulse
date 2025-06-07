@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getEvents } from "@/backend/api/services/eventService";
 import { fetchTasks } from "@/backend/api/services/task.service";
+import { fetchNotesWithProjects } from "@/backend/api/services/notes.service";
 
 /**
  * Get events for a specific user within a date range
@@ -392,44 +393,17 @@ export const getUserNotes = async (
       throw new Error("User not authenticated or ID mismatch");
     }
     
-    let query = supabase
-      .from('notes')
-      .select(`
-        *,
-        project:projects(*)
-      `)
-      .eq('user', user.id);
+    // Use the new notes service (follows MCP pattern)
+    const notes = await fetchNotesWithProjects(contentSearch, projectName, pinnedOnly);
     
-    // Filter by content if provided
-    if (contentSearch && contentSearch.trim() !== '') {
-      query = query.ilike('content', `%${contentSearch}%`);
-    }
-    
-    // Filter by pinned status if requested
-    if (pinnedOnly === true) {
-      query = query.eq('pinned', true);
-    }
-    
-    const { data: notes, error } = await query.order('last_updated', { ascending: false });
-    
-    if (error) {
-      console.error("Error fetching user notes:", error);
-      return [];
-    }
-    
-    let filteredNotes = notes || [];
-    
-    // Filter by project name if provided (done in application layer for flexibility)
-    if (projectName && projectName.trim() !== '') {
-      const lowercaseProjectName = projectName.toLowerCase();
-      filteredNotes = filteredNotes.filter(note => 
-        note.project && 
-        note.project.name && 
-        note.project.name.toLowerCase().includes(lowercaseProjectName)
-      );
-    }
-    
-    return filteredNotes;
+    // Map to the expected format for AI integration
+    return notes.map(note => ({
+      id: note.id,
+      content: note.content || '',
+      last_updated: note.last_updated || new Date().toISOString(),
+      pinned: note.pinned || false,
+      project: note.project_data
+    }));
   } catch (error) {
     console.error("Error fetching user notes:", error);
     return [];
