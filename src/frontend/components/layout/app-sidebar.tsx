@@ -9,7 +9,7 @@ import {
   SidebarFooter,
   useSidebar
 } from "@/frontend/components/ui/sidebar";
-import { Home, Calendar, Clock, ListTodo, FileText, User, LogOut, ChevronLeft, ChevronRight, Files, Settings, Sun, Moon, MessageSquare, Lightbulb, TestTube } from "lucide-react";
+import { Home, Calendar, Clock, ListTodo, FileText, User, LogOut, ChevronLeft, ChevronRight, Files, Settings, Sun, Moon, MessageSquare, Lightbulb } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/frontend/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -130,16 +130,7 @@ export function AppSidebar() {
     return location.pathname.startsWith(url);
   };
 
-  // Add testing dashboard for all users
-  const navigationItems = [
-    ...mainItems,
-    {
-      title: "Testing Dashboard",
-      url: "/testing",
-      icon: TestTube,
-      badge: false,
-    }
-  ];
+  const navigationItems = mainItems;
 
   return (
     <Sidebar>

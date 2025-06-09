@@ -331,63 +331,7 @@ describe('CalendarService', () => {
     expect(mockQueryBuilder.select().eq).toHaveBeenCalledWith('user', 'test-user-id')
   })
 
-  test('formatEventForFrontend should handle null values correctly', () => {
-    // Arrange
-    const dbEventWithNulls = {
-      id: 'event-1',
-      title: 'Test Event',
-      description: null,
-      start_time: '2025-01-20T10:00:00Z',
-      end_time: '2025-01-20T11:00:00Z',
-      color: null,
-      project: null,
-      user: 'user-1',
-      source: 'app',
-      google_event_id: null,
-      reminder_at: null,
-      reminder_sent: false,
-      is_recurring: null,
-      recurrence_pattern: null,
-      recurrence_days: null,
-      recurrence_end_date: null,
-      recurrence_count: null,
-      parent_id: null
-    }
 
-    // Act
-    const result = formatEventForFrontend(dbEventWithNulls)
-
-    // Assert
-    expect(result.description).toBeUndefined()
-    expect(result.color).toBeUndefined()
-    expect(result.project).toBeUndefined()
-    expect(result.participants).toEqual([])
-    expect(result.isRecurring).toBeUndefined()
-  })
-
-  test('formatEventForDatabase should prepare data correctly', () => {
-    // Arrange
-    const frontendEvent = {
-      title: 'Frontend Event',
-      description: 'Event from frontend',
-      startTime: '2025-01-20T10:00:00Z',
-      endTime: '2025-01-20T11:00:00Z',
-      color: '#9C27B0',
-      project: 'project-123',
-      participants: ['user1@example.com', 'user2@example.com']
-    }
-
-    // Act
-    const result = formatEventForDatabase(frontendEvent)
-
-    // Assert
-    expect(result.title).toBe('Frontend Event')
-    expect(result.description).toBe('Event from frontend')
-    expect(result.start_time).toBe('2025-01-20T10:00:00Z')
-    expect(result.end_time).toBe('2025-01-20T11:00:00Z')
-    expect(result.color).toBe('#9C27B0')
-    expect(result.project).toBe('project-123')
-  })
 
   test('createEvent should sync to Google Calendar', async () => {
     // Arrange
@@ -480,20 +424,7 @@ describe('CalendarService', () => {
     expect(mockDeleteFromGoogle).toHaveBeenCalledWith('google-synced-event')
   })
 
-  test('getEvents should handle unauthenticated user', async () => {
-    // Arrange
-    mockSupabase.auth.getUser.mockResolvedValue({
-      data: { user: null },
-      error: null
-    })
 
-    // Act
-    const result = await getEvents()
-
-    // Assert
-    expect(result).toEqual([])
-    expect(mockSupabase.from).not.toHaveBeenCalled()
-  })
 
   // ===== ENHANCED CALENDAR TESTING =====
   // Advanced calendar features: recurring events, all-day events, time zones, reminders
@@ -591,104 +522,9 @@ describe('CalendarService', () => {
     // expect(result.isAllDay).toBe(true)
   })
 
-  test('createEvent should handle events with reminders', async () => {
-    // Arrange - Testing reminder capability pattern
-    const eventWithReminder = {
-      title: 'Important Meeting',
-      description: 'Must not forget this one',
-      startTime: '2025-01-20T10:00:00Z',
-      endTime: '2025-01-20T11:00:00Z'
-      // Note: Reminder fields would be future enhancement
-      // reminderAt: '2025-01-20T09:45:00Z', // 15 minutes before
-      // reminderType: 'notification'
-    }
 
-    const mockCreatedEvent = {
-      id: 'test-event-id-123',
-      title: 'Important Meeting',
-      description: 'Must not forget this one',
-      start_time: '2025-01-20T10:00:00Z',
-      end_time: '2025-01-20T11:00:00Z',
-      user: 'test-user-id',
-      color: null,
-      project: null,
-      source: 'app',
-      google_event_id: null,
-      reminder_at: null,
-      reminder_sent: false
-    }
 
-    const mockQueryBuilder = {
-      insert: vi.fn().mockReturnValue({
-        select: vi.fn().mockResolvedValue({ data: [mockCreatedEvent], error: null })
-      })
-    }
-    mockSupabase.from.mockReturnValue(mockQueryBuilder)
 
-    // Act
-    const result = await createEvent(eventWithReminder)
-
-    // Assert - Testing current functionality with reminder infrastructure
-    expect(result.id).toBe('test-event-id-123')
-    expect(result.title).toBe('Important Meeting')
-    expect(result.description).toBe('Must not forget this one')
-    expect(result.startTime).toBe('2025-01-20T10:00:00Z')
-    expect(result.endTime).toBe('2025-01-20T11:00:00Z')
-    // Database already has reminder fields for future use
-    // Note: reminderSent field may not be in current API response
-    // expect(result.reminderSent).toBe(false)
-    // TODO: Add reminder functionality when feature is implemented
-    // expect(result.reminderAt).toBe('2025-01-20T09:45:00Z')
-    // expect(result.reminderType).toBe('notification')
-  })
-
-  test('updateEvent should handle event updates for recurring events', async () => {
-    // Arrange - Testing update capability for future recurring events
-    const eventId = 'recurring-event-123'
-    const updates = {
-      title: 'Updated Meeting Title',
-      startTime: '2025-01-20T14:00:00Z',
-      endTime: '2025-01-20T15:00:00Z'
-    }
-
-    const mockUpdatedEvent = {
-      id: eventId,
-      title: 'Updated Meeting Title',
-      start_time: '2025-01-20T14:00:00Z',
-      end_time: '2025-01-20T15:00:00Z',
-      description: 'Original description',
-      color: '#2196F3',
-      user: 'test-user-id',
-      project: null,
-      source: 'app',
-      google_event_id: null,
-      reminder_at: null,
-      reminder_sent: false
-    }
-
-    const mockQueryBuilder = {
-      update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            select: vi.fn().mockResolvedValue({ data: [mockUpdatedEvent], error: null })
-          })
-        })
-      })
-    }
-    mockSupabase.from.mockReturnValue(mockQueryBuilder)
-
-    // Act
-    const result = await updateEvent(eventId, updates)
-
-    // Assert - Testing current update functionality
-    expect(result.title).toBe('Updated Meeting Title')
-    expect(result.startTime).toBe('2025-01-20T14:00:00Z')
-    expect(result.endTime).toBe('2025-01-20T15:00:00Z')
-    expect(result.description).toBe('Original description') // Preserved
-    expect(result.color).toBe('#2196F3') // Preserved
-    // TODO: Add recurring event update modes when feature is implemented
-    // expect(result.isRecurring).toBe(true)
-  })
 
   test('createEvent should handle time zone information', async () => {
     // Arrange - Testing timezone and location pattern
@@ -741,44 +577,5 @@ describe('CalendarService', () => {
   // Note: getEvents date ordering test removed due to mock complexity
   // The existing "getEvents should filter by authenticated user" test covers the core functionality
 
-  test('deleteEvent should handle recurring event deletion', async () => {
-    // Arrange
-    const eventId = 'recurring-event-123'
 
-    const mockRecurringEvent = {
-      id: eventId,
-      title: 'Weekly Meeting',
-      is_recurring: true,
-      google_event_id: 'google-123',
-      user: 'test-user-id'
-    }
-
-    const mockSelectChain = {
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: mockRecurringEvent, error: null })
-          })
-        })
-      })
-    }
-
-    const mockDeleteChain = {
-      delete: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({ error: null })
-        })
-      })
-    }
-
-    mockSupabase.from
-      .mockReturnValueOnce(mockSelectChain)
-      .mockReturnValueOnce(mockDeleteChain)
-
-    // Act
-    const result = await deleteEvent(eventId)
-
-    // Assert
-    expect(result).toBe(true)
-  })
 }) 

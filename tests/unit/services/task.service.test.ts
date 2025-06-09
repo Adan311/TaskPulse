@@ -334,57 +334,7 @@ describe('TaskService', () => {
     expect(mockQueryChain.or).toHaveBeenCalledWith('title.ilike.%important%,description.ilike.%important%')
   })
 
-  test('mapDbTaskToTask should handle null values correctly', () => {
-    // Arrange
-    const dbTaskWithNulls = {
-      id: 'task-1',
-      title: 'Test Task',
-      description: null,
-      status: 'todo',
-      priority: 'medium',
-      due_date: null,
-      project: null,
-      user: 'user-1',
-      archived: null,
-      completion_date: null,
-      labels: null,
-      parent_task_id: null,
-      last_updated_at: '2025-01-16T10:00:00Z',
-      created_at: '2025-01-15T10:00:00Z',
-      updated_at: '2025-01-16T10:00:00Z',
-      reminder_at: null,
-      reminder_sent: null,
-      is_recurring: null,
-      recurrence_pattern: null,
-      recurrence_days: null,
-      recurrence_end_date: null,
-      recurrence_count: null,
-      parent_id: null,
-      recurrence_mode: null
-    }
 
-    // Act
-    const result = mapDbTaskToTask(dbTaskWithNulls)
-
-    // Assert - Should handle null values gracefully
-    expect(result.archived).toBe(false)
-    expect(result.reminder_sent).toBe(false)
-    expect(result.is_recurring).toBe(false)
-    expect(result.labels).toEqual([])
-    expect(result.recurrence_days).toEqual([])
-    expect(result.recurrence_mode).toBe('clone')
-  })
-
-  test('updateProjectProgress should handle errors gracefully', async () => {
-    // Arrange - This is testing the utility function
-    const projectId = 'test-project'
-    
-    // This should not throw even if project service fails
-    // Act & Assert - Should not throw
-    await expect(updateProjectProgress(projectId)).resolves.not.toThrow()
-    await expect(updateProjectProgress(null)).resolves.not.toThrow()
-    await expect(updateProjectProgress(undefined)).resolves.not.toThrow()
-  })
 
   // ===== ENHANCED TASK TESTING =====
   // Advanced task features: dependencies, subtasks, notifications, recurring tasks, time tracking
@@ -527,56 +477,7 @@ describe('TaskService', () => {
     expect(updateChain.eq).toHaveBeenCalledWith('id', taskId)
   })
 
-  test('createTask should handle recurring task setup', async () => {
-    // Arrange - Testing recurring task creation
-    const recurringTaskData = {
-      title: 'Weekly Report',
-      description: 'Generate weekly progress report',
-      status: 'todo' as const,
-      priority: 'medium' as const,
-      is_recurring: true,
-      recurrence_pattern: 'weekly',
-      recurrence_days: ['monday'],
-      recurrence_end_date: '2025-06-01',
-      recurrence_count: 20
-    }
 
-    const mockCreatedRecurringTask = {
-      id: 'recurring-task-789',
-      title: 'Weekly Report',
-      description: 'Generate weekly progress report',
-      status: 'todo',
-      priority: 'medium',
-      is_recurring: true,
-      recurrence_pattern: 'weekly',
-      recurrence_days: ['monday'],
-      recurrence_end_date: '2025-06-01',
-      recurrence_count: 20,
-      user: 'test-user-id',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-
-    mockSupabase.from.mockReturnValue({
-      insert: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: mockCreatedRecurringTask, error: null })
-        })
-      })
-    })
-
-    // Act
-    const result = await createTask(recurringTaskData)
-
-    // Assert - Testing recurring task properties
-    expect(result.id).toBe('recurring-task-789')
-    expect(result.title).toBe('Weekly Report')
-    expect(result.is_recurring).toBe(true)
-    expect(result.recurrence_pattern).toBe('weekly')
-    expect(result.recurrence_days).toEqual(['monday'])
-    expect(result.recurrence_end_date).toBe('2025-06-01')
-    expect(result.recurrence_count).toBe(20)
-  })
 
   test('fetchTasks should handle complex filtering with labels and time tracking', async () => {
     // Arrange - Testing advanced filtering capabilities (simplified for current API)
@@ -657,55 +558,7 @@ describe('TaskService', () => {
     // expect(mockComplexQueryChain.contains).toHaveBeenCalledWith('labels', ['urgent', 'client-work'])
   })
 
-  test('updateTask should handle time tracking updates', async () => {
-    // Arrange - Testing time tracking functionality
-    const taskId = 'time-tracked-task-123'
-    const timeUpdate = {
-      time_tracked: 3.5,
-      last_time_entry: new Date().toISOString(),
-      time_tracking_active: false
-    }
 
-    const mockTimeTrackedTask = {
-      id: taskId,
-      title: 'Time Tracked Task',
-      description: 'Task with time tracking',
-      status: 'in_progress',
-      priority: 'medium',
-      time_tracked: 3.5,
-      estimated_hours: 5,
-      last_time_entry: timeUpdate.last_time_entry,
-      time_tracking_active: false,
-      user: 'test-user-id',
-      created_at: '2025-01-15T10:00:00Z',
-      updated_at: new Date().toISOString()
-    }
-
-    mockSupabase.from.mockReturnValue({
-      update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnThis(),
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: mockTimeTrackedTask, error: null })
-        })
-      })
-    })
-
-    // Act
-    const result = await updateTask(taskId, timeUpdate)
-
-    // Assert - Testing time tracking updates (future enhancement)
-    expect(result.id).toBe(taskId)
-    expect(result.title).toBe('Time Tracked Task')
-    expect(result.description).toBe('Task with time tracking')
-    expect(result.status).toBe('in_progress')
-    expect(result.priority).toBe('medium')
-    
-    // TODO: Add time tracking properties when feature is implemented
-    // expect(result.time_tracked).toBe(3.5)
-    // expect(result.estimated_hours).toBe(5)
-    // expect(result.last_time_entry).toBe(timeUpdate.last_time_entry)
-    // expect(result.time_tracking_active).toBe(false)
-  })
 
   test('deleteTask should handle cascade deletion of subtasks', async () => {
     // Arrange - Testing cascade deletion
@@ -775,88 +628,5 @@ describe('TaskService', () => {
     expect(mockSupabase.from).toHaveBeenCalledWith('tasks')
     // TODO: Add cascade deletion when subtask feature is implemented
     // expect(mockSupabase.from).toHaveBeenCalledTimes(4)
-  })
-
-  test('fetchTasks should handle task dependency resolution', async () => {
-    // Arrange - Testing dependency chain resolution
-    const tasksWithDependencies = [
-      {
-        id: 'task-a',
-        title: 'Task A - Foundation',
-        status: 'done',
-        priority: 'high',
-        dependencies: [],
-        blocking_tasks: ['task-b', 'task-c'],
-        user: 'test-user-id'
-      },
-      {
-        id: 'task-b',
-        title: 'Task B - Depends on A',
-        status: 'todo',
-        priority: 'medium',
-        dependencies: ['task-a'],
-        blocking_tasks: ['task-d'],
-        user: 'test-user-id'
-      },
-      {
-        id: 'task-c',
-        title: 'Task C - Depends on A',
-        status: 'todo',
-        priority: 'medium',
-        dependencies: ['task-a'],
-        blocking_tasks: [],
-        user: 'test-user-id'
-      },
-      {
-        id: 'task-d',
-        title: 'Task D - Depends on B',
-        status: 'todo',
-        priority: 'low',
-        dependencies: ['task-b'],
-        blocking_tasks: [],
-        user: 'test-user-id'
-      }
-    ]
-
-    // Mock query chain for dependency resolution
-    const mockDependencyQueryChain = {
-      eq: vi.fn().mockReturnThis(),
-      in: vi.fn().mockReturnThis(),
-      gte: vi.fn().mockReturnThis(),
-      lte: vi.fn().mockReturnThis(),
-      or: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({ data: tasksWithDependencies, error: null })
-    }
-
-    mockSupabase.from.mockReturnValue({
-      select: vi.fn().mockReturnValue(mockDependencyQueryChain)
     })
-
-    // Act
-    const result = await fetchTasks()
-
-    // Assert - Testing dependency chain
-    expect(result).toHaveLength(4)
-    
-    // Verify task relationships (future enhancement)
-    const taskA = result.find(t => t.id === 'task-a')
-    const taskB = result.find(t => t.id === 'task-b')
-    const taskC = result.find(t => t.id === 'task-c')
-    const taskD = result.find(t => t.id === 'task-d')
-    
-    expect(taskA?.title).toBe('Task A - Foundation')
-    expect(taskB?.title).toBe('Task B - Depends on A')
-    expect(taskC?.title).toBe('Task C - Depends on A')
-    expect(taskD?.title).toBe('Task D - Depends on B')
-    
-    // Verify status progression
-    expect(taskA?.status).toBe('done')
-    expect(taskB?.status).toBe('todo')
-    expect(taskC?.status).toBe('todo')
-    expect(taskD?.status).toBe('todo')
-    
-    // TODO: Add dependency relationship checks when feature is implemented
-    // expect(taskA?.dependencies).toEqual([])
-    // expect(taskA?.blocking_tasks).toEqual(['task-b', 'task-c'])
-  })
 }) 

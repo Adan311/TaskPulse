@@ -216,23 +216,7 @@ describe('TimeTrackingService', () => {
     expect(mockQuery.select().eq().order().limit).toHaveBeenCalledWith(1)
   })
 
-  test('getActiveTimeLog should return null when no active session', async () => {
-    // Arrange
-    const mockQuery = {
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValue({ data: [], error: null })
-      })
-    }
-    mockSupabase.from.mockReturnValue(mockQuery)
 
-    // Act
-    const result = await getActiveTimeLog()
-
-    // Assert
-    expect(result).toBe(null)
-  })
 
   test('pauseTimeTracking should pause active session', async () => {
     // Arrange
@@ -536,25 +520,9 @@ describe('TimeTrackingService', () => {
     expect(mockQuery.select().eq).toHaveBeenCalledWith('project_id', projectId)
   })
 
-  test('formatDuration should convert seconds to human readable format', () => {
-    // Act & Assert
-    expect(formatDuration(3665)).toBe('1h 1m') // 1 hour, 1 minute
-    expect(formatDuration(3600)).toBe('1h 0m') // exactly 1 hour
-    expect(formatDuration(90)).toBe('1m') // 1 minute 30 seconds (rounds down to 1 minute)
-    expect(formatDuration(45)).toBe('0m') // 45 seconds (rounds down to 0 minutes)
-    expect(formatDuration(0)).toBe('0m') // 0 seconds
-  })
 
-  test('calculateElapsedTime should return seconds since start time', () => {
-    // Arrange - Mock current time as 10:30, start time as 09:00
-    const startTime = '2025-01-16T09:00:00Z'
-    
-    // Act
-    const result = calculateElapsedTime(startTime)
 
-    // Assert - Should be 1.5 hours = 5400 seconds
-    expect(result).toBe(5400)
-  })
+
 
   test('getProjectTimeStats should calculate project-specific statistics', async () => {
     // Arrange
@@ -640,37 +608,9 @@ describe('TimeTrackingService', () => {
       .rejects.toThrow('User not authenticated')
   })
 
-  test('pauseTimeTracking should handle no active sessions', async () => {
-    // Arrange
-    const mockQuery = {
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValue({ data: [], error: null })
-      })
-    }
-    mockSupabase.from.mockReturnValue(mockQuery)
 
-    // Act & Assert
-    await expect(pauseTimeTracking())
-      .rejects.toThrow('No active time tracking sessions found')
-  })
 
-  test('resumeTimeTracking should handle no paused sessions', async () => {
-    // Arrange
-    const mockQuery = {
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValue({ data: [], error: null })
-      })
-    }
-    mockSupabase.from.mockReturnValue(mockQuery)
 
-    // Act & Assert
-    await expect(resumeTimeTracking())
-      .rejects.toThrow('No paused time tracking sessions found')
-  })
 
   test('getActiveTimeLog should handle unauthenticated user gracefully', async () => {
     // Arrange

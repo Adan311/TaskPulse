@@ -26,7 +26,7 @@ const Settings = React.lazy(() => import("./frontend/pages/Settings"));
 const ProjectDetailPage = React.lazy(() => import("./frontend/pages/ProjectDetailPage"));
 const Chat = React.lazy(() => import("./frontend/pages/Chat"));
 const Suggestions = React.lazy(() => import("./frontend/pages/Suggestions"));
-const TestingDashboard = React.lazy(() => import("./frontend/pages/TestingDashboard"));
+
 const PrivacyPolicy = React.lazy(() => import("./frontend/pages/legal/PrivacyPolicy"));
 const TermsOfService = React.lazy(() => import("./frontend/pages/legal/TermsOfService"));
 
@@ -145,14 +145,7 @@ const router = createBrowserRouter([
           </LazyWrapper>
         ),
       },
-      {
-        path: "testing",
-        element: (
-          <LazyWrapper>
-            <TestingDashboard />
-          </LazyWrapper>
-        ),
-      },
+
       {
         path: "privacy-policy",
         element: (

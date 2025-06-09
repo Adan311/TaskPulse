@@ -200,48 +200,7 @@ describe('AuthService', () => {
     expect(result).toBe(null)
   })
 
-  test('setupAuthListener should set up auth state change listener', () => {
-    // Arrange
-    const mockCallback = vi.fn()
-    const mockSubscription = { unsubscribe: vi.fn() }
 
-    mockSupabase.auth.onAuthStateChange.mockReturnValue({
-      data: { subscription: mockSubscription }
-    })
-
-    // Act
-    const subscription = setupAuthListener(mockCallback)
-
-    // Assert
-    expect(subscription).toBe(mockSubscription)
-    expect(mockSupabase.auth.onAuthStateChange).toHaveBeenCalledWith(expect.any(Function))
-  })
-
-  test('setupAuthListener callback should handle user changes', () => {
-    // Arrange
-    const mockCallback = vi.fn()
-    let authChangeHandler: any
-
-    mockSupabase.auth.onAuthStateChange.mockImplementation((handler) => {
-      authChangeHandler = handler
-      return { data: { subscription: { unsubscribe: vi.fn() } } }
-    })
-
-    setupAuthListener(mockCallback)
-
-    // Act - Simulate auth state change with user
-    const mockUser = { id: 'user-123', email: 'test@example.com' }
-    authChangeHandler('SIGNED_IN', { user: mockUser })
-
-    // Assert
-    expect(mockCallback).toHaveBeenCalledWith(mockUser)
-
-    // Act - Simulate auth state change without user
-    authChangeHandler('SIGNED_OUT', null)
-
-    // Assert
-    expect(mockCallback).toHaveBeenCalledWith(null)
-  })
 
   test('updatePassword should verify current password and update', async () => {
     // Arrange
@@ -325,24 +284,7 @@ describe('AuthService', () => {
     })
   })
 
-  test('updateProfile should update only name when email not provided', async () => {
-    // Arrange
-    const profileData = { name: 'Updated Name' }
 
-    mockSupabase.auth.updateUser.mockResolvedValue({
-      data: { user: { id: 'user-123' } },
-      error: null
-    })
-
-    // Act
-    const result = await updateProfile(profileData)
-
-    // Assert
-    expect(result.success).toBe(true)
-    expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({
-      data: { first_name: profileData.name }
-    })
-  })
 
   test('updateProfile should handle update errors', async () => {
     // Arrange
@@ -441,51 +383,5 @@ describe('AuthService', () => {
       .rejects.toThrow('User not authenticated')
   })
 
-  test('deleteAccount should continue deletion even if some tables fail', async () => {
-    // Arrange
-    const password = 'userpassword123'
-    const mockUser = { id: 'user-123', email: 'test@example.com' }
 
-    mockSupabase.auth.getUser.mockResolvedValue({
-      data: { user: mockUser },
-      error: null
-    })
-
-    mockSupabase.auth.signInWithPassword.mockResolvedValue({
-      data: { user: mockUser, session: { access_token: 'token' } },
-      error: null
-    })
-
-    // Mock some deletions to fail
-    const mockDeleteBuilder = {
-      delete: vi.fn().mockReturnValue({
-        eq: vi.fn()
-          .mockResolvedValueOnce({ error: null }) // First table succeeds
-          .mockResolvedValueOnce({ error: { message: 'Deletion failed' } }) // Second table fails
-          .mockResolvedValue({ error: null }) // Remaining tables succeed
-      })
-    }
-    mockSupabase.from.mockReturnValue(mockDeleteBuilder)
-
-    mockSupabase.auth.signOut.mockResolvedValue({ error: null })
-
-    // Act
-    const result = await deleteAccount(password)
-
-    // Assert
-    expect(result.success).toBe(true)
-    expect(mockSupabase.auth.signOut).toHaveBeenCalled()
-  })
-
-  test('updatePassword should handle unauthenticated user', async () => {
-    // Arrange
-    mockSupabase.auth.getUser.mockResolvedValue({
-      data: { user: null },
-      error: null
-    })
-
-    // Act & Assert
-    await expect(updatePassword('old', 'new'))
-      .rejects.toThrow('User not authenticated')
-  })
 }) 

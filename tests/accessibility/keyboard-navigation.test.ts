@@ -1,406 +1,510 @@
-import { describe, test, expect, vi, beforeEach } from 'vitest'
+import { describe, test, expect, beforeEach } from 'vitest'
 
-// Mock the Supabase client
-vi.mock('../../src/backend/api/client/supabase', () => {
-  const mockAuth = {
-    getUser: vi.fn(),
-    signInWithPassword: vi.fn()
-  }
-
-  const mockFrom = vi.fn(() => ({
-    select: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    update: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn(),
-    order: vi.fn().mockReturnThis()
-  }))
-
-  return {
-    supabase: {
-      auth: mockAuth,
-      from: mockFrom
-    }
-  }
-})
+// Mock keyboard events
+const createKeyboardEvent = (type: string, key: string, shiftKey = false) => {
+  return new KeyboardEvent(type, {
+    key,
+    shiftKey,
+    bubbles: true,
+    cancelable: true
+  })
+}
 
 describe('Keyboard Navigation Accessibility Tests', () => {
-  let mockSupabase: any
+  beforeEach(() => {
+    // Reset DOM for each test
+    document.body.innerHTML = ''
+  })
 
-  beforeEach(async () => {
-    vi.clearAllMocks()
-    vi.resetModules()
+  test('should support tab navigation through all interactive elements', () => {
+    // Arrange - Create page with various interactive elements
+    document.body.innerHTML = `
+      <button>Button 1</button>
+      <a href="#link">Link</a>
+      <input type="text" placeholder="Text input">
+      <select>
+        <option>Option 1</option>
+        <option>Option 2</option>
+      </select>
+      <textarea placeholder="Textarea"></textarea>
+      <button>Button 2</button>
+    `
+
+    // Act - Get all tabbable elements
+    const tabbableElements = document.querySelectorAll(
+      'button, a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )
+
+    // Assert - All interactive elements should be tabbable
+    expect(tabbableElements.length).toBe(6)
     
-    // Get the mocked supabase instance
-    const { supabase } = await import('../../src/backend/api/client/supabase')
-    mockSupabase = supabase
-  })
-
-  describe('Tab Navigation and Focus Management', () => {
-    test('should support tab navigation through all interactive elements', async () => {
-      // Arrange - Mock interactive elements in tab order
-      const tabSequence = [
-        { element: 'skip-to-content', tabIndex: 0, isFocusable: true },
-        { element: 'main-navigation', tabIndex: 0, isFocusable: true },
-        { element: 'search-input', tabIndex: 0, isFocusable: true },
-        { element: 'user-menu', tabIndex: 0, isFocusable: true },
-        { element: 'create-task-button', tabIndex: 0, isFocusable: true },
-        { element: 'task-list', tabIndex: 0, isFocusable: true },
-        { element: 'sidebar-toggle', tabIndex: 0, isFocusable: true }
-      ]
-
-      // Act & Assert - All elements are focusable in logical order
-      tabSequence.forEach(({ element, tabIndex, isFocusable }) => {
-        expect(isFocusable).toBe(true)
-        expect(tabIndex).toBeGreaterThanOrEqual(0)
-      })
-    })
-
-    test('should support shift+tab for reverse navigation', async () => {
-      // Arrange - Mock reverse tab navigation
-      const reverseNavigation = [
-        { from: 'submit-button', to: 'cancel-button', canNavigateBack: true },
-        { from: 'cancel-button', to: 'form-input', canNavigateBack: true },
-        { from: 'form-input', to: 'form-label', canNavigateBack: true }
-      ]
-
-      // Act & Assert - Reverse navigation works correctly
-      reverseNavigation.forEach(({ from, to, canNavigateBack }) => {
-        expect(canNavigateBack).toBe(true)
-      })
-    })
-
-    test('should maintain focus visibility with clear indicators', async () => {
-      // Arrange - Mock focus indicators
-      const focusIndicators = [
-        { element: 'button', hasOutline: true, isVisible: true, contrastRatio: 3.1 },
-        { element: 'link', hasOutline: true, isVisible: true, contrastRatio: 3.2 },
-        { element: 'input', hasOutline: true, isVisible: true, contrastRatio: 3.5 },
-        { element: 'select', hasOutline: true, isVisible: true, contrastRatio: 3.0 }
-      ]
-
-      // Act & Assert - Focus indicators are visible and meet contrast requirements
-      focusIndicators.forEach(({ element, hasOutline, isVisible, contrastRatio }) => {
-        expect(hasOutline).toBe(true)
-        expect(isVisible).toBe(true)
-        expect(contrastRatio).toBeGreaterThanOrEqual(3.0) // WCAG AA requirement
-      })
-    })
-
-    test('should skip non-interactive elements during tab navigation', async () => {
-      // Arrange - Mock elements that should not receive focus
-      const nonInteractiveElements = [
-        { element: 'div', shouldReceiveFocus: false },
-        { element: 'span', shouldReceiveFocus: false },
-        { element: 'p', shouldReceiveFocus: false },
-        { element: 'h1', shouldReceiveFocus: false },
-        { element: 'img', shouldReceiveFocus: false }
-      ]
-
-      // Act & Assert - Non-interactive elements don't receive focus
-      nonInteractiveElements.forEach(({ element, shouldReceiveFocus }) => {
-        expect(shouldReceiveFocus).toBe(false)
-      })
+    tabbableElements.forEach(element => {
+      const htmlElement = element as HTMLElement
+      // Elements should be focusable
+      expect(htmlElement.tabIndex >= 0 || 
+             ['BUTTON', 'A', 'INPUT', 'SELECT', 'TEXTAREA'].includes(htmlElement.tagName)).toBe(true)
     })
   })
 
-  describe('Keyboard Shortcuts and Commands', () => {
-    test('should support standard keyboard shortcuts', async () => {
-      // Arrange - Mock standard keyboard shortcuts
-      const shortcuts = [
-        { key: 'Ctrl+S', action: 'save', isSupported: true },
-        { key: 'Ctrl+Z', action: 'undo', isSupported: true },
-        { key: 'Ctrl+Y', action: 'redo', isSupported: true },
-        { key: 'Ctrl+F', action: 'search', isSupported: true },
-        { key: 'Escape', action: 'close-modal', isSupported: true }
-      ]
+  test('should support shift+tab for reverse navigation', () => {
+    // Arrange - Create elements in tab order
+    document.body.innerHTML = `
+      <button id="first">First</button>
+      <button id="second">Second</button>
+      <button id="third">Third</button>
+    `
 
-      // Act & Assert - Standard shortcuts are supported
-      shortcuts.forEach(({ key, action, isSupported }) => {
-        expect(isSupported).toBe(true)
-      })
-    })
+    const firstButton = document.getElementById('first') as HTMLButtonElement
+    const secondButton = document.getElementById('second') as HTMLButtonElement
+    const thirdButton = document.getElementById('third') as HTMLButtonElement
 
-    test('should provide application-specific keyboard shortcuts', async () => {
-      // Arrange - Mock app-specific shortcuts
-      const appShortcuts = [
-        { key: 'Ctrl+N', action: 'create-new-task', isSupported: true },
-        { key: 'Ctrl+Shift+P', action: 'create-new-project', isSupported: true },
-        { key: 'Ctrl+T', action: 'start-timer', isSupported: true },
-        { key: 'Ctrl+Shift+C', action: 'open-calendar', isSupported: true }
-      ]
+    // Act - Simulate shift+tab navigation
+    thirdButton.focus()
+    expect(document.activeElement).toBe(thirdButton)
 
-      // Act & Assert - App-specific shortcuts work
-      appShortcuts.forEach(({ key, action, isSupported }) => {
-        expect(isSupported).toBe(true)
-      })
-    })
+    // Simulate shift+tab (would move to second button)
+    const shiftTabEvent = createKeyboardEvent('keydown', 'Tab', true)
+    thirdButton.dispatchEvent(shiftTabEvent)
 
-    test('should handle arrow key navigation in lists and grids', async () => {
-      // Arrange - Mock arrow key navigation
-      const arrowNavigation = [
-        { context: 'task-list', direction: 'down', canNavigate: true },
-        { context: 'task-list', direction: 'up', canNavigate: true },
-        { context: 'calendar-grid', direction: 'left', canNavigate: true },
-        { context: 'calendar-grid', direction: 'right', canNavigate: true },
-        { context: 'project-cards', direction: 'down', canNavigate: true }
-      ]
+    // Assert - Reverse navigation should be supported
+    // In actual implementation, event handler would manage focus
+    expect(firstButton).toBeTruthy()
+    expect(secondButton).toBeTruthy()
+    expect(thirdButton).toBeTruthy()
+  })
 
-      // Act & Assert - Arrow key navigation works in appropriate contexts
-      arrowNavigation.forEach(({ context, direction, canNavigate }) => {
-        expect(canNavigate).toBe(true)
-      })
-    })
+  test('should maintain focus visibility with clear indicators', () => {
+    // Arrange - Create focusable elements
+    const focusableElements = [
+      '<button style="outline: 2px solid blue;">Styled Button</button>',
+      '<a href="#" style="outline: 2px solid blue;">Styled Link</a>',
+      '<input type="text" style="outline: 2px solid blue;">',
+      '<select style="outline: 2px solid blue;"><option>Option</option></select>'
+    ]
 
-    test('should support home and end keys for navigation', async () => {
-      // Arrange - Mock home/end key behavior
-      const homeEndNavigation = [
-        { context: 'task-list', key: 'Home', goesToFirst: true },
-        { context: 'task-list', key: 'End', goesToLast: true },
-        { context: 'text-input', key: 'Home', goesToStart: true },
-        { context: 'text-input', key: 'End', goesToEnd: true }
-      ]
+    focusableElements.forEach(html => {
+      // Act
+      document.body.innerHTML = html
+      const element = document.body.firstElementChild as HTMLElement
+      element.focus()
 
-      // Act & Assert - Home/End keys work correctly
-      homeEndNavigation.forEach(({ context, key, goesToFirst, goesToLast, goesToStart, goesToEnd }) => {
-        if (goesToFirst) expect(goesToFirst).toBe(true)
-        if (goesToLast) expect(goesToLast).toBe(true)
-        if (goesToStart) expect(goesToStart).toBe(true)
-        if (goesToEnd) expect(goesToEnd).toBe(true)
-      })
+      // Assert - Element should have focus indicator
+      const hasOutline = element.style.outline.includes('solid') || 
+                        element.style.outlineWidth || 
+                        element.style.border.includes('solid')
+      expect(hasOutline || element === document.activeElement).toBe(true)
     })
   })
 
-  describe('Modal and Dialog Focus Management', () => {
-    test('should trap focus within modal dialogs', async () => {
-      // Arrange - Mock modal focus trap
-      const modalFocusTrap = [
-        { modal: 'create-task-modal', focusTrapped: true, canEscapeWithTab: false },
-        { modal: 'edit-project-modal', focusTrapped: true, canEscapeWithTab: false },
-        { modal: 'delete-confirmation', focusTrapped: true, canEscapeWithTab: false },
-        { modal: 'settings-dialog', focusTrapped: true, canEscapeWithTab: false }
-      ]
+  test('should skip non-interactive elements during tab navigation', () => {
+    // Arrange - Mix of interactive and non-interactive elements
+    document.body.innerHTML = `
+      <p>Non-interactive paragraph</p>
+      <button>Interactive button</button>
+      <div>Non-interactive div</div>
+      <span>Non-interactive span</span>
+      <a href="#link">Interactive link</a>
+      <h2>Non-interactive heading</h2>
+      <input type="text" placeholder="Interactive input">
+    `
 
-      // Act & Assert - Focus is trapped in modals
-      modalFocusTrap.forEach(({ modal, focusTrapped, canEscapeWithTab }) => {
-        expect(focusTrapped).toBe(true)
-        expect(canEscapeWithTab).toBe(false)
-      })
-    })
+    // Act - Get tabbable elements
+    const tabbableElements = document.querySelectorAll(
+      'button, a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )
 
-    test('should return focus to trigger element when modal closes', async () => {
-      // Arrange - Mock focus restoration
-      const focusRestoration = [
-        { trigger: 'create-task-button', modal: 'create-task-modal', focusReturned: true },
-        { trigger: 'edit-button', modal: 'edit-modal', focusReturned: true },
-        { trigger: 'delete-button', modal: 'delete-confirmation', focusReturned: true }
-      ]
+    const nonInteractiveElements = document.querySelectorAll(
+      'p, div:not([tabindex]), span:not([tabindex]), h1, h2, h3, h4, h5, h6'
+    )
 
-      // Act & Assert - Focus returns to trigger element
-      focusRestoration.forEach(({ trigger, modal, focusReturned }) => {
-        expect(focusReturned).toBe(true)
-      })
-    })
+    // Assert - Only interactive elements should be tabbable
+    expect(tabbableElements.length).toBe(3) // button, link, input
+    expect(nonInteractiveElements.length).toBe(4) // p, div, span, h2
 
-    test('should support escape key to close modals', async () => {
-      // Arrange - Mock escape key behavior
-      const escapeKeyBehavior = [
-        { modal: 'create-task-modal', escapable: true },
-        { modal: 'edit-project-modal', escapable: true },
-        { modal: 'settings-dialog', escapable: true },
-        { modal: 'critical-confirmation', escapable: false } // Some modals shouldn't be escapable
-      ]
-
-      // Act & Assert - Escape key behavior is appropriate
-      escapeKeyBehavior.forEach(({ modal, escapable }) => {
-        // Most modals should be escapable, but some critical ones might not be
-        expect(typeof escapable).toBe('boolean')
-      })
-    })
-
-    test('should set initial focus to appropriate element in modal', async () => {
-      // Arrange - Mock initial focus in modals
-      const initialFocus = [
-        { modal: 'create-task-modal', initialFocus: 'task-title-input', isAppropriate: true },
-        { modal: 'delete-confirmation', initialFocus: 'cancel-button', isAppropriate: true },
-        { modal: 'settings-dialog', initialFocus: 'first-setting', isAppropriate: true }
-      ]
-
-      // Act & Assert - Initial focus is set appropriately
-      initialFocus.forEach(({ modal, initialFocus, isAppropriate }) => {
-        expect(isAppropriate).toBe(true)
-        expect(initialFocus).toBeTruthy()
-      })
+    nonInteractiveElements.forEach(element => {
+      const htmlElement = element as HTMLElement
+      expect(htmlElement.tabIndex).toBeLessThan(0)
     })
   })
 
-  describe('Form Navigation and Interaction', () => {
-    test('should support enter key to submit forms', async () => {
-      // Arrange - Mock form submission with enter key
-      const formSubmission = [
-        { form: 'login-form', enterKeySubmits: true },
-        { form: 'create-task-form', enterKeySubmits: true },
-        { form: 'search-form', enterKeySubmits: true },
-        { form: 'settings-form', enterKeySubmits: true }
-      ]
+  test('should support standard keyboard shortcuts', () => {
+    // Arrange - Create form with standard shortcuts
+    document.body.innerHTML = `
+      <form>
+        <label for="name">Name (Alt+N):</label>
+        <input type="text" id="name" accesskey="n">
+        
+        <label for="email">Email (Alt+E):</label>
+        <input type="email" id="email" accesskey="e">
+        
+        <button type="submit" accesskey="s">Submit (Alt+S)</button>
+        <button type="button" accesskey="c">Cancel (Alt+C)</button>
+      </form>
+    `
 
-      // Act & Assert - Enter key submits forms
-      formSubmission.forEach(({ form, enterKeySubmits }) => {
-        expect(enterKeySubmits).toBe(true)
-      })
-    })
+    // Act - Check for access keys
+    const elementsWithAccessKeys = document.querySelectorAll('[accesskey]')
 
-    test('should support space and enter for button activation', async () => {
-      // Arrange - Mock button activation
-      const buttonActivation = [
-        { button: 'submit-button', spaceActivates: true, enterActivates: true },
-        { button: 'cancel-button', spaceActivates: true, enterActivates: true },
-        { button: 'toggle-button', spaceActivates: true, enterActivates: true }
-      ]
-
-      // Act & Assert - Both space and enter activate buttons
-      buttonActivation.forEach(({ button, spaceActivates, enterActivates }) => {
-        expect(spaceActivates).toBe(true)
-        expect(enterActivates).toBe(true)
-      })
-    })
-
-    test('should support arrow keys for radio button groups', async () => {
-      // Arrange - Mock radio button navigation
-      const radioNavigation = [
-        { group: 'priority-level', arrowKeysWork: true, wrapsAround: true },
-        { group: 'notification-type', arrowKeysWork: true, wrapsAround: true },
-        { group: 'theme-selection', arrowKeysWork: true, wrapsAround: true }
-      ]
-
-      // Act & Assert - Arrow keys work for radio buttons
-      radioNavigation.forEach(({ group, arrowKeysWork, wrapsAround }) => {
-        expect(arrowKeysWork).toBe(true)
-        expect(wrapsAround).toBe(true)
-      })
-    })
-
-    test('should support space key for checkbox toggling', async () => {
-      // Arrange - Mock checkbox interaction
-      const checkboxInteraction = [
-        { checkbox: 'task-complete', spaceToggles: true },
-        { checkbox: 'notification-enabled', spaceToggles: true },
-        { checkbox: 'auto-save', spaceToggles: true }
-      ]
-
-      // Act & Assert - Space key toggles checkboxes
-      checkboxInteraction.forEach(({ checkbox, spaceToggles }) => {
-        expect(spaceToggles).toBe(true)
-      })
+    // Assert - Elements should have access keys for keyboard shortcuts
+    expect(elementsWithAccessKeys.length).toBe(4)
+    
+    elementsWithAccessKeys.forEach(element => {
+      const accessKey = element.getAttribute('accesskey')
+      expect(accessKey).toBeTruthy()
+      expect(accessKey?.length).toBe(1)
     })
   })
 
-  describe('Navigation Menu and Dropdown Accessibility', () => {
-    test('should support arrow key navigation in dropdown menus', async () => {
-      // Arrange - Mock dropdown navigation
-      const dropdownNavigation = [
-        { menu: 'user-menu', arrowKeysWork: true, wrapsAround: true },
-        { menu: 'project-selector', arrowKeysWork: true, wrapsAround: true },
-        { menu: 'filter-options', arrowKeysWork: true, wrapsAround: true }
-      ]
+  test('should provide application-specific keyboard shortcuts', () => {
+    // Arrange - Test app-specific shortcuts
+    const shortcutElements = [
+      { key: 'Escape', action: 'escape' },
+      { key: 'Enter', action: 'enter' },
+      { key: 'Space', action: 'space' },
+      { key: 'ArrowUp', action: 'arrows' },
+      { key: 'ArrowDown', action: 'arrows' }
+    ]
 
-      // Act & Assert - Arrow keys work in dropdowns
-      dropdownNavigation.forEach(({ menu, arrowKeysWork, wrapsAround }) => {
-        expect(arrowKeysWork).toBe(true)
-        expect(wrapsAround).toBe(true)
-      })
-    })
+    document.body.innerHTML = `
+      <div id="app">
+        <button data-shortcut="escape">Close (Esc)</button>
+        <form data-shortcut="enter">
+          <input type="text">
+          <button type="submit">Submit (Enter)</button>
+        </form>
+        <input type="checkbox" data-shortcut="space"> Toggle (Space)
+        <ul data-shortcut="arrows">
+          <li>Item 1</li>
+          <li>Item 2</li>
+          <li>Item 3</li>
+        </ul>
+      </div>
+    `
 
-    test('should support enter and space to select dropdown items', async () => {
-      // Arrange - Mock dropdown item selection
-      const dropdownSelection = [
-        { item: 'menu-item', enterSelects: true, spaceSelects: true },
-        { item: 'filter-option', enterSelects: true, spaceSelects: true },
-        { item: 'project-option', enterSelects: true, spaceSelects: true }
-      ]
-
-      // Act & Assert - Both enter and space select items
-      dropdownSelection.forEach(({ item, enterSelects, spaceSelects }) => {
-        expect(enterSelects).toBe(true)
-        expect(spaceSelects).toBe(true)
-      })
-    })
-
-    test('should close dropdowns with escape key', async () => {
-      // Arrange - Mock escape key behavior for dropdowns
-      const escapeClosing = [
-        { dropdown: 'user-menu', escapable: true },
-        { dropdown: 'project-selector', escapable: true },
-        { dropdown: 'context-menu', escapable: true }
-      ]
-
-      // Act & Assert - Escape closes dropdowns
-      escapeClosing.forEach(({ dropdown, escapable }) => {
-        expect(escapable).toBe(true)
-      })
-    })
-
-    test('should maintain focus on menu trigger when dropdown closes', async () => {
-      // Arrange - Mock focus management for dropdowns
-      const focusManagement = [
-        { trigger: 'user-menu-button', dropdown: 'user-menu', focusReturned: true },
-        { trigger: 'project-button', dropdown: 'project-selector', focusReturned: true }
-      ]
-
-      // Act & Assert - Focus returns to trigger
-      focusManagement.forEach(({ trigger, dropdown, focusReturned }) => {
-        expect(focusReturned).toBe(true)
-      })
+    // Act & Assert - Check for shortcut indicators
+    shortcutElements.forEach(shortcut => {
+      const keydownEvent = createKeyboardEvent('keydown', shortcut.key)
+      const appElement = document.getElementById('app')
+      
+      // Simulate shortcut handling
+      appElement?.dispatchEvent(keydownEvent)
+      
+      // Verify shortcut elements exist - match exact attribute values
+      const shortcutElement = document.querySelector(`[data-shortcut="${shortcut.action}"]`)
+      expect(shortcutElement).toBeTruthy()
     })
   })
 
-  describe('Skip Links and Landmark Navigation', () => {
-    test('should provide skip links for main content areas', async () => {
-      // Arrange - Mock skip links
-      const skipLinks = [
-        { link: 'skip-to-main', target: 'main-content', exists: true, functional: true },
-        { link: 'skip-to-nav', target: 'main-navigation', exists: true, functional: true },
-        { link: 'skip-to-search', target: 'search-form', exists: true, functional: true }
-      ]
+  test('should handle arrow key navigation in lists and grids', () => {
+    // Arrange - Create list with arrow navigation
+    document.body.innerHTML = `
+      <ul role="listbox" aria-label="Options">
+        <li role="option" tabindex="0">Option 1</li>
+        <li role="option" tabindex="-1">Option 2</li>
+        <li role="option" tabindex="-1">Option 3</li>
+        <li role="option" tabindex="-1">Option 4</li>
+      </ul>
+    `
 
-      // Act & Assert - Skip links exist and work
-      skipLinks.forEach(({ link, target, exists, functional }) => {
-        expect(exists).toBe(true)
-        expect(functional).toBe(true)
-      })
+    const listbox = document.querySelector('[role="listbox"]') as HTMLElement
+    const options = Array.from(document.querySelectorAll('[role="option"]')) as HTMLElement[]
+
+    // Assert - List structure for arrow navigation
+    expect(listbox).toBeTruthy()
+    expect(options.length).toBe(4)
+    
+    // Only first option should be initially tabbable
+    expect(options[0].tabIndex).toBe(0)
+    options.slice(1).forEach(option => {
+      expect(option.tabIndex).toBe(-1)
     })
 
-    test('should support landmark navigation with screen readers', async () => {
-      // Arrange - Mock landmark elements
-      const landmarks = [
-        { type: 'banner', role: 'banner', navigable: true },
-        { type: 'navigation', role: 'navigation', navigable: true },
-        { type: 'main', role: 'main', navigable: true },
-        { type: 'complementary', role: 'complementary', navigable: true },
-        { type: 'contentinfo', role: 'contentinfo', navigable: true }
-      ]
+    // Simulate arrow key navigation
+    const arrowDownEvent = createKeyboardEvent('keydown', 'ArrowDown')
+    listbox.dispatchEvent(arrowDownEvent)
+    
+    // Navigation should be handled by JavaScript (not tested here)
+    expect(arrowDownEvent.key).toBe('ArrowDown')
+  })
 
-      // Act & Assert - Landmarks are navigable
-      landmarks.forEach(({ type, role, navigable }) => {
-        expect(navigable).toBe(true)
-        expect(role).toBeTruthy()
-      })
+  test('should support home and end keys for navigation', () => {
+    // Arrange - Create navigable content
+    document.body.innerHTML = `
+      <div role="grid" tabindex="0">
+        <div role="row">
+          <div role="gridcell" tabindex="-1">Cell 1</div>
+          <div role="gridcell" tabindex="-1">Cell 2</div>
+          <div role="gridcell" tabindex="-1">Cell 3</div>
+        </div>
+      </div>
+      
+      <textarea>Line 1
+Line 2
+Line 3</textarea>
+      
+      <input type="text" value="Some text content">
+    `
+
+    const grid = document.querySelector('[role="grid"]') as HTMLElement
+    const textarea = document.querySelector('textarea') as HTMLTextAreaElement
+    const input = document.querySelector('input') as HTMLInputElement
+
+    // Act & Assert - Test Home/End key support
+    const homeEvent = createKeyboardEvent('keydown', 'Home')
+    const endEvent = createKeyboardEvent('keydown', 'End')
+
+    // Grid should handle Home/End for navigation
+    grid.dispatchEvent(homeEvent)
+    grid.dispatchEvent(endEvent)
+    expect(homeEvent.key).toBe('Home')
+    expect(endEvent.key).toBe('End')
+
+    // Form controls should support Home/End naturally
+    textarea.focus()
+    input.focus()
+    expect(textarea).toBeTruthy()
+    expect(input).toBeTruthy()
+  })
+
+  test('should trap focus within modal dialogs', () => {
+    // Arrange - Create modal with focusable elements
+    document.body.innerHTML = `
+      <div id="main-content">
+        <button>Outside Button</button>
+      </div>
+      
+      <div role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <h2 id="modal-title">Modal Title</h2>
+        <button id="modal-first">First Button</button>
+        <input type="text" placeholder="Input">
+        <button id="modal-last">Last Button</button>
+      </div>
+    `
+
+    const modal = document.querySelector('[role="dialog"]') as HTMLElement
+    const outsideButton = document.querySelector('#main-content button') as HTMLButtonElement
+    const firstModalButton = document.getElementById('modal-first') as HTMLButtonElement
+    const lastModalButton = document.getElementById('modal-last') as HTMLButtonElement
+
+    // Act - Get focusable elements in modal
+    const modalFocusableElements = modal.querySelectorAll(
+      'button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])'
+    )
+
+    // Assert - Focus should be trapped in modal
+    expect(modal.getAttribute('aria-modal')).toBe('true')
+    expect(modalFocusableElements.length).toBe(3) // 2 buttons + 1 input
+    expect(firstModalButton).toBeTruthy()
+    expect(lastModalButton).toBeTruthy()
+    expect(outsideButton).toBeTruthy()
+
+    // Modal should prevent focus from leaving (implementation dependent)
+    const tabEvent = createKeyboardEvent('keydown', 'Tab')
+    lastModalButton.dispatchEvent(tabEvent)
+    expect(tabEvent.key).toBe('Tab')
+  })
+
+  test('should return focus to trigger element when modal closes', () => {
+    // Arrange - Create button that opens modal
+    document.body.innerHTML = `
+      <button id="open-modal">Open Modal</button>
+      
+      <div role="dialog" aria-modal="true" style="display: none;">
+        <h2>Modal</h2>
+        <button id="close-modal">Close</button>
+      </div>
+    `
+
+    const openButton = document.getElementById('open-modal') as HTMLButtonElement
+    const modal = document.querySelector('[role="dialog"]') as HTMLElement
+    const closeButton = document.getElementById('close-modal') as HTMLButtonElement
+
+    // Act - Simulate modal workflow
+    openButton.focus()
+    expect(document.activeElement).toBe(openButton)
+
+    // Modal opens (focus should move to modal)
+    modal.style.display = 'block'
+    closeButton.focus()
+    expect(document.activeElement).toBe(closeButton)
+
+    // Assert - When modal closes, focus should return to trigger
+    modal.style.display = 'none'
+    openButton.focus() // Simulate focus restoration
+    expect(document.activeElement).toBe(openButton)
+  })
+
+  test('should support escape key to close modals', () => {
+    // Arrange - Create modal
+    document.body.innerHTML = `
+      <div role="dialog" aria-modal="true" data-escapable="true">
+        <h2>Modal Title</h2>
+        <p>Modal content</p>
+        <button>Action</button>
+        <button>Close</button>
+      </div>
+    `
+
+    const modal = document.querySelector('[role="dialog"]') as HTMLElement
+
+    // Act - Test escape key functionality
+    const escapeEvent = createKeyboardEvent('keydown', 'Escape')
+    modal.dispatchEvent(escapeEvent)
+
+    // Assert - Modal should handle escape key
+    expect(escapeEvent.key).toBe('Escape')
+    expect(modal.getAttribute('data-escapable')).toBe('true')
+    
+    // In real implementation, escape would close modal
+    expect(modal.getAttribute('aria-modal')).toBe('true')
+  })
+
+  test('should set initial focus to appropriate element in modal', () => {
+    // Arrange - Different types of modals
+    const modalTypes = [
+      {
+        html: `
+          <div role="dialog" aria-modal="true">
+            <h2>Confirmation</h2>
+            <p>Are you sure?</p>
+            <button data-primary="true">Confirm</button>
+            <button>Cancel</button>
+          </div>
+        `,
+        expectedFocus: '[data-primary="true"]'
+      },
+      {
+        html: `
+          <div role="dialog" aria-modal="true">
+            <h2>Edit Item</h2>
+            <input type="text" data-autofocus="true" value="Item name">
+            <button>Save</button>
+            <button>Cancel</button>
+          </div>
+        `,
+        expectedFocus: '[data-autofocus="true"]'
+      }
+    ]
+
+    modalTypes.forEach(modalType => {
+      // Act
+      document.body.innerHTML = modalType.html
+      const modal = document.querySelector('[role="dialog"]') as HTMLElement
+      const expectedElement = modal.querySelector(modalType.expectedFocus) as HTMLElement
+
+      // Assert - Modal should set appropriate initial focus
+      expect(modal).toBeTruthy()
+      expect(expectedElement).toBeTruthy()
+      
+      // Focus should be set programmatically on modal open
+      expectedElement.focus()
+      expect(document.activeElement).toBe(expectedElement)
+    })
+  })
+
+  test('should support enter key to submit forms', () => {
+    // Arrange - Create form
+    document.body.innerHTML = `
+      <form id="test-form">
+        <input type="text" placeholder="Name" required>
+        <input type="email" placeholder="Email" required>
+        <button type="submit">Submit</button>
+        <button type="button">Cancel</button>
+      </form>
+    `
+
+    const form = document.getElementById('test-form') as HTMLFormElement
+    const textInput = form.querySelector('input[type="text"]') as HTMLInputElement
+    const submitButton = form.querySelector('button[type="submit"]') as HTMLButtonElement
+
+    // Act - Test enter key in form
+    textInput.focus()
+    const enterEvent = createKeyboardEvent('keydown', 'Enter')
+    textInput.dispatchEvent(enterEvent)
+
+    // Assert - Enter should trigger form submission
+    expect(enterEvent.key).toBe('Enter')
+    expect(submitButton.type).toBe('submit')
+    expect(form.tagName).toBe('FORM')
+    
+    // Form should handle enter key naturally
+    expect(form.querySelector('input[required]')).toBeTruthy()
+  })
+
+  test('should support space and enter for button activation', () => {
+    // Arrange - Create different types of buttons
+    document.body.innerHTML = `
+      <button type="button" id="regular-button">Regular Button</button>
+      <button type="submit" id="submit-button">Submit Button</button>
+      <div role="button" tabindex="0" id="custom-button">Custom Button</div>
+      <a href="#" role="button" id="link-button">Link Button</a>
+    `
+
+    const buttons = [
+      document.getElementById('regular-button'),
+      document.getElementById('submit-button'),
+      document.getElementById('custom-button'),
+      document.getElementById('link-button')
+    ] as HTMLElement[]
+
+    // Act & Assert - Test space and enter activation
+    buttons.forEach(button => {
+      const spaceEvent = createKeyboardEvent('keydown', ' ')
+      const enterEvent = createKeyboardEvent('keydown', 'Enter')
+
+      button.dispatchEvent(spaceEvent)
+      button.dispatchEvent(enterEvent)
+
+      // Buttons should respond to both space and enter
+      expect(spaceEvent.key).toBe(' ')
+      expect(enterEvent.key).toBe('Enter')
+      
+      // Custom buttons need role="button"
+      if (button.tagName !== 'BUTTON') {
+        expect(button.getAttribute('role')).toBe('button')
+        expect(button.tabIndex >= 0).toBe(true)
+      }
+    })
+  })
+
+  test('should support arrow keys for radio button groups', () => {
+    // Arrange - Create radio button group
+    document.body.innerHTML = `
+      <fieldset>
+        <legend>Choose an option:</legend>
+        <input type="radio" id="option1" name="choice" value="1" checked>
+        <label for="option1">Option 1</label>
+        
+        <input type="radio" id="option2" name="choice" value="2">
+        <label for="option2">Option 2</label>
+        
+        <input type="radio" id="option3" name="choice" value="3">
+        <label for="option3">Option 3</label>
+      </fieldset>
+    `
+
+    const radioButtons = Array.from(document.querySelectorAll('input[type="radio"]')) as HTMLInputElement[]
+    const firstRadio = radioButtons[0]
+
+    // Act - Test arrow key navigation
+    firstRadio.focus()
+    const arrowDownEvent = createKeyboardEvent('keydown', 'ArrowDown')
+    const arrowUpEvent = createKeyboardEvent('keydown', 'ArrowUp')
+
+    firstRadio.dispatchEvent(arrowDownEvent)
+    firstRadio.dispatchEvent(arrowUpEvent)
+
+    // Assert - Radio buttons should form a group
+    expect(radioButtons.length).toBe(3)
+    expect(radioButtons[0].checked).toBe(true)
+    
+    // All radio buttons should have same name
+    radioButtons.forEach(radio => {
+      expect(radio.name).toBe('choice')
     })
 
-    test('should provide heading navigation structure', async () => {
-      // Arrange - Mock heading navigation
-      const headingNavigation = [
-        { level: 1, text: 'Main Page Title', navigable: true },
-        { level: 2, text: 'Section Title', navigable: true },
-        { level: 3, text: 'Subsection Title', navigable: true }
-      ]
-
-      // Act & Assert - Headings are navigable
-      headingNavigation.forEach(({ level, text, navigable }) => {
-        expect(navigable).toBe(true)
-        expect(level).toBeGreaterThanOrEqual(1)
-        expect(level).toBeLessThanOrEqual(6)
-      })
-    })
+    // Arrow keys should navigate between options
+    expect(arrowDownEvent.key).toBe('ArrowDown')
+    expect(arrowUpEvent.key).toBe('ArrowUp')
   })
 }) 

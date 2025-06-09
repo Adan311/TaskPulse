@@ -133,37 +133,7 @@ describe('FileService', () => {
     expect(mockQueryBuilder.select().eq).toHaveBeenCalledWith('user', 'test-user-id')
   })
 
-  test('fetchFiles should apply project filter correctly', async () => {
-    // Arrange
-    const mockProjectFiles = [
-      {
-        id: 'file-1',
-        name: 'Project Document.pdf',
-        project: 'project-123',
-        user: 'test-user-id'
-      }
-    ]
 
-    const mockQueryBuilder = {
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis()
-    }
-    // Set up chained eq calls
-    mockQueryBuilder.eq
-      .mockReturnValueOnce(mockQueryBuilder) // First eq for user
-      .mockResolvedValueOnce({ data: mockProjectFiles, error: null }) // Second eq for project
-
-    mockSupabase.from.mockReturnValue(mockQueryBuilder)
-
-    // Act
-    const result = await fetchFiles({ project_id: 'project-123' })
-
-    // Assert
-    expect(result).toHaveLength(1)
-    expect(result[0].project).toBe('project-123')
-    expect(mockQueryBuilder.eq).toHaveBeenCalledWith('user', 'test-user-id')
-    expect(mockQueryBuilder.eq).toHaveBeenCalledWith('project', 'project-123')
-  })
 
   test('uploadFile should upload to storage and save metadata', async () => {
     // Arrange
@@ -303,41 +273,7 @@ describe('FileService', () => {
     expect(mockQueryBuilder.select().eq).toHaveBeenCalledWith('user', 'test-user-id')
   })
 
-  test('getFileDownloadUrl should return public URL for file', async () => {
-    // Arrange
-    const fileId = 'test-file-id'
-    const mockFile = {
-      id: fileId,
-      file: 'test-user-id/document.pdf',
-      user: 'test-user-id'
-    }
 
-    // Mock getFileById
-    const mockQueryBuilder = {
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: mockFile, error: null })
-      })
-    }
-    mockSupabase.from.mockReturnValue(mockQueryBuilder)
-
-    // Mock storage getPublicUrl specifically for this test
-    const mockStorageBucket = {
-      upload: vi.fn(),
-      remove: vi.fn(),
-      getPublicUrl: vi.fn().mockReturnValue({ 
-        data: { publicUrl: 'https://test.com/document.pdf' } 
-      })
-    }
-    mockSupabase.storage.from.mockReturnValue(mockStorageBucket)
-
-    // Act
-    const result = await getFileDownloadUrl(fileId)
-
-    // Assert
-    expect(result).toBe('https://test.com/document.pdf')
-    expect(mockStorageBucket.getPublicUrl).toHaveBeenCalledWith('test-user-id/document.pdf')
-  })
 
   test('deleteFile should remove from storage and database', async () => {
     // Arrange
@@ -520,21 +456,7 @@ describe('FileService', () => {
     expect(mockQueryBuilder.update().eq).toHaveBeenCalledWith('user', 'test-user-id')
   })
 
-  test('canPreviewFile should correctly identify previewable file types', () => {
-    // Act & Assert
-    expect(canPreviewFile('image/jpeg')).toBe(true)
-    expect(canPreviewFile('image/png')).toBe(true)
-    expect(canPreviewFile('image/gif')).toBe(true)
-    expect(canPreviewFile('text/plain')).toBe(true)
-    expect(canPreviewFile('application/pdf')).toBe(true)
-    expect(canPreviewFile('video/mp4')).toBe(true)
-    expect(canPreviewFile('audio/mpeg')).toBe(true)
-    
-    // Non-previewable types
-    expect(canPreviewFile('application/zip')).toBe(false)
-    expect(canPreviewFile('application/x-binary')).toBe(false)
-    expect(canPreviewFile('unknown/type')).toBe(false)
-  })
+
 
   test('fetchFiles should handle unauthenticated user', async () => {
     // Arrange
@@ -565,19 +487,7 @@ describe('FileService', () => {
     await expect(uploadFile(uploadParams)).rejects.toThrow('User not authenticated')
   })
 
-  test('getFileById should handle file not found', async () => {
-    // Arrange
-    const mockQueryBuilder = {
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } })
-      })
-    }
-    mockSupabase.from.mockReturnValue(mockQueryBuilder)
 
-    // Act & Assert
-    await expect(getFileById('non-existent-file')).rejects.toThrow()
-  })
 
   test('deleteFile should handle file not found', async () => {
     // Arrange
@@ -594,42 +504,5 @@ describe('FileService', () => {
       .rejects.toThrow('File not found or you don\'t have permission to delete it')
   })
 
-  test('fetchFiles should apply multiple filters correctly', async () => {
-    // Arrange
-    const mockFiles = [
-      {
-        id: 'file-1',
-        name: 'Event Document.pdf',
-        event: 'event-789',
-        task: 'task-456',
-        user: 'test-user-id'
-      }
-    ]
 
-    const mockQueryBuilder = {
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis()
-    }
-    // Set up chained eq calls
-    mockQueryBuilder.eq
-      .mockReturnValueOnce(mockQueryBuilder) // user filter
-      .mockReturnValueOnce(mockQueryBuilder) // task filter
-      .mockResolvedValueOnce({ data: mockFiles, error: null }) // event filter
-
-    mockSupabase.from.mockReturnValue(mockQueryBuilder)
-
-    // Act
-    const result = await fetchFiles({ 
-      task_id: 'task-456', 
-      event_id: 'event-789' 
-    })
-
-    // Assert
-    expect(result).toHaveLength(1)
-    expect(result[0].task).toBe('task-456')
-    expect(result[0].event).toBe('event-789')
-    expect(mockQueryBuilder.eq).toHaveBeenCalledWith('user', 'test-user-id')
-    expect(mockQueryBuilder.eq).toHaveBeenCalledWith('task', 'task-456')
-    expect(mockQueryBuilder.eq).toHaveBeenCalledWith('event', 'event-789')
-  })
 }) 

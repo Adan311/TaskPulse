@@ -50,444 +50,247 @@ describe('File Upload Security Tests', () => {
     })
   })
 
-  describe('File Type Validation', () => {
-    test('should reject executable file types', async () => {
-      // Arrange
-      const dangerousFileTypes = [
-        { name: 'malware.exe', type: 'application/x-msdownload' },
-        { name: 'script.bat', type: 'application/x-bat' },
-        { name: 'virus.scr', type: 'application/x-screensaver' },
-        { name: 'trojan.com', type: 'application/x-msdos-program' },
-        { name: 'malicious.msi', type: 'application/x-msi' }
-      ]
+  test('should validate file types and reject malicious files', async () => {
+    // Arrange - Test dangerous file extensions and MIME types
+    const dangerousFiles = [
+      { name: 'malware.exe', type: 'application/x-msdownload' },
+      { name: 'script.bat', type: 'application/x-bat' },
+      { name: 'virus.scr', type: 'application/x-screensaver' },
+      { name: 'image.jpg', type: 'application/javascript' }, // MIME mismatch
+      { name: 'document.pdf.exe', type: 'application/pdf' }  // Double extension
+    ]
 
-      // Act & Assert
-      dangerousFileTypes.forEach(fileInfo => {
-        // File validation should reject these types
-        const isExecutable = /\.(exe|bat|scr|com|msi|cmd|pif)$/i.test(fileInfo.name)
-        expect(isExecutable).toBe(true)
-        
-        // These should be blocked by file upload security
-        const isDangerous = ['application/x-msdownload', 'application/x-bat', 'application/x-screensaver'].includes(fileInfo.type)
-        if (isDangerous) {
-          expect(fileInfo.type).toMatch(/application\/x-/)
-        }
-      })
-    })
-
-    test('should validate file extensions against MIME types', async () => {
-      // Arrange
-      const mismatchedFiles = [
-        { name: 'image.jpg', type: 'application/javascript', content: '<script>alert("XSS")</script>' },
-        { name: 'document.pdf', type: 'text/html', content: '<html><script>alert(1)</script></html>' },
-        { name: 'data.csv', type: 'application/x-executable', content: 'malicious binary data' }
-      ]
-
-      // Act & Assert
-      mismatchedFiles.forEach(file => {
-        const extension = file.name.split('.').pop()?.toLowerCase()
-        const expectedMimeTypes = {
-          'jpg': ['image/jpeg', 'image/jpg'],
-          'pdf': ['application/pdf'],
-          'csv': ['text/csv', 'application/csv']
-        }
-
-        if (extension && expectedMimeTypes[extension as keyof typeof expectedMimeTypes]) {
-          const expected = expectedMimeTypes[extension as keyof typeof expectedMimeTypes]
-          const isValidMimeType = expected.includes(file.type)
-          
-          // Should detect MIME type mismatch
-          expect(isValidMimeType).toBe(false)
-        }
-      })
-    })
-
-    test('should reject files with double extensions', async () => {
-      // Arrange
-      const doubleExtensionFiles = [
-        'document.pdf.exe',
-        'image.jpg.scr',
-        'data.txt.bat',
-        'archive.zip.com'
-      ]
-
-      // Act & Assert
-      doubleExtensionFiles.forEach(filename => {
-        const hasDoubleExtension = /\.\w+\.\w+$/.test(filename)
-        expect(hasDoubleExtension).toBe(true)
-        
-        // Should be flagged as suspicious
-        const endsWithExecutable = /\.(exe|scr|bat|com)$/i.test(filename)
-        expect(endsWithExecutable).toBe(true)
-      })
+    // Act & Assert
+    dangerousFiles.forEach(fileInfo => {
+      const isExecutable = /\.(exe|bat|scr|com|msi|cmd|pif)$/i.test(fileInfo.name)
+      const hasDoubleExtension = /\.\w+\.\w+$/.test(fileInfo.name)
+      const isSuspiciousMime = fileInfo.type.includes('x-ms') || fileInfo.type.includes('javascript')
+      
+      const isDangerous = isExecutable || hasDoubleExtension || isSuspiciousMime
+      expect(isDangerous).toBe(true)
     })
   })
 
-  describe('File Size and Content Validation', () => {
-    test('should enforce file size limits', async () => {
-      // Arrange
-      const maxFileSize = 10 * 1024 * 1024 // 10MB
-      const oversizedContent = 'x'.repeat(maxFileSize + 1)
+  test('should enforce file size limits', async () => {
+    // Arrange
+    const maxFileSize = 10 * 1024 * 1024 // 10MB
+    const oversizedContent = 'x'.repeat(maxFileSize + 1)
+    
+    const oversizedFile = new File([oversizedContent], 'large-file.txt', { type: 'text/plain' })
+
+    // Act & Assert
+    expect(oversizedFile.size).toBeGreaterThan(maxFileSize)
+    
+    // File upload should reject files over size limit
+    const isOversized = oversizedFile.size > maxFileSize
+    expect(isOversized).toBe(true)
+  })
+
+  test('should scan uploaded files for malware', async () => {
+    // Arrange - Test malicious file content patterns
+    const maliciousContents = [
+      '<?php system($_GET["cmd"]); ?>',
+      '<script>window.location="http://evil.com"</script>',
+      'eval(base64_decode($_POST["code"]))',
+      '<%@ Page Language="C#" %><script runat="server">',
+      'import os; os.system("rm -rf /")',
+      '\x4D\x5A\x90\x00' // PE executable header
+    ]
+
+    // Act & Assert
+    maliciousContents.forEach(content => {
+      const hasPhpCode = content.includes('<?php') || content.includes('system(')
+      const hasJavaScript = content.includes('<script>') || content.includes('eval(')
+      const hasAspCode = content.includes('<%@') || content.includes('runat="server"')
+      const hasPythonCode = content.includes('os.system') || content.includes('import os')
+      const hasPEHeader = content.includes('\x4D\x5A')
       
-      const oversizedFile = new File([oversizedContent], 'large-file.txt', { type: 'text/plain' })
-
-      // Act & Assert
-      expect(oversizedFile.size).toBeGreaterThan(maxFileSize)
-      
-      // File upload should reject files over size limit
-      const isOversized = oversizedFile.size > maxFileSize
-      expect(isOversized).toBe(true)
-    })
-
-    test('should scan file content for malicious patterns', async () => {
-      // Arrange
-      const maliciousContents = [
-        '<?php system($_GET["cmd"]); ?>',
-        '<script>window.location="http://evil.com"</script>',
-        'eval(base64_decode($_POST["code"]))',
-        '<%@ Page Language="C#" %><script runat="server">',
-        'import os; os.system("rm -rf /")'
-      ]
-
-      // Act & Assert
-      maliciousContents.forEach(content => {
-        // Content scanning should detect these patterns
-        const hasPhpCode = content.includes('<?php') || content.includes('system(')
-        const hasJavaScript = content.includes('<script>') || content.includes('eval(')
-        const hasAspCode = content.includes('<%@') || content.includes('runat="server"')
-        const hasPythonCode = content.includes('os.system') || content.includes('import os')
-        
-        const isSuspicious = hasPhpCode || hasJavaScript || hasAspCode || hasPythonCode
-        expect(isSuspicious).toBe(true)
-      })
-    })
-
-    test('should validate image file headers', async () => {
-      // Arrange
-      const fakeImageContent = '<script>alert("XSS")</script>'
-      const realJpegHeader = new Uint8Array([0xFF, 0xD8, 0xFF, 0xE0])
-      const fakePngContent = 'PNG\r\n\x1a\n<script>alert(1)</script>'
-
-      // Act & Assert
-      // Real image files should start with proper magic bytes
-      expect(realJpegHeader[0]).toBe(0xFF)
-      expect(realJpegHeader[1]).toBe(0xD8)
-      
-      // Fake images should be detected
-      const fakeImageBytes = new TextEncoder().encode(fakeImageContent)
-      expect(fakeImageBytes[0]).not.toBe(0xFF) // Not a real JPEG
-      
-      // PNG files should start with PNG signature
-      const pngSignature = new Uint8Array([0x89, 0x50, 0x4E, 0x47])
-      const fakePngBytes = new TextEncoder().encode(fakePngContent)
-      expect(fakePngBytes[0]).not.toBe(0x89) // Not a real PNG
+      const containsMalware = hasPhpCode || hasJavaScript || hasAspCode || hasPythonCode || hasPEHeader
+      expect(containsMalware).toBe(true)
     })
   })
 
-  describe('File Name Security', () => {
-    test('should sanitize malicious file names', async () => {
-      // Arrange
-      const maliciousNames = [
-        '../../../etc/passwd',
-        '..\\..\\windows\\system32\\config\\sam',
-        'file<script>alert(1)</script>.txt',
-        'document"onload="alert(1)".pdf',
-        'image\x00.jpg.exe',
-        'file\r\nwith\nnewlines.txt'
-      ]
+  test('should prevent executable file uploads', async () => {
+    // Arrange - Test comprehensive list of executable extensions
+    const executableExtensions = [
+      'exe', 'bat', 'cmd', 'com', 'pif', 'scr', 'vbs', 'js', 'jar',
+      'app', 'deb', 'pkg', 'rpm', 'dmg', 'msi', 'ps1', 'sh'
+    ]
 
-      // Act & Assert
-      maliciousNames.forEach(filename => {
-        // Path traversal detection
-        const hasPathTraversal = filename.includes('../') || filename.includes('..\\')
-        if (hasPathTraversal) {
-          expect(filename).toMatch(/\.\.[\\/]/)
-        }
-        
-        // XSS in filename detection
-        const hasXSS = filename.includes('<script>') || filename.includes('onload=')
-        if (hasXSS) {
-          expect(filename).toMatch(/<|onload=/i)
-        }
-        
-        // Null byte detection
-        const hasNullByte = filename.includes('\x00')
-        if (hasNullByte) {
-          expect(filename).toContain('\x00')
-        }
-        
-        // Newline injection detection
-        const hasNewlines = filename.includes('\r') || filename.includes('\n')
-        if (hasNewlines) {
-          expect(filename).toMatch(/[\r\n]/)
-        }
-        
-        // Sanitization example
-        const sanitized = filename
-          .replace(/[<>"']/g, '') // Remove XSS chars
-          .replace(/[\r\n\x00]/g, '') // Remove control chars
-          .replace(/\.\.[\/\\]/g, '') // Remove path traversal
-        
-        expect(sanitized).not.toContain('<')
-        expect(sanitized).not.toContain('..')
-      })
-    })
-
-    test('should handle Unicode and special encoding in filenames', async () => {
-      // Arrange
-      const unicodeNames = [
-        'file\u202e.txt\u202dexe', // Right-to-left override
-        'document\u200b.pdf', // Zero-width space
-        'image\ufeff.jpg', // Byte order mark
-        'file%2e%2e%2f.txt', // URL encoded path traversal
-        'document%3cscript%3e.html' // URL encoded XSS
-      ]
-
-      // Act & Assert
-      unicodeNames.forEach(filename => {
-        // Unicode control character detection
-        const hasControlChars = /[\u200b-\u200f\u202a-\u202e\ufeff]/.test(filename)
-        if (hasControlChars) {
-          expect(filename).toMatch(/[\u200b-\u200f\u202a-\u202e\ufeff]/)
-        }
-        
-        // URL encoding detection
-        const hasUrlEncoding = filename.includes('%')
-        if (hasUrlEncoding) {
-          const decoded = decodeURIComponent(filename)
-          expect(decoded).toBeDefined()
-          
-          // Check if decoded version contains dangerous patterns
-          if (decoded.includes('../') || decoded.includes('<script>')) {
-            expect(decoded).toMatch(/\.\.|<script>/i)
-          }
-        }
-      })
+    // Act & Assert
+    executableExtensions.forEach(ext => {
+      const filename = `malicious.${ext}`
+      const isExecutable = /\.(exe|bat|cmd|com|pif|scr|vbs|js|jar|app|deb|pkg|rpm|dmg|msi|ps1|sh)$/i.test(filename)
+      
+      expect(isExecutable).toBe(true)
+      // These should all be blocked by file upload security
     })
   })
 
-  describe('File Storage Security', () => {
-    test('should prevent file upload to unauthorized paths', async () => {
-      // Arrange
-      mockSupabase.storage.from.mockReturnValue({
-        upload: vi.fn().mockResolvedValue({
-          data: { path: 'files/user-123/safe-file.txt' },
-          error: null
-        })
-      })
+  test('should validate file headers and content', async () => {
+    // Arrange - Test file header validation
+    const fakeImageContent = '<script>alert("XSS")</script>'
+    const realJpegHeader = new Uint8Array([0xFF, 0xD8, 0xFF, 0xE0])
+    const realPngHeader = new Uint8Array([0x89, 0x50, 0x4E, 0x47])
+    const realPdfHeader = new Uint8Array([0x25, 0x50, 0x44, 0x46])
 
-      const { uploadFile } = await import('../../src/backend/api/services/file.service')
-      const testFile = new File(['content'], 'test.txt', { type: 'text/plain' })
+    // Act & Assert
+    // Verify real headers
+    expect(realJpegHeader[0]).toBe(0xFF)
+    expect(realJpegHeader[1]).toBe(0xD8)
+    expect(realPngHeader[0]).toBe(0x89)
+    expect(realPdfHeader[0]).toBe(0x25)
+    
+    // Detect fake images
+    const fakeImageBytes = new TextEncoder().encode(fakeImageContent)
+    expect(fakeImageBytes[0]).not.toBe(0xFF) // Not a real JPEG
+    expect(fakeImageBytes[0]).not.toBe(0x89) // Not a real PNG
+  })
 
-      // Act
-      try {
-        await uploadFile(testFile, 'test-project-id')
-        
-        // Assert - Should upload to user-specific path
-        expect(mockSupabase.storage.from).toHaveBeenCalledWith('files')
-      } catch (error) {
-        expect(error).toBeDefined()
-      }
+  test('should prevent path traversal attacks in file names', async () => {
+    // Arrange - Test path traversal patterns
+    const pathTraversalNames = [
+      '../../../etc/passwd',
+      '..\\..\\windows\\system32\\config\\sam',
+      '....//....//etc//hosts',
+      '%2e%2e%2f%2e%2e%2fetc%2fpasswd', // URL encoded
+      '..%255c..%255c..%255c..%255cwindows%255csystem32%255cconfig%255csam',
+      '~/.bash_history',
+      '/var/log/auth.log'
+    ]
+
+    // Act & Assert
+    pathTraversalNames.forEach(filename => {
+      const hasPathTraversal = filename.includes('..') || 
+                              filename.includes('%2e%2e') ||
+                              filename.includes('~') ||
+                              filename.startsWith('/')
+      
+      expect(hasPathTraversal).toBe(true)
+      // These should be sanitized or rejected
+    })
+  })
+
+  test('should sanitize file metadata', async () => {
+    // Arrange - Test malicious metadata
+    const maliciousMetadata = {
+      filename: '<script>alert("xss")</script>malware.exe',
+      description: 'javascript:alert(document.cookie)',
+      tags: ['<img src=x onerror=alert(1)>', '"; DROP TABLE files; --'],
+      category: '\x00\x01\x02malicious'
+    }
+
+    // Act - Simulate metadata sanitization
+    const sanitizedMetadata = {
+      filename: maliciousMetadata.filename.replace(/<[^>]*>/g, '').replace(/[<>"']/g, ''),
+      description: maliciousMetadata.description.replace(/javascript:/g, '').replace(/[<>"']/g, ''),
+      tags: maliciousMetadata.tags.map(tag => 
+        tag.replace(/<[^>]*>/g, '')
+           .replace(/[<>"';]/g, '')
+           .replace(/DROP\s+TABLE/gi, '')
+           .replace(/--/g, '')
+      ),
+      category: maliciousMetadata.category.replace(/[\x00-\x1F\x7F]/g, '')
+    }
+
+    // Assert - Verify sanitization
+    expect(sanitizedMetadata.filename).not.toContain('<script>')
+    expect(sanitizedMetadata.description).not.toContain('javascript:')
+    expect(sanitizedMetadata.tags[0]).not.toContain('<img')
+    expect(sanitizedMetadata.tags[1]).not.toContain('DROP')
+    expect(sanitizedMetadata.tags[1]).not.toContain('TABLE')
+    expect(sanitizedMetadata.category).not.toContain('\x00')
+  })
+
+  test('should prevent unauthorized file access', async () => {
+    // Arrange - Mock unauthorized access attempt
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: null },
+      error: { message: 'User not authenticated' }
     })
 
-    test('should validate file permissions and ownership', async () => {
-      // Arrange
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: { 
-            id: 'file-123',
-            user_id: 'user-123', // Should match authenticated user
-            filename: 'test.txt'
-          },
-          error: null
-        })
-      })
-
+    // Act & Assert
+    try {
+      // Import and call the actual service function
       const { getFileById } = await import('../../src/backend/api/services/file.service')
+      await getFileById('file-123')
+      // Should not reach here
+      expect(true).toBe(false)
+    } catch (error) {
+      expect(error).toBeDefined()
+      expect(error.message).toContain('User not authenticated')
+    }
+  })
 
-      // Act
+  test('should handle file upload errors securely', async () => {
+    // Arrange - Mock various upload error scenarios
+    const uploadErrors = [
+      { code: 'STORAGE_ERROR', message: 'Storage upload failed' },
+      { code: 'DATABASE_ERROR', message: 'Database insert failed' },
+      { code: 'PERMISSION_ERROR', message: 'Insufficient permissions' },
+      { code: 'QUOTA_EXCEEDED', message: 'Storage quota exceeded' }
+    ]
+
+    // Setup proper mock chain
+    const mockUpload = vi.fn()
+    const mockInsert = vi.fn()
+    
+    mockSupabase.storage.from.mockReturnValue({
+      upload: mockUpload
+    })
+    
+    mockSupabase.from.mockReturnValue({
+      insert: mockInsert
+    })
+
+    mockUpload.mockRejectedValue(uploadErrors[0])
+    mockInsert.mockRejectedValue(uploadErrors[1])
+
+    // Act & Assert
+    for (const error of uploadErrors) {
       try {
-        const result = await getFileById('file-123')
+        // Simulate error handling
+        throw new Error(error.message)
+      } catch (e) {
+        expect(e).toBeDefined()
+        // Error messages should not expose sensitive information
+        expect(error.message).not.toContain('password')
+        expect(error.message).not.toContain('secret')
+        expect(error.message).not.toContain('token')
+      }
+    }
+  })
+
+  test('should prevent file overwrite attacks', async () => {
+    // Arrange - Test file overwrite prevention
+    const existingFiles = [
+      'important-config.json',
+      'user-data.csv',
+      'system-backup.zip'
+    ]
+
+    mockSupabase.from.mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockResolvedValue({
+        data: [{ id: 'file-123', name: 'important-config.json' }],
+        error: null
+      })
+    })
+
+    // Act & Assert
+    for (const filename of existingFiles) {
+      try {
+        // Simulate duplicate filename check
+        const { data } = await mockSupabase.from('files').select('*').eq('name', filename)
         
-        // Assert - Should only return files owned by current user
-        expect(result).toBeDefined()
-        expect(mockSupabase.from).toHaveBeenCalledWith('files')
+        if (data && data.length > 0) {
+          // Should prevent overwrite or generate unique name
+          const hasConflict = true
+          expect(hasConflict).toBe(true)
+        }
       } catch (error) {
         expect(error).toBeDefined()
       }
-    })
-
-    test('should prevent unauthorized file access', async () => {
-      // Arrange - Mock unauthenticated user
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: null },
-        error: { message: 'User not authenticated' }
-      })
-
-      const { getFileById } = await import('../../src/backend/api/services/file.service')
-
-      // Act & Assert
-      try {
-        await getFileById('other-user-file-123')
-        // If it doesn't throw, that's unexpected
-                 throw new Error('Expected getFileById to throw an error')
-      } catch (error) {
-        // This is expected - should throw authentication error
-        expect(error).toBeDefined()
-        expect(error.message).toContain('User not authenticated')
-      }
-    })
-  })
-
-  describe('File Download Security', () => {
-    test('should validate file download permissions', async () => {
-      // Arrange
-      mockSupabase.storage.from.mockReturnValue({
-        getPublicUrl: vi.fn().mockReturnValue({
-          data: { publicUrl: 'https://storage.supabase.co/files/user-123/file.txt' }
-        })
-      })
-
-      const { getFileDownloadUrl } = await import('../../src/backend/api/services/file.service')
-
-      // Act
-      try {
-        const result = await getFileDownloadUrl('file-123')
-        
-        // Assert - Should generate secure download URL
-        expect(result).toBeDefined()
-        if (typeof result === 'string') {
-          expect(result).toMatch(/^https:\/\//)
-        }
-      } catch (error) {
-        expect(error).toBeDefined()
-      }
-    })
-
-    test('should prevent directory traversal in file downloads', async () => {
-      // Arrange
-      const maliciousFilePaths = [
-        '../../../etc/passwd',
-        '..\\..\\windows\\system32\\config\\sam',
-        '/etc/shadow',
-        'C:\\Windows\\System32\\config\\SAM'
-      ]
-
-      // Act & Assert
-      maliciousFilePaths.forEach(path => {
-        // Path validation should reject these
-        const hasTraversal = path.includes('../') || path.includes('..\\')
-        const isAbsolute = path.startsWith('/') || /^[A-Z]:\\/.test(path)
-        
-        if (hasTraversal || isAbsolute) {
-          expect(path).toMatch(/\.\.|^[\/\\]|^[A-Z]:\\/i)
-        }
-      })
-    })
-  })
-
-  describe('File Metadata Security', () => {
-    test('should sanitize file metadata and descriptions', async () => {
-      // Arrange
-      const maliciousMetadata = {
-        description: '<script>alert("XSS in metadata")</script>',
-        tags: ['<img src="x" onerror="alert(1)">', 'normal-tag'],
-        alt_text: 'Image<iframe src="javascript:alert(1)"></iframe>',
-        custom_fields: {
-          author: 'User<script>steal_data()</script>',
-          category: 'Documents"onload="alert(1)"'
-        }
-      }
-
-      // Act & Assert
-      Object.entries(maliciousMetadata).forEach(([key, value]) => {
-        if (typeof value === 'string') {
-          const hasXSS = value.includes('<script>') || value.includes('onerror=') || value.includes('onload=')
-          if (hasXSS) {
-            expect(value).toMatch(/<script>|onerror=|onload=/i)
-          }
-        } else if (Array.isArray(value)) {
-          value.forEach(item => {
-            if (typeof item === 'string') {
-              const hasXSS = item.includes('<') || item.includes('onerror=')
-              if (hasXSS) {
-                expect(item).toMatch(/<|onerror=/i)
-              }
-            }
-          })
-        }
-      })
-    })
-
-    test('should validate file EXIF data security', async () => {
-      // Arrange - EXIF data can contain malicious content
-      const maliciousExifData = {
-        comment: '<script>alert("EXIF XSS")</script>',
-        software: 'PhotoEditor<img src="x" onerror="alert(1)">',
-        artist: 'Photographer"onload="steal_data()"',
-        copyright: 'Copyright © <iframe src="javascript:alert(1)"></iframe>'
-      }
-
-      // Act & Assert
-      Object.entries(maliciousExifData).forEach(([field, value]) => {
-        // EXIF data should be sanitized
-        const hasXSS = value.includes('<script>') || value.includes('<img') || value.includes('<iframe')
-        if (hasXSS) {
-          expect(value).toMatch(/<(script|img|iframe)/i)
-        }
-        
-        // Sanitization example
-        const sanitized = value.replace(/<[^>]*>/g, '').replace(/["']/g, '')
-        expect(sanitized).not.toContain('<')
-        expect(sanitized).not.toContain('"')
-      })
-    })
-  })
-
-  describe('Virus and Malware Detection', () => {
-    test('should detect common malware signatures', async () => {
-      // Arrange - Common malware patterns (simplified for testing)
-      const malwarePatterns = [
-        'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*', // EICAR test string
-        'MZ\x90\x00', // PE executable header
-        '\x7fELF', // ELF executable header
-        'PK\x03\x04', // ZIP file header (could contain malware)
-      ]
-
-      // Act & Assert
-      malwarePatterns.forEach(pattern => {
-        // Virus scanning should detect these patterns
-        const isEicar = pattern.includes('EICAR-STANDARD-ANTIVIRUS-TEST')
-        const isPE = pattern.startsWith('MZ')
-        const isELF = pattern.startsWith('\x7fELF')
-        const isZip = pattern.startsWith('PK')
-        
-        const isSuspicious = isEicar || isPE || isELF || isZip
-        expect(isSuspicious).toBe(true)
-      })
-    })
-
-    test('should quarantine suspicious files', async () => {
-      // Arrange
-      const suspiciousFile = new File(['suspicious content'], 'malware.exe', { 
-        type: 'application/x-msdownload' 
-      })
-
-      // Act & Assert
-      // File should be quarantined rather than stored normally
-      const isExecutable = suspiciousFile.name.endsWith('.exe')
-      const isDangerousType = suspiciousFile.type === 'application/x-msdownload'
-      
-      if (isExecutable && isDangerousType) {
-        expect(suspiciousFile.name).toMatch(/\.exe$/)
-        expect(suspiciousFile.type).toBe('application/x-msdownload')
-        
-        // Should be flagged for quarantine
-        const shouldQuarantine = true
-        expect(shouldQuarantine).toBe(true)
-      }
-    })
+    }
   })
 }) 

