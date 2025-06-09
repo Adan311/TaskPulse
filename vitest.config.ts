@@ -8,14 +8,14 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./tests/config/test-setup.ts'],
+    setupFiles: ['./src/tests/config/test-setup.ts', './src/tests/integration/setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      reportsDirectory: './tests/reports/coverage',
+      reportsDirectory: './src/tests/reports/coverage',
       exclude: [
         'node_modules/',
-        'tests/',
+        'src/tests/',
         '**/*.d.ts',
         '**/*.config.*',
         '**/dist/**',
@@ -33,8 +33,14 @@ export default defineConfig({
         },
       },
     },
-    include: ['tests/unit/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', 'tests/security/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', 'tests/accessibility/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', 'tests/ai/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    exclude: ['node_modules', 'dist', '.idea', '.git', '.cache', 'tests/integration'],
+    include: [
+      'src/tests/unit/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', 
+      'src/tests/integration/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'src/tests/security/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', 
+      'src/tests/accessibility/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', 
+      'src/tests/ai/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'
+    ],
+    exclude: ['node_modules', 'dist', '.idea', '.git', '.cache'],
   },
   resolve: {
     alias: {

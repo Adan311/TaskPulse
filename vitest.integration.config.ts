@@ -9,14 +9,14 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     // Include both basic and integration setup for integration tests
-    setupFiles: ['./tests/config/test-setup.ts', './tests/integration/setup.ts'],
+    setupFiles: ['./src/tests/config/test-setup.ts', './src/tests/integration/setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      reportsDirectory: './tests/reports/coverage',
+      reportsDirectory: './src/tests/reports/coverage',
       exclude: [
         'node_modules/',
-        'tests/',
+        'src/tests/',
         '**/*.d.ts',
         '**/*.config.*',
         '**/dist/**',
@@ -35,7 +35,7 @@ export default defineConfig({
       },
     },
     // Only include integration tests
-    include: ['tests/integration/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    include: ['src/tests/integration/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: ['node_modules', 'dist', '.idea', '.git', '.cache'],
   },
   resolve: {
