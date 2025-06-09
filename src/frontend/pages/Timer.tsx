@@ -10,7 +10,7 @@ import { Button } from "@/frontend/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/frontend/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/frontend/components/ui/card";
 import { getEvents, Event as CalendarEvent } from "@/backend/api/services/eventService";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/backend/database/client";
 import { format, addDays, subDays } from "date-fns";
 import { useGlobalTimer } from "@/frontend/context/TimerContext";
 

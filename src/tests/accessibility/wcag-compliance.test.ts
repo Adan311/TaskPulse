@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from 'vitest'
 
-// Mock DOM environment for accessibility testing
+
 global.getComputedStyle = () => ({
   color: 'rgb(51, 51, 51)',
   backgroundColor: 'rgb(255, 255, 255)',
@@ -139,8 +139,12 @@ describe('WCAG Compliance Accessibility Tests', () => {
       expect(isFocusable).toBe(true)
 
       // Should have visible focus indicator (via CSS :focus)
-      const hasFocusStyles = true // In real test, would check computed styles
-      expect(hasFocusStyles).toBe(true)
+
+      const computedStyle = window.getComputedStyle(element)
+      const hasFocusStyles = computedStyle.outline !== 'none' || 
+                            computedStyle.outlineWidth !== '0px' || 
+                            element.style.outline.length > 0
+      expect(hasFocusStyles || element === document.activeElement).toBe(true)
     })
   })
 

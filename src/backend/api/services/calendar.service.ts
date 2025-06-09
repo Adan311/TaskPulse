@@ -1,8 +1,8 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '../../database/client';
 import { v4 as uuidv4 } from "uuid";
-import { Database } from '@/integrations/supabase/types';
-import { DatabaseEvent, DatabaseEventInsert, isDatabaseEvent } from '@/backend/types/supabaseSchema';
+import { Database } from '../../database/types';
+import { DatabaseEvent, DatabaseEventInsert, isDatabaseEvent } from '@/backend/database/schema';
 
 export interface CalendarEvent {
   id: string;

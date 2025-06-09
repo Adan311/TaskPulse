@@ -1,6 +1,6 @@
 // Basic sidebar implementation for the application
 import * as React from "react";
-import { cn } from "@/frontend/utils/utils";
+import { cn } from "@/frontend/lib/utils";
 
 // Context for managing sidebar state
 type SidebarContextType = {

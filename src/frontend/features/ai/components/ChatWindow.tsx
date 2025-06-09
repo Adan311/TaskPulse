@@ -12,7 +12,7 @@ import { getSuggestionCounts, requestSuggestions } from "@/backend/api/services/
 import { useNavigate } from "react-router-dom";
 import SuggestionBadge from './SuggestionBadge';
 import { MarkdownRenderer } from './MarkdownRenderer';
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/backend/database/client";
 import { useSidebar } from "@/frontend/components/ui/sidebar/sidebar";
 import { 
   validateUserInput, 

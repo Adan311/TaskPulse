@@ -10,8 +10,8 @@ import {
   saveEventSuggestions 
 } from '../../../backend/api/services/ai/suggestions/suggestionService'
 
-// Mock the Supabase client
-vi.mock('../../../integrations/supabase/client', () => {
+
+vi.mock('../../../backend/database/client', () => {
   const createMockQueryBuilder = () => ({
     select: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
@@ -69,7 +69,7 @@ describe('AIService', () => {
     vi.clearAllMocks()
     
     // Get the mocked instances
-    const { supabase } = await import('../../../integrations/supabase/client')
+    const { supabase } = await import('../../../backend/database/client')
     const { callGeminiApiDirectly } = await import('../../../backend/api/services/ai/core/geminiService')
     
     mockSupabase = supabase

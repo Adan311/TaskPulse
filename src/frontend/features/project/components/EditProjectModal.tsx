@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Project } from '@/backend/types/supabaseSchema';
+import { Project } from '@/backend/database/schema';
 import { useProjects } from '../hooks/useProjects';
 import { useProjectProgress } from '../hooks/useProjectProgress';
 import { format } from 'date-fns';

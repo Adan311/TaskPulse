@@ -114,7 +114,9 @@ class PerformanceMonitor {
     return { ...this.metrics };
   }
 
-  public logMetrics(): void {
+  public logMetrics(enableLogging: boolean = import.meta.env.DEV): void {
+    if (!enableLogging) return;
+    
     const metrics = this.getMetrics();
     console.group('🚀 Performance Metrics');
     
@@ -149,45 +151,53 @@ class PerformanceMonitor {
 }
 
 // Route transition timing
-export const trackRouteTransition = (routeName: string) => {
+export const trackRouteTransition = (routeName: string, enableLogging: boolean = import.meta.env.DEV) => {
   const startTime = performance.now();
   
   return () => {
     const endTime = performance.now();
     const duration = endTime - startTime;
-    console.log(`📍 Route transition to ${routeName}: ${duration.toFixed(2)}ms`);
     
-    // Log if transition is slower than target (500ms)
-    if (duration > 500) {
-      console.warn(`⚠️ Slow route transition detected: ${routeName} took ${duration.toFixed(2)}ms`);
+    if (enableLogging) {
+      console.log(`📍 Route transition to ${routeName}: ${duration.toFixed(2)}ms`);
+      
+      // Log if transition is slower than target (500ms)
+      if (duration > 500) {
+        console.warn(`⚠️ Slow route transition detected: ${routeName} took ${duration.toFixed(2)}ms`);
+      }
     }
   };
 };
 
 // Bundle size tracking
-export const trackBundleLoad = (chunkName: string) => {
+export const trackBundleLoad = (chunkName: string, enableLogging: boolean = import.meta.env.DEV) => {
   const startTime = performance.now();
   
   return () => {
     const endTime = performance.now();
     const duration = endTime - startTime;
-    console.log(`📦 Chunk loaded: ${chunkName} in ${duration.toFixed(2)}ms`);
+    
+    if (enableLogging) {
+      console.log(`📦 Chunk loaded: ${chunkName} in ${duration.toFixed(2)}ms`);
+    }
   };
 };
 
 // Initialize performance monitoring
-export const initPerformanceMonitoring = () => {
+export const initPerformanceMonitoring = (enableLogging: boolean = import.meta.env.DEV) => {
   const monitor = new PerformanceMonitor();
   
   // Log metrics after page load
   window.addEventListener('load', () => {
     setTimeout(() => {
-      monitor.logMetrics();
+      monitor.logMetrics(enableLogging);
       
-      if (!monitor.isGoodPerformance()) {
-        console.warn('⚠️ Performance metrics indicate room for improvement');
-      } else {
-        console.log('✅ Good performance metrics achieved');
+      if (enableLogging) {
+        if (!monitor.isGoodPerformance()) {
+          console.warn('⚠️ Performance metrics indicate room for improvement');
+        } else {
+          console.log('✅ Good performance metrics achieved');
+        }
       }
     }, 1000);
   });

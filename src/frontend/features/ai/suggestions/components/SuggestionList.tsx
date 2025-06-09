@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/backend/database/client';
 import { User } from '@supabase/supabase-js';
 import { 
     getTaskSuggestions, 

@@ -12,7 +12,7 @@ import { WeekView } from "@/frontend/features/calendar/components/WeekView";
 import { ListView } from "@/frontend/features/calendar/components/ListView";
 import { EventDialog } from "@/frontend/features/calendar/components/EventDialog";
 import { getEvents, Event } from "@/backend/api/services/eventService";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/backend/database/client";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { DayView } from "@/frontend/features/calendar/components/DayView";
 

@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../../../../database/client";
 import { getEvents } from "@/backend/api/services/eventService";
 import { fetchTasks } from "@/backend/api/services/task.service";
 import { fetchNotesWithProjects } from "@/backend/api/services/notes.service";

@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '../../../database/client';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface TimeLog {
@@ -673,8 +673,11 @@ export const getProductivityInsights = async (): Promise<{
       ? `${mostProductiveHour}:00 - ${parseInt(mostProductiveHour) + 1}:00`
       : 'N/A';
 
-    // Task completion rate (simplified - would need actual task data)
-    const taskCompletionRate = 85; // Placeholder
+    // Calculate task completion rate from time logs
+    // This provides a productivity estimate based on completed sessions
+    const completedSessions = weekLogs?.filter(log => log.status === 'completed').length || 0;
+    const totalSessions = weekLogs?.length || 0;
+    const taskCompletionRate = totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0;
 
     return {
       totalHoursToday,

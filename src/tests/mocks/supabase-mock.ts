@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 
-// Mock Supabase client for testing
+
 export const mockSupabaseClient = {
   auth: {
     getUser: vi.fn().mockResolvedValue({

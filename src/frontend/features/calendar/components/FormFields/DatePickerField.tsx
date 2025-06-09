@@ -5,7 +5,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/fron
 import { Button } from "@/frontend/components/ui/button";
 import { Calendar } from "@/frontend/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/frontend/components/ui/popover";
-import { cn } from "@/frontend/utils/utils";
+import { cn } from "@/frontend/lib/utils";
 import { UseFormReturn } from "react-hook-form";
 import { FormValues } from "../../EventFormSchema";
 

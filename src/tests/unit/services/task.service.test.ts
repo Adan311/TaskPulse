@@ -9,7 +9,7 @@ import {
 } from '../../../backend/api/services/tasks/taskOperations'
 
 // Mock the Supabase client properly
-vi.mock('../../../integrations/supabase/client', () => {
+vi.mock('../../../backend/database/client', () => {
   const createMockQueryBuilder = () => ({
     select: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
@@ -69,7 +69,7 @@ describe('TaskService', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
     // Get the mocked supabase instance
-    const { supabase } = await import('../../../integrations/supabase/client')
+    const { supabase } = await import('../../../backend/database/client')
     mockSupabase = supabase
     
     // Reset auth mock to default authenticated state
@@ -141,10 +141,10 @@ describe('TaskService', () => {
       id: taskId,
       title: 'Updated Title',
       status: 'in_progress',
-      description: 'Original Description', // Should be preserved
-      priority: 'high', // Should be preserved
+      description: 'Original Description',
+      priority: 'high',
       user: 'test-user-id',
-      created_at: '2025-01-15T10:00:00Z', // Should be preserved
+      created_at: '2025-01-15T10:00:00Z',
       updated_at: new Date().toISOString()
     }
 
@@ -163,8 +163,8 @@ describe('TaskService', () => {
     // Assert
     expect(result.title).toBe('Updated Title')
     expect(result.status).toBe('in_progress')
-    expect(result.description).toBe('Original Description') // Preserved
-    expect(result.priority).toBe('high') // Preserved
+    expect(result.description).toBe('Original Description')
+    expect(result.priority).toBe('high')
     expect(mockSupabase.from).toHaveBeenCalledWith('tasks')
   })
 
@@ -175,20 +175,20 @@ describe('TaskService', () => {
       project: 'project-123'
     }
 
-    // Mock the select query (first call)
+
     const selectMock = createMockQueryBuilder()
     selectMock.select.mockReturnValue({
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ data: taskWithProject, error: null })
     })
 
-    // Mock the delete query (second call)  
+
     const deleteMock = createMockQueryBuilder()
     deleteMock.delete.mockReturnValue({
       eq: vi.fn().mockReturnThis()
     })
 
-    // Return different mocks for different calls
+
     mockSupabase.from
       .mockReturnValueOnce(selectMock)  // First call for select
       .mockReturnValueOnce(deleteMock)  // Second call for delete
@@ -242,7 +242,7 @@ describe('TaskService', () => {
     expect(result[0].project).toBe(projectId)
     expect(result[1].project).toBe(projectId)
     
-    // Verify correct database calls
+
     const selectChain = mockSupabase.from().select()
     expect(selectChain.eq).toHaveBeenCalledWith('project', projectId)
     expect(selectChain.eq).toHaveBeenCalledWith('user', 'test-user-id')
@@ -305,7 +305,7 @@ describe('TaskService', () => {
       }
     ]
 
-    // Mock the query chain
+
     const mockQueryChain = {
       eq: vi.fn().mockReturnThis(),
       in: vi.fn().mockReturnThis(),
@@ -326,7 +326,7 @@ describe('TaskService', () => {
     expect(result).toHaveLength(1)
     expect(result[0].title).toBe('Important Task')
     
-    // Verify filters were applied
+
     expect(mockQueryChain.in).toHaveBeenCalledWith('status', ['todo', 'in_progress'])
     expect(mockQueryChain.in).toHaveBeenCalledWith('priority', ['high'])
     expect(mockQueryChain.gte).toHaveBeenCalledWith('created_at', filters.dateRange.start.toISOString())
@@ -379,7 +379,7 @@ describe('TaskService', () => {
     expect(result.title).toBe('Dependent Task')
     expect(result.description).toBe('Task that depends on other tasks')
     expect(result.priority).toBe('high')
-    // TODO: Add dependency properties when feature is implemented
+    
     // expect(result.dependencies).toEqual(['task-1', 'task-2'])
     // expect(result.blocking_tasks).toEqual(['task-4'])
   })
@@ -424,7 +424,7 @@ describe('TaskService', () => {
     expect(result.title).toBe('Subtask Item')
     expect(result.description).toBe('Child task of a parent task')
     expect(result.priority).toBe('medium')
-    // TODO: Add subtask properties when feature is implemented
+    
     // expect(result.parent_task_id).toBe('parent-task-123')
     // expect(result.estimated_hours).toBe(2)
   })
@@ -468,11 +468,11 @@ describe('TaskService', () => {
     expect(result.status).toBe('done')
     expect(result.title).toBe('Task with Notifications')
     expect(result.description).toBe('Task that triggers notifications')
-    // TODO: Add notification properties when feature is implemented
+    
     // expect(result.completion_date).toBe(statusUpdate.completion_date)
     // expect(result.notify_on_completion).toBe(true)
     
-    // Verify update was called with completion date
+
     const updateChain = mockSupabase.from().update()
     expect(updateChain.eq).toHaveBeenCalledWith('id', taskId)
   })
@@ -549,12 +549,12 @@ describe('TaskService', () => {
     expect(result[1].title).toBe('Critical System Update')
     expect(result[1].priority).toBe('critical')
     
-    // Verify filters were applied
+
     expect(mockComplexQueryChain.in).toHaveBeenCalledWith('status', ['in_progress'])
     expect(mockComplexQueryChain.in).toHaveBeenCalledWith('priority', ['high', 'critical'])
     expect(mockComplexQueryChain.gte).toHaveBeenCalledWith('created_at', advancedFilters.dateRange.start.toISOString())
     expect(mockComplexQueryChain.lte).toHaveBeenCalledWith('created_at', advancedFilters.dateRange.end.toISOString())
-    // TODO: Add advanced filtering when features are implemented
+    
     // expect(mockComplexQueryChain.contains).toHaveBeenCalledWith('labels', ['urgent', 'client-work'])
   })
 
@@ -576,7 +576,7 @@ describe('TaskService', () => {
       { id: 'subtask-2', parent_task_id: parentTaskId, user: 'test-user-id' }
     ]
 
-    // Mock for parent task select
+
     const mockParentSelectChain = {
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnThis(),
@@ -584,7 +584,7 @@ describe('TaskService', () => {
       })
     }
 
-    // Mock for subtasks select
+
     const mockSubtasksSelectChain = {
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
@@ -593,7 +593,7 @@ describe('TaskService', () => {
       })
     }
 
-    // Mock for subtasks delete
+
     const mockSubtasksDeleteChain = {
       delete: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
@@ -626,7 +626,7 @@ describe('TaskService', () => {
     // Assert - Testing cascade deletion (simplified for current API)
     expect(result).toBe(true)
     expect(mockSupabase.from).toHaveBeenCalledWith('tasks')
-    // TODO: Add cascade deletion when subtask feature is implemented
+    
     // expect(mockSupabase.from).toHaveBeenCalledTimes(4)
     })
 }) 

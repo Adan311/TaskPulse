@@ -4,7 +4,7 @@ import { Button } from "@/frontend/components/ui/button";
 import { Calendar, ExternalLink } from "lucide-react";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { initiateGoogleCalendarAuth } from "@/backend/api/services/googleCalendar/googleCalendarService";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/backend/database/client";
 
 interface GoogleCalendarButtonProps {
   onSuccess?: () => void;

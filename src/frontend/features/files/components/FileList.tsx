@@ -9,7 +9,7 @@ import {
   DialogContent
 } from "@/frontend/components/ui/dialog";
 import { formatDistanceToNow, format } from 'date-fns';
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/backend/database/client";
 import { 
   DropdownMenu,
   DropdownMenuContent,

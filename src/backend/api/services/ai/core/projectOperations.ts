@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../../../../database/client";
 
 /**
  * Get all items (tasks, events, notes, files) for a specific project

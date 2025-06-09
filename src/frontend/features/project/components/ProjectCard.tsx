@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format, differenceInDays } from 'date-fns';
-import { Project } from '@/backend/types/supabaseSchema';
+import { Project } from '@/backend/database/schema';
 import { Card, CardContent } from '@/frontend/components/ui/card';
 import { Badge } from '@/frontend/components/ui/badge';
 import { cn } from '@/frontend/lib/utils';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Project } from '@/backend/types/supabaseSchema';
+import { Project } from '@/backend/database/schema';
 import { Input } from "@/frontend/components/ui/input";
 import { Textarea } from "@/frontend/components/ui/textarea";
 import { 

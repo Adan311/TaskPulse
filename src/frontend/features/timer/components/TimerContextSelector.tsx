@@ -45,8 +45,8 @@ import {
   ClipboardList,
   Play
 } from 'lucide-react';
-import { Task } from '@/backend/types/supabaseSchema';
-import { Project } from '@/backend/types/supabaseSchema';
+import { Task } from '@/backend/database/schema';
+import { Project } from '@/backend/database/schema';
 import { Event } from '@/frontend/types/calendar';
 import { fetchTasks } from '@/backend/api/services/task.service';
 import { fetchProjects } from '@/backend/api/services/project.service';

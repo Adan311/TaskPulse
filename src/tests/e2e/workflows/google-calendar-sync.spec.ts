@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { AuthHelpers, NavigationHelpers, CalendarHelpers, WaitHelpers } from '../utils/test-helpers'
 
-// Test data
+
 const testEvents = [
   {
     title: 'Project Kickoff Meeting',
@@ -124,7 +124,7 @@ test.describe('Google Calendar Integration E2E', () => {
         await expect(page.locator('h1, h2')).toBeVisible()
         console.log('✅ Calendar page loaded for import testing')
         
-        // Note: Actual import would require Google Calendar API setup
+    
         console.log('ℹ️ Google Calendar import requires API configuration')
       } catch (error) {
         console.log('⚠️ Import functionality test failed:', error)
@@ -160,7 +160,7 @@ test.describe('Google Calendar Integration E2E', () => {
         await expect(page.locator('body')).toBeVisible()
         console.log('✅ Conflict resolution interface tested')
         
-        // Note: Actual conflict resolution would require Google Calendar integration
+  
         console.log('ℹ️ Conflict resolution requires Google Calendar API setup')
       } catch (error) {
         console.log('⚠️ Conflict resolution test failed:', error)
@@ -179,7 +179,7 @@ test.describe('Google Calendar Integration E2E', () => {
         await expect(page.locator('h1, h2')).toBeVisible()
         console.log('✅ Calendar page loaded for OAuth testing')
         
-        // Note: Actual OAuth would require Google OAuth setup
+  
         console.log('ℹ️ OAuth authentication requires Google OAuth configuration')
       } catch (error) {
         console.log('⚠️ OAuth interface test failed:', error)

@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '../../../database/client';
 import { GoogleCalendarAuth } from './googleCalendarAuth';
 import { GoogleCalendarSync } from './googleCalendarSync';
 

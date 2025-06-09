@@ -3,7 +3,7 @@
  * Manages conversation memory, user preferences, and contextual information
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../../../../database/client";
 import { withErrorHandling } from "./errorService";
 
 interface UserContext {

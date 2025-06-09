@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../../../../database/client";
 import { v4 as uuidv4 } from "uuid";
 import { callGeminiApiDirectly, getGeminiApiKey, FormattedMessage } from "../core/geminiService";
 import type { ChatMessage } from "../chat/chatService";

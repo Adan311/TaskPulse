@@ -1,5 +1,5 @@
 import React from 'react';
-import { Project } from '@/backend/types/supabaseSchema';
+import { Project } from '@/backend/database/schema';
 import { Slider } from '@/frontend/components/ui/slider';
 import { Switch } from '@/frontend/components/ui/switch';
 import { Button } from '@/frontend/components/ui/button';

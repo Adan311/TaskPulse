@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+import { Button } from '@/frontend/components/ui/button';
 import { Plus, CheckSquare } from 'lucide-react';
 
 interface TaskBoardHeaderProps {

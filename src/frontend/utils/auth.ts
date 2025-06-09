@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/backend/database/client";
 import { useToast } from '@/frontend/hooks/use-toast';
 
 export const login = async (email: string, password: string) => {

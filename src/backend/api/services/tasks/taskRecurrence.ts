@@ -1,6 +1,6 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../../../database/client";
 import { v4 as uuidv4 } from "uuid";
-import { Task } from '@/backend/types/supabaseSchema';
+import { Task } from '@/backend/database/schema';
 import { mapDbTaskToTask, updateProjectProgress } from './taskOperations';
 import { 
   addDays, addWeeks, addMonths, addYears, 

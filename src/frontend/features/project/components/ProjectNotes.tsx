@@ -6,7 +6,7 @@ import { Textarea } from '@/frontend/components/ui/textarea';
 import { Card } from '@/frontend/components/ui/card';
 import { Pin, Trash, Copy, Edit2, Search, Save, X, Unlink } from 'lucide-react';
 import { Input } from '@/frontend/components/ui/input';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/backend/database/client';
 
 interface ProjectNotesProps {
   projectId: string;

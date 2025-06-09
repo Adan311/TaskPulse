@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { DropResult } from '@hello-pangea/dnd';
 import { useToast } from '@/frontend/hooks/use-toast';
-import { Task } from '@/backend/types/supabaseSchema';
+import { Task } from '@/backend/database/schema';
 import {
   fetchTasks,
   createTask,
@@ -12,7 +12,7 @@ import {
   bulkArchiveTasks,
   autoArchiveOldTasks
 } from '@/backend/api/services/task.service';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/backend/database/client';
 import { TaskFilters } from '../components/TaskFilterBar';
 
 // Status mapping functions to handle UI vs database format differences

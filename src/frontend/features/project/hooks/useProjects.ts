@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/backend/database/client";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
-import { Project as SchemaProject } from "@/backend/types/supabaseSchema";
+import { Project as SchemaProject } from "@/backend/database/schema";
 
 // Export the Project type from supabaseSchema to ensure consistency
 export type Project = SchemaProject;

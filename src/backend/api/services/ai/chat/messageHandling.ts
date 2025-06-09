@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../../../../database/client";
 import { v4 as uuidv4 } from "uuid";
 import { getGeminiApiKey, callGeminiApiDirectly, FormattedMessage } from "../core/geminiService";
 import { analyzeConversation, saveTaskSuggestions, saveEventSuggestions } from "../suggestions/suggestionService";

@@ -1,4 +1,4 @@
-// Test data for E2E tests
+
 export const testProjects = [
   {
     name: 'E2E Test Project',

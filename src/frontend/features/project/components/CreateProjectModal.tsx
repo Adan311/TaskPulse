@@ -8,7 +8,7 @@ import {
   DialogFooter
 } from "@/frontend/components/ui/dialog";
 import { Button } from "@/frontend/components/ui/button";
-import { Project } from '@/backend/types/supabaseSchema';
+import { Project } from '@/backend/database/schema';
 import { ProjectFormFields } from './ProjectFormFields';
 
 interface CreateProjectModalProps {

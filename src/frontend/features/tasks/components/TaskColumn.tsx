@@ -1,7 +1,7 @@
 import { Droppable } from '@hello-pangea/dnd';
 import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/ui/card';
 import { TaskList } from './TaskList';
-import { Task } from '@/backend/types/supabaseSchema';
+import { Task } from '@/backend/database/schema';
 
 // Map DB status to UI status for comparison
 const mapDbStatusToUi = (status: string): string => {

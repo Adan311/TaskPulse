@@ -61,7 +61,7 @@ export interface TestNote {
   pinned: boolean
 }
 
-// Test Data Generators
+
 export const createTestUser = (): TestUser => ({
   id: uuidv4(),
   email: `test-${Date.now()}-${Math.random().toString(36).substring(7)}@example.com`,
@@ -180,7 +180,7 @@ export class DatabaseCleaner {
       console.log('🧹 Cleaning up test data...')
       
       // Import Supabase client directly like the rest of the app
-      const { supabase } = await import('../../../integrations/supabase/client')
+      const { supabase } = await import('../../../backend/database/client')
 
       // Clean in reverse order of dependencies
       
@@ -264,7 +264,7 @@ export class DatabaseCleaner {
     if (this.createdProjects.length === 0) return
     
     try {
-      const { supabase } = await import('../../../integrations/supabase/client')
+      const { supabase } = await import('../../../backend/database/client')
       
       const { error } = await supabase
         .from('projects')
@@ -283,7 +283,7 @@ export class DatabaseCleaner {
     if (this.createdTasks.length === 0) return
     
     try {
-      const { supabase } = await import('../../../integrations/supabase/client')
+      const { supabase } = await import('../../../backend/database/client')
       
       const { error } = await supabase
         .from('tasks')
@@ -330,7 +330,7 @@ export const assertDatabaseRecord = async (
   id: string,
   expectedFields: Record<string, any>
 ) => {
-  const { supabase } = await import('../../../integrations/supabase/client')
+  const { supabase } = await import('../../../backend/database/client')
   
   const { data, error } = await supabase
     .from(table)
@@ -358,7 +358,7 @@ export const assertUserDataIsolation = async (
   userId: string,
   shouldNotContainIds: string[]
 ) => {
-  const { supabase } = await import('../../../integrations/supabase/client')
+  const { supabase } = await import('../../../backend/database/client')
   
   const userColumn = table === 'projects' ? 'user' : 'user'
   const { data, error } = await supabase

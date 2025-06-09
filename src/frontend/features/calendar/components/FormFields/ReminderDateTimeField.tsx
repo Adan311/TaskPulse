@@ -4,7 +4,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/fron
 import { Popover, PopoverContent, PopoverTrigger } from "@/frontend/components/ui/popover";
 import { Button } from "@/frontend/components/ui/button";
 import { Calendar } from "@/frontend/components/ui/calendar";
-import { cn } from "@/frontend/utils/utils";
+import { cn } from "@/frontend/lib/utils";
 import { CalendarClock, Clock, Bell, BellOff } from "lucide-react";
 import { format, addMinutes, setHours, setMinutes, parseISO } from "date-fns";
 import {

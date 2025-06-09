@@ -3,7 +3,7 @@ import { Button } from '@/frontend/components/ui/button';
 import { Badge } from '@/frontend/components/ui/badge';
 import { Clock, Play, Square } from 'lucide-react';
 import { useGlobalTimer } from '@/frontend/context/TimerContext';
-import { Task } from '@/backend/types/supabaseSchema';
+import { Task } from '@/backend/database/schema';
 import { cn } from '@/frontend/lib/utils';
 
 interface TaskTimeTrackerProps {

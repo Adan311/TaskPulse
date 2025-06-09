@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Project } from '@/backend/types/supabaseSchema';
+import { Project } from '@/backend/database/schema';
 import { setAutoProgress, setManualProgress } from '@/backend/api/services/project.service';
 import { useToast } from '@/frontend/hooks/use-toast';
 

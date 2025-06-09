@@ -250,7 +250,7 @@ describe('Screen Reader Accessibility Tests', () => {
     expect(pageLoader.getAttribute('aria-live')).toBe('polite')
     expect(pageLoader.getAttribute('role')).toBe('status')
 
-    // Simulate loading completion
+
     pageLoader.setAttribute('aria-busy', 'false')
     pageLoader.textContent = 'Page loaded successfully'
     expect(pageLoader.getAttribute('aria-busy')).toBe('false')

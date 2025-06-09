@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../../../../database/client";
 import { v4 as uuidv4 } from "uuid";
 import { createTask } from "@/backend/api/services/task.service";
 import { createEvent } from "@/backend/api/services/eventService";

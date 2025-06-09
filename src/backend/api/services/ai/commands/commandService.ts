@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../../../../database/client";
 import { getGeminiApiKey, callGeminiApiDirectly, FormattedMessage } from "../core/geminiService";
 import { createTask, deleteTask, updateTask } from "../../task.service";
 import { createEvent, deleteEvent, updateEvent } from "../../eventService";

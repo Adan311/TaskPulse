@@ -1,6 +1,6 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { format } from 'date-fns';
-import { Task } from '@/backend/types/supabaseSchema';
+import { Task } from '@/backend/database/schema';
 import { fetchProjectTasks, createTask, updateTask, deleteTask, updateTaskStatus, unlinkTaskFromProject } from '@/backend/api/services/task.service';
 import { Card, CardContent } from '@/frontend/components/ui/card';
 import { Button } from '@/frontend/components/ui/button';

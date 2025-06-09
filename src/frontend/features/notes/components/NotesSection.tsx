@@ -34,7 +34,9 @@ export const NotesSection: React.FC = () => {
   const handlePin      = (id: string) => { const n = notes.find(x => x.id === id); n?.pinned ? unpinNote(id) : pinNote(id); };
   const handleDelete   = (id: string) => { deleteNote(id); setSelectedNoteId(null); };
   const handleCopy     = (c: string)   => navigator.clipboard.writeText(c);
-  const handleAddToProj= (id: string)  => { /* TODO */ };
+  const handleAddToProj= (id: string)  => { 
+    // This function is not used as the NoteViewer handles project selection internally
+  };
 
   const handleNew      = ()             => { setSelectedNoteId(null); setNewNoteContent(''); };
   const handleSaveNew  = async (c: string) => {

@@ -1,6 +1,6 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { DatabaseEvent } from '@/backend/types/supabaseSchema';
+import { supabase } from '../../../database/client';
+import { DatabaseEvent } from '@/backend/database/schema';
 import { hasGoogleCalendarConnected } from './googleCalendarService';
 
 /**

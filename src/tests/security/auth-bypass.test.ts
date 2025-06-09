@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest'
 
-// Mock the Supabase client
-vi.mock('../../integrations/supabase/client', () => {
+
+vi.mock('../../backend/database/client', () => {
   const mockAuth = {
     getUser: vi.fn(),
     signInWithPassword: vi.fn(),
@@ -33,7 +33,7 @@ describe('Authentication Bypass Security Tests', () => {
     vi.clearAllMocks()
     
     // Get the mocked supabase instance
-    const { supabase } = await import('../../integrations/supabase/client')
+    const { supabase } = await import('../../backend/database/client')
     mockSupabase = supabase
   })
 
@@ -167,7 +167,7 @@ describe('Authentication Bypass Security Tests', () => {
       error: null
     })
 
-    // Mock database query that should filter by user ID
+
     mockSupabase.from.mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),

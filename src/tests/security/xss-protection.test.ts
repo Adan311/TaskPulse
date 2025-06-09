@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest'
 
-// Mock the Supabase client
-vi.mock('../../integrations/supabase/client', () => {
+
+vi.mock('../../backend/database/client', () => {
   const mockAuth = {
     getUser: vi.fn()
   }
@@ -31,7 +31,7 @@ describe('XSS Protection Security Tests', () => {
     vi.clearAllMocks()
     
     // Get the mocked supabase instance
-    const { supabase } = await import('../../integrations/supabase/client')
+    const { supabase } = await import('../../backend/database/client')
     mockSupabase = supabase
 
     // Mock authenticated user by default

@@ -20,8 +20,8 @@ import {
   getProductivityInsights
 } from '../../../backend/api/services/timeTracking/timeTrackingService'
 
-// Mock the Supabase client
-vi.mock('../../../integrations/supabase/client', () => {
+
+vi.mock('../../../backend/database/client', () => {
   const createMockQueryBuilder = () => ({
     select: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
@@ -83,7 +83,7 @@ describe('TimeTrackingService', () => {
     vi.clearAllMocks()
     
     // Get the mocked supabase instance
-    const { supabase } = await import('../../../integrations/supabase/client')
+    const { supabase } = await import('../../../backend/database/client')
     mockSupabase = supabase
     
     // Reset auth mock to default authenticated state
@@ -144,7 +144,7 @@ describe('TimeTrackingService', () => {
       })
     }
 
-    // Return different mocks for different calls
+
     mockSupabase.from
       .mockReturnValueOnce(mockActiveCheck)  // Check for active sessions
       .mockReturnValueOnce(mockInsertQuery)  // Insert new session
@@ -410,7 +410,7 @@ describe('TimeTrackingService', () => {
       }
     ]
 
-    // Mock the complex query chain that getTimeLogs uses
+
     const mockQuery = {
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockImplementation((field, value) => {

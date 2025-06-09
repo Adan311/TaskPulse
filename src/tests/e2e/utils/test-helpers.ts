@@ -1,7 +1,7 @@
 import { Page, expect, BrowserContext } from '@playwright/test'
 import { BrowserRecovery } from './browser-recovery'
 
-// Test data constants
+
 export const TEST_USER = {
   email: 'e2e-test@motionmingle.com',
   password: 'TestPassword123!',

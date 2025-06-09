@@ -1,7 +1,7 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../../../database/client";
 import { v4 as uuidv4 } from "uuid";
 import { Event as FrontendEvent } from "@/frontend/types/calendar";
-import { DatabaseEvent, DatabaseEventInsert } from "@/backend/types/supabaseSchema";
+import { DatabaseEvent, DatabaseEventInsert } from "@/backend/database/schema";
 import { formatEventForFrontend } from './eventOperations';
 import { 
   addDays, addWeeks, addMonths, addYears, 

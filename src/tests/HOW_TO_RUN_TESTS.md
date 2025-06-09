@@ -1,4 +1,4 @@
-Hello, bowl# How to Run Tests - MotionMingle
+# How to Run Tests - MotionMingle
 
 This guide explains how to run the comprehensive test suite for MotionMingle.
 

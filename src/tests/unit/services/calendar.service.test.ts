@@ -9,8 +9,8 @@ import {
   formatEventForDatabase
 } from '../../../backend/api/services/events/eventOperations'
 
-// Mock the Supabase client
-vi.mock('../../../integrations/supabase/client', () => {
+
+vi.mock('../../../backend/database/client', () => {
   const createMockQueryBuilder = () => ({
     select: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
@@ -59,7 +59,7 @@ describe('CalendarService', () => {
     vi.clearAllMocks()
     
     // Get the mocked supabase instance
-    const { supabase } = await import('../../../integrations/supabase/client')
+    const { supabase } = await import('../../../backend/database/client')
     mockSupabase = supabase
     
     // Reset auth mock to default authenticated state
@@ -146,10 +146,10 @@ describe('CalendarService', () => {
     const mockUpdatedEvent = {
       id: eventId,
       title: 'Updated Meeting Title',
-      description: 'Original description', // Should be preserved
+      description: 'Original description',
       start_time: '2025-01-20T14:00:00Z',
-      end_time: '2025-01-20T15:00:00Z', // Should be preserved
-      color: '#2196F3', // Should be preserved
+      end_time: '2025-01-20T15:00:00Z',
+      color: '#2196F3',
       user: 'test-user-id',
       project: null,
       source: 'app'
@@ -169,8 +169,8 @@ describe('CalendarService', () => {
     // Assert
     expect(result.title).toBe('Updated Meeting Title')
     expect(result.startTime).toBe('2025-01-20T14:00:00Z')
-    expect(result.description).toBe('Original description') // Preserved
-    expect(result.endTime).toBe('2025-01-20T15:00:00Z') // Preserved
+    expect(result.description).toBe('Original description')
+    expect(result.endTime).toBe('2025-01-20T15:00:00Z')
     expect(mockSupabase.from).toHaveBeenCalledWith('events')
     expect(mockQueryBuilder.update).toHaveBeenCalled()
   })
@@ -185,7 +185,7 @@ describe('CalendarService', () => {
       user: 'test-user-id'
     }
 
-    // Mock the select query chain
+
     const mockSelectChain = {
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
@@ -196,7 +196,7 @@ describe('CalendarService', () => {
       })
     }
 
-    // Mock the delete query chain
+
     const mockDeleteChain = {
       delete: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
@@ -205,7 +205,7 @@ describe('CalendarService', () => {
       })
     }
 
-    // Return different mocks for different calls
+
     mockSupabase.from
       .mockReturnValueOnce(mockSelectChain)  // First call for select
       .mockReturnValueOnce(mockDeleteChain)  // Second call for delete
@@ -437,8 +437,7 @@ describe('CalendarService', () => {
       startTime: '2025-01-20T10:00:00Z',
       endTime: '2025-01-20T11:00:00Z',
       participants: []
-      // Note: Current API doesn't support recurring events yet
-      // This test demonstrates specification for future enhancement
+
     }
 
     const mockCreatedEvent = {
@@ -484,7 +483,7 @@ describe('CalendarService', () => {
       endTime: '2025-01-20T23:59:59Z',
       color: '#4CAF50',
       participants: []
-      // Note: isAllDay flag would be future enhancement
+
     }
 
     const mockCreatedEvent = {
@@ -518,7 +517,7 @@ describe('CalendarService', () => {
     expect(result.startTime).toBe('2025-01-20T00:00:00Z')
     expect(result.endTime).toBe('2025-01-20T23:59:59Z')
     expect(result.color).toBe('#4CAF50')
-    // TODO: Add all-day flag when feature is implemented
+    
     // expect(result.isAllDay).toBe(true)
   })
 
@@ -534,9 +533,7 @@ describe('CalendarService', () => {
       startTime: '2025-01-20T10:00:00Z',
       endTime: '2025-01-20T11:00:00Z',
       participants: []
-      // Note: timezone and location would be future enhancements
-      // timezone: 'America/New_York',
-      // location: 'Video Conference'
+
     }
 
     const mockCreatedEvent = {

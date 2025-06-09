@@ -47,7 +47,10 @@ const NotesPage: React.FC = () => {
     setSelectedNoteId(null);
   };
   const handleCopy = (content: string) => navigator.clipboard.writeText(content);
-  const handleAddToProject = (id: string) => {/* TODO: Implement add to project logic */};
+  const handleAddToProject = (id: string) => {
+    // This function is not used by NoteViewer as it has its own project selection modal
+    // Kept for interface compatibility
+  };
 
   // New: handle creating a new note from the main area
   const handleCreateNewNote = () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 
-// Test data setup
+
 const testUserId = 'test-user-integration-notifications'
 let testCleanupIds: string[] = []
 
@@ -29,7 +29,7 @@ describe('Notification System Integration Tests - Real MCP Integration', () => {
     }
     
     // Mock the Supabase client for auth during integration tests
-    const { supabase } = await import('../../integrations/supabase/client')
+    const { supabase } = await import('../../backend/database/client')
     supabase.auth = mockAuth as any
   })
 

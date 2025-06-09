@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { format, differenceInDays } from 'date-fns';
-import { Project, Task } from '@/backend/types/supabaseSchema';
+import { Project, Task } from '@/backend/database/schema';
 import { ProjectTasks } from './ProjectTasks';
 import { ProjectEvents } from './ProjectEvents';
 import { ProjectFiles } from './ProjectFiles';

@@ -98,10 +98,33 @@ export const a11y = {
 
   // Color contrast checking (for development)
   checkColorContrast: (foreground: string, background: string): boolean => {
-    // This is a simplified version - in production you'd use a proper color contrast library
-    // Returns true if contrast ratio is acceptable (4.5:1 for normal text, 3:1 for large text)
-    console.log(`Color contrast check: ${foreground} on ${background}`);
-    return true; // Placeholder
+    // Basic contrast checking - converts colors to RGB and calculates luminance
+    // Returns true if contrast ratio meets WCAG AA standards (4.5:1 for normal text)
+    try {
+      const getLuminance = (color: string): number => {
+        // Simple RGB extraction for hex colors
+        const hex = color.replace('#', '');
+        const r = parseInt(hex.substr(0, 2), 16) / 255;
+        const g = parseInt(hex.substr(2, 2), 16) / 255;
+        const b = parseInt(hex.substr(4, 2), 16) / 255;
+        
+        // Calculate relative luminance
+        const rs = r <= 0.03928 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
+        const gs = g <= 0.03928 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4);
+        const bs = b <= 0.03928 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4);
+        
+        return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+      };
+      
+      const fgLuminance = getLuminance(foreground);
+      const bgLuminance = getLuminance(background);
+      const contrast = (Math.max(fgLuminance, bgLuminance) + 0.05) / (Math.min(fgLuminance, bgLuminance) + 0.05);
+      
+      return contrast >= 4.5; // WCAG AA standard
+    } catch (error) {
+      console.warn('Color contrast check failed:', error);
+      return true; // Fail safely
+    }
   },
 
   // Generate accessible IDs

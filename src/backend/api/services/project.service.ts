@@ -1,6 +1,6 @@
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '../../database/client';
 import { v4 as uuidv4 } from "uuid";
-import { Project } from '@/backend/types/supabaseSchema';
+import { Project } from '@/backend/database/schema';
 
 export const fetchProjects = async (): Promise<Project[]> => {
   const { data: { user } } = await supabase.auth.getUser();

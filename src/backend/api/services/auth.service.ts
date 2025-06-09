@@ -1,4 +1,4 @@
-import { supabase } from '../client/supabase';
+import { supabase } from '../../database/client';
 
 export const login = async (email: string, password: string) => {
   try {

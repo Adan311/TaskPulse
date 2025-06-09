@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from "@/frontend/lib/utils";
 import { Event } from "@/frontend/types/calendar";
 import { format, addHours } from "date-fns";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/frontend/components/ui/avatar";
 
 interface TimelineViewProps {
   events: Event[];

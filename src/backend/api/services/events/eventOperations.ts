@@ -1,9 +1,9 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../../../database/client";
+import { Database } from "../../../database/types";
 import { v4 as uuidv4 } from "uuid";
 import { saveEventToGoogleCalendar, deleteEventFromGoogleCalendar } from "../googleCalendar/googleCalendarService";
 import { Event as FrontendEvent } from "@/frontend/types/calendar";
-import { DatabaseEvent, DatabaseEventInsert, DatabaseEventUpdate } from "@/backend/types/supabaseSchema";
-import { Database } from '@/integrations/supabase/types';
+import { DatabaseEvent, DatabaseEventInsert, DatabaseEventUpdate } from "@/backend/database/schema";
 
 type DbEvent = Database['public']['Tables']['events']['Row'];
 
@@ -167,12 +167,10 @@ export async function createEvent(event: Omit<FrontendEvent, "id">): Promise<Fro
 
   // Sync to Google Calendar if connected
   try {
-    console.log("Attempting to sync new event to Google Calendar");
     // Convert to DbEvent format for Google Calendar sync
     const formattedData = data[0] as unknown as DatabaseEvent;
     if (formattedData) {
-      const syncResult = await saveEventToGoogleCalendar(formattedData);
-      console.log("Google Calendar sync result:", syncResult);
+      await saveEventToGoogleCalendar(formattedData);
     }
   } catch (syncError) {
     console.error("Error syncing to Google Calendar:", syncError);
@@ -247,12 +245,10 @@ export async function updateEvent(
 
     // Sync to Google Calendar if connected
     try {
-      console.log("Attempting to sync updated event to Google Calendar");
       // Convert to DbEvent format for Google Calendar sync
       const formattedData = data[0] as unknown as DatabaseEvent;
       if (formattedData) {
-        const syncResult = await saveEventToGoogleCalendar(formattedData);
-        console.log("Google Calendar sync result:", syncResult);
+        await saveEventToGoogleCalendar(formattedData);
       }
     } catch (syncError) {
       console.error("Error syncing to Google Calendar:", syncError);
@@ -297,9 +293,7 @@ export async function deleteEvent(
 
   // Delete from Google Calendar first if it's linked
   try {
-    console.log("Attempting to delete event from Google Calendar:", id);
-    const deleteResult = await deleteEventFromGoogleCalendar(id);
-    console.log("Google Calendar delete result:", deleteResult);
+    await deleteEventFromGoogleCalendar(id);
   } catch (syncError) {
     console.error("Error deleting from Google Calendar:", syncError);
     // Continue even if sync fails

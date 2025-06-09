@@ -1,5 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
-import { Task } from '@/backend/types/supabaseSchema';
+import { supabase } from "../../database/client";
+import { Task } from '@/backend/database/schema';
 import { Event } from '@/frontend/types/calendar';
 
 // Type for reminders

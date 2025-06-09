@@ -115,7 +115,7 @@ test.describe('Complete User Journey - MotionMingle E2E', () => {
           await wait.safeWaitForLoadState('domcontentloaded')
         }
         
-        // Test task completion
+  
         await tasks.completeTask(testProjects[0].tasks[0].title)
         
         console.log('✅ Task management completed')
@@ -176,7 +176,7 @@ test.describe('Complete User Journey - MotionMingle E2E', () => {
         // Navigate to files
         await nav.goToFiles()
         
-        // Note: File upload testing would require actual files
+    
         // For now, we'll just verify the page loads
         await expect(page.locator('main')).toBeVisible()
         

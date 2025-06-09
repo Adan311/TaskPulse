@@ -1,8 +1,8 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../../../database/client";
 import { v4 as uuidv4 } from "uuid";
 import { TaskFilters } from '@/frontend/features/tasks/components/TaskFilterBar';
-import { Task } from '@/backend/types/supabaseSchema';
-import { Database } from '@/integrations/supabase/types';
+import { Task } from '@/backend/database/schema';
+import { Database } from '../../../database/types';
 import { updateProjectProgressOnTaskChange } from "../project.service";
 
 type DbTask = Database['public']['Tables']['tasks']['Row'];

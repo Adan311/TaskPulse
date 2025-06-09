@@ -3,7 +3,7 @@ import { AppLayout } from '@/frontend/components/layout/AppLayout';
 import { FileUploadSection } from '@/frontend/features/files/components/FileUploadSection';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/frontend/components/ui/tabs';
 import { Card, CardContent } from '@/frontend/components/ui/card';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/backend/database/client';
 import { Button } from '@/frontend/components/ui/button';
 import { motion } from 'framer-motion';
 

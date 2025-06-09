@@ -1,7 +1,7 @@
 import { useTheme } from "next-themes"
 import { Toaster as Sonner } from "sonner"
 import * as React from "react"
-import { cn } from "@/frontend/utils/utils"
+import { cn } from "@/frontend/lib/utils"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 

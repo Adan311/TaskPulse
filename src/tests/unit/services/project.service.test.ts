@@ -10,8 +10,8 @@ import {
   updateProjectProgressOnTaskChange
 } from '../../../backend/api/services/project.service'
 
-// Mock the Supabase client
-vi.mock('../../../integrations/supabase/client', () => {
+
+vi.mock('../../../backend/database/client', () => {
   const createMockQueryBuilder = () => ({
     select: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
@@ -53,7 +53,7 @@ describe('ProjectService', () => {
     vi.clearAllMocks()
     
     // Get the mocked supabase instance
-    const { supabase } = await import('../../../integrations/supabase/client')
+    const { supabase } = await import('../../../backend/database/client')
     mockSupabase = supabase
     
     // Reset auth mock to default authenticated state
@@ -184,9 +184,9 @@ describe('ProjectService', () => {
     const mockUpdatedProject = {
       id: projectId,
       name: 'Updated Project Name',
-      description: 'Original description', // Should be preserved
+      description: 'Original description',
       status: 'completed',
-      priority: 'medium', // Should be preserved
+      priority: 'medium',
       progress: 100,
       user: 'test-user-id'
     }
@@ -206,7 +206,7 @@ describe('ProjectService', () => {
     expect(result.name).toBe('Updated Project Name')
     expect(result.status).toBe('completed')
     expect(result.progress).toBe(100)
-    expect(result.description).toBe('Original description') // Preserved
+    expect(result.description).toBe('Original description')
     expect(mockQueryBuilder.update).toHaveBeenCalledWith(updates)
     expect(mockQueryBuilder.update().eq).toHaveBeenCalledWith('id', projectId)
     expect(mockQueryBuilder.update().eq).toHaveBeenCalledWith('user', 'test-user-id')
@@ -237,13 +237,13 @@ describe('ProjectService', () => {
     // Arrange
     const projectId = 'test-project'
     
-    // Mock project data - using auto progress
+
     const mockProjectData = {
       auto_progress: true,
       manual_progress: null
     }
 
-    // Mock tasks data - 2 completed out of 5 total = 40%
+
     const mockTasks = [
       { status: 'done' },
       { status: 'done' },
@@ -252,7 +252,7 @@ describe('ProjectService', () => {
       { status: 'todo' }
     ]
 
-    // Mock the project query
+
     const mockProjectQuery = {
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnThis(),
@@ -260,7 +260,7 @@ describe('ProjectService', () => {
       })
     }
 
-    // Mock the tasks query
+
     const mockTasksQuery = {
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
@@ -269,7 +269,7 @@ describe('ProjectService', () => {
       })
     }
 
-    // Mock the update query
+
     const mockUpdateQuery = {
       update: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnThis(),
@@ -277,7 +277,7 @@ describe('ProjectService', () => {
       })
     }
 
-    // Return different mocks for different table calls
+
     mockSupabase.from
       .mockReturnValueOnce(mockProjectQuery)  // First call for project
       .mockReturnValueOnce(mockTasksQuery)    // Second call for tasks
@@ -300,9 +300,9 @@ describe('ProjectService', () => {
     // Arrange
     const projectId = 'test-project'
     
-    // Mock for calculateProjectProgress call
+
     const mockProjectData = { auto_progress: true, manual_progress: null }
-    const mockTasks = [{ status: 'done' }, { status: 'todo' }] // 50% completion
+    const mockTasks = [{ status: 'done' }, { status: 'todo' }]
     
     const mockProjectQuery = {
       select: vi.fn().mockReturnValue({
@@ -322,7 +322,7 @@ describe('ProjectService', () => {
       })
     }
 
-    // Mock for updateProject call
+
     const mockUpdatedProject = {
       id: projectId,
       auto_progress: true,

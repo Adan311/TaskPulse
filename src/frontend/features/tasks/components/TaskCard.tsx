@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Task } from '@/backend/types/supabaseSchema';
+import { Task } from '@/backend/database/schema';
 import { Card, CardContent } from '@/frontend/components/ui/card';
 import { Button } from '@/frontend/components/ui/button';
 import { Badge } from '@/frontend/components/ui/badge';

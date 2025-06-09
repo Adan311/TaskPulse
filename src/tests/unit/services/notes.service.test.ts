@@ -14,8 +14,8 @@ import {
   type UpdateNoteData
 } from '../../../backend/api/services/notes.service';
 
-// Mock the Supabase client
-vi.mock('../../../integrations/supabase/client', () => {
+
+vi.mock('../../../backend/database/client', () => {
   const mockAuth = {
     getUser: vi.fn()
   };
@@ -59,7 +59,7 @@ describe('Notes Service', () => {
     vi.clearAllMocks();
     
     // Get the mocked supabase instance
-    const { supabase } = await import('../../../integrations/supabase/client');
+    const { supabase } = await import('../../../backend/database/client');
     mockSupabase = supabase;
     
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: mockUser } });
@@ -275,7 +275,7 @@ describe('Notes Service', () => {
 
   describe('toggleNotePinned', () => {
     it('should toggle note pinned status', async () => {
-      // Mock the select query to get current pinned status
+
       const mockSelectChain = {
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -286,7 +286,7 @@ describe('Notes Service', () => {
         })
       };
 
-      // Mock the update query
+
       const mockUpdateChain = {
         update: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({

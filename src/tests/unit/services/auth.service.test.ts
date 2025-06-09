@@ -10,8 +10,8 @@ import {
   deleteAccount
 } from '../../../backend/api/services/auth.service'
 
-// Mock the Supabase client
-vi.mock('../../../integrations/supabase/client', () => {
+
+vi.mock('../../../backend/database/client', () => {
   const mockAuth = {
     signInWithPassword: vi.fn(),
     signUp: vi.fn(),
@@ -40,7 +40,7 @@ describe('AuthService', () => {
     vi.clearAllMocks()
     
     // Get the mocked supabase instance
-    const { supabase } = await import('../../../integrations/supabase/client')
+    const { supabase } = await import('../../../backend/database/client')
     mockSupabase = supabase
   })
 
@@ -316,7 +316,7 @@ describe('AuthService', () => {
       error: null
     })
 
-    // Mock data deletion
+
     const mockDeleteBuilder = {
       delete: vi.fn().mockReturnValue({
         eq: vi.fn().mockResolvedValue({ error: null })
@@ -339,7 +339,7 @@ describe('AuthService', () => {
     })
     expect(mockSupabase.auth.signOut).toHaveBeenCalled()
     
-    // Verify data deletion was attempted for all tables
+
     expect(mockSupabase.from).toHaveBeenCalledWith('notes')
     expect(mockSupabase.from).toHaveBeenCalledWith('tasks')
     expect(mockSupabase.from).toHaveBeenCalledWith('events')

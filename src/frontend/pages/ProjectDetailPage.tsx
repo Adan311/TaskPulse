@@ -5,7 +5,7 @@ import { ProjectDetail } from '@/frontend/features/project/components/ProjectDet
 import { useProjects } from '@/frontend/features/project/hooks/useProjects';
 import { Box, CircularProgress, Typography, useTheme } from '@mui/material';
 import { useToast } from '@/frontend/hooks/use-toast';
-import { Project } from '@/backend/types/supabaseSchema';
+import { Project } from '@/backend/database/schema';
 import {
   Dialog,
   DialogContent,

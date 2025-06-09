@@ -1,5 +1,4 @@
-
-import { supabase } from '../client/supabase';
+import { supabase } from '../../../database/client';
 
 export const testConnection = async (): Promise<boolean> => {
   try {

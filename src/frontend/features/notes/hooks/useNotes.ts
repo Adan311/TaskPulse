@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/backend/database/client";
 import { useToast } from "@/frontend/hooks/use-toast";
 
 // --- Hook returns all relevant state and functions to manage notes

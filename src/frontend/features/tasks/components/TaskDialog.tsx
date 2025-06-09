@@ -18,9 +18,9 @@ import {
   SelectValue,
 } from "@/frontend/components/ui/select";
 import { Label } from "@/frontend/components/ui/label";
-import { Task } from '@/backend/types/supabaseSchema';
+import { Task } from '@/backend/database/schema';
 import { useToast } from "@/frontend/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/backend/database/client";
 import { useState, useEffect } from "react";
 import { Calendar } from '@/frontend/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/frontend/components/ui/popover';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Project } from '@/backend/types/supabaseSchema';
+import { Project } from '@/backend/database/schema';
 import { ProjectTasks } from './ProjectTasks';
 import { ProjectEvents } from './ProjectEvents';
 import { ProjectFiles } from './ProjectFiles';

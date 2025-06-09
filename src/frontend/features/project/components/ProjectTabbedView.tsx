@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Project, Task } from '@/backend/types/supabaseSchema';
+import { Project, Task } from '@/backend/database/schema';
 import { ProjectTasks } from './ProjectTasks';
 import { ProjectEvents } from './ProjectEvents';
 import { ProjectFiles } from './ProjectFiles';

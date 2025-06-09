@@ -1,6 +1,20 @@
-// Define database schema types
-import { Database } from '@/integrations/supabase/types';
+// Application-specific schema interfaces that extend auto-generated database types
+import { Database } from './types';
 
+// Re-export Database type for convenience
+export type { Database };
+
+// Helper type to extract event type from Database
+export type DatabaseEvent = Database['public']['Tables']['events']['Row'];
+export type DatabaseEventInsert = Database['public']['Tables']['events']['Insert'];
+export type DatabaseEventUpdate = Database['public']['Tables']['events']['Update'];
+
+// Helper function to check if an object is a database event
+export function isDatabaseEvent(obj: any): obj is DatabaseEvent {
+  return obj && typeof obj === 'object' && 'id' in obj;
+}
+
+// Application-specific interfaces for better type safety and business logic
 export interface Task {
   id: string;
   title: string;
@@ -51,7 +65,6 @@ export interface Project {
   total_time_logged_hours?: number | null;
 }
 
-// Make sure Event interface matches the database schema
 export interface Event {
   id: string;
   title: string;
@@ -76,14 +89,4 @@ export interface Event {
   recurrence_end_date?: string | null;
   recurrence_count?: number | null;
   parent_id?: string | null; // Link to parent recurring event
-}
-
-// Helper type to extract event type from Database
-export type DatabaseEvent = Database['public']['Tables']['events']['Row'];
-export type DatabaseEventInsert = Database['public']['Tables']['events']['Insert'];
-export type DatabaseEventUpdate = Database['public']['Tables']['events']['Update'];
-
-// Helper function to check if an object is a database event
-export function isDatabaseEvent(obj: any): obj is DatabaseEvent {
-  return obj && typeof obj === 'object' && 'id' in obj;
-}
+} 

@@ -10,8 +10,8 @@ import {
   canPreviewFile
 } from '../../../backend/api/services/file.service'
 
-// Mock the Supabase client
-vi.mock('../../../integrations/supabase/client', () => {
+
+vi.mock('../../../backend/database/client', () => {
   const createMockQueryBuilder = () => ({
     select: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
@@ -67,7 +67,7 @@ describe('FileService', () => {
     vi.clearAllMocks()
     
     // Get the mocked supabase instance
-    const { supabase } = await import('../../../integrations/supabase/client')
+    const { supabase } = await import('../../../backend/database/client')
     mockSupabase = supabase
     
     // Reset auth mock to default authenticated state
@@ -174,7 +174,6 @@ describe('FileService', () => {
     // Override the storage.from mock to return our tracked bucket
     mockSupabase.storage.from.mockReturnValue(mockStorageBucket)
 
-    // Mock database insert
     const mockQueryBuilder = {
       insert: vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
@@ -209,7 +208,7 @@ describe('FileService', () => {
     const mockFile = new File(['test'], 'test.pdf', { type: 'application/pdf' })
     const uploadParams = { file: mockFile }
 
-    // Mock storage upload failure
+
     const mockStorage = mockSupabase.storage.from()
     mockStorage.upload.mockResolvedValue({ 
       data: null, 
@@ -225,11 +224,10 @@ describe('FileService', () => {
     const mockFile = new File(['test'], 'test.pdf', { type: 'application/pdf' })
     const uploadParams = { file: mockFile }
 
-    // Mock successful storage upload
+
     const mockStorage = mockSupabase.storage.from()
     mockStorage.upload.mockResolvedValue({ data: { path: 'test-user-id/i.pdf' }, error: null })
 
-    // Mock database insert failure
     const mockQueryBuilder = {
       insert: vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
@@ -301,7 +299,7 @@ describe('FileService', () => {
       })
     }
 
-    // Return different mocks for different calls
+
     mockSupabase.from
       .mockReturnValueOnce(mockSelectQuery)  // First call to get file
       .mockReturnValueOnce(mockDeleteQuery)  // Second call to delete
@@ -343,7 +341,7 @@ describe('FileService', () => {
       })
     }
     
-    // Mock the update query
+
     const mockUpdateQuery = {
       update: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
@@ -356,7 +354,7 @@ describe('FileService', () => {
       })
     }
     
-    // Return different mocks for different calls
+
     mockSupabase.from
       .mockReturnValueOnce(mockSelectQuery)  // First call for permission check
       .mockReturnValueOnce(mockUpdateQuery)  // Second call for update
@@ -394,7 +392,7 @@ describe('FileService', () => {
       })
     }
     
-    // Mock the update query
+
     const mockUpdateQuery = {
       update: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
@@ -407,7 +405,7 @@ describe('FileService', () => {
       })
     }
     
-    // Return different mocks for different calls
+
     mockSupabase.from
       .mockReturnValueOnce(mockSelectQuery)  // First call for permission check
       .mockReturnValueOnce(mockUpdateQuery)  // Second call for update
