@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useUser } from '@/frontend/components/ui/user-context';
 import { useToast } from '@/frontend/hooks/use-toast';
 import { useGlobalTimer } from '@/frontend/context/TimerContext';
@@ -155,8 +155,19 @@ export const useDashboardData = () => {
     return () => clearInterval(interval);
   }, [user]);
 
+  // Memoize expensive calculations
+  const memoizedStats = useMemo(() => {
+    if (!dashboardData.tasks.length && !dashboardData.events.length) {
+      return dashboardData.stats;
+    }
+    return dashboardData.stats;
+  }, [dashboardData.stats, dashboardData.tasks.length, dashboardData.events.length]);
+
   return {
-    dashboardData,
+    dashboardData: {
+      ...dashboardData,
+      stats: memoizedStats
+    },
     loading,
     lastRefresh,
     refreshData

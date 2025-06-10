@@ -34,7 +34,7 @@ export const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({
   };
 
   const getCompletionPercentage = () => {
-    if (stats.tasksTotal === 0) return 0;
+    if (!stats || stats.tasksTotal === 0) return 0;
     return Math.round((stats.tasksCompleted / stats.tasksTotal) * 100);
   };
 
@@ -91,6 +91,15 @@ export const QuickStatsWidget: React.FC<QuickStatsWidgetProps> = ({
             key={card.title}
             className="relative overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group hover:scale-[1.02] border-0 shadow-sm"
             onClick={card.onClick}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                card.onClick();
+              }
+            }}
+            aria-label={`View ${card.title}: ${card.value}`}
           >
             <CardContent className="p-6">
               {/* Background gradient */}

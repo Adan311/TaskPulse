@@ -2,20 +2,12 @@ import { useState, useEffect } from 'react';
 
 export interface DashboardLayoutConfig {
   showAIChat: boolean;
-  showCalendar: boolean;
-  showTasks: boolean;
-  showTimer: boolean;
-  showStats: boolean;
   chatCollapsed: boolean;
   selectedView: 'overview' | 'calendar' | 'tasks' | 'projects' | 'notes';
 }
 
 const DEFAULT_LAYOUT: DashboardLayoutConfig = {
   showAIChat: true,
-  showCalendar: true,
-  showTasks: true,
-  showTimer: true,
-  showStats: true,
   chatCollapsed: false,
   selectedView: 'overview'
 };

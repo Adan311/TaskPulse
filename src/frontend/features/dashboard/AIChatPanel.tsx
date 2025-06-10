@@ -1,14 +1,9 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/ui/card';
+import { Card, CardContent } from '@/frontend/components/ui/card';
 import { Button } from '@/frontend/components/ui/button';
-import { Badge } from '@/frontend/components/ui/badge';
 import { 
   MessageSquare, 
-  Minimize2, 
-  Maximize2, 
-  Sparkles,
-  Lightbulb,
-  Zap
+  Maximize2
 } from 'lucide-react';
 import { ChatWindow } from '@/frontend/features/ai/components/ChatWindow';
 import { DashboardData } from './hooks/useDashboardData';
@@ -27,24 +22,6 @@ export const AIChatPanel: React.FC<AIChatPanelProps> = ({
   className
 }) => {
   const [conversationId, setConversationId] = useState<string>('');
-
-  const quickSuggestions = [
-    {
-      icon: Lightbulb,
-      text: "Help me plan my week",
-      action: "plan-week"
-    },
-    {
-      icon: Zap,
-      text: "Suggest tasks for my project",
-      action: "suggest-tasks"
-    },
-    {
-      icon: MessageSquare,
-      text: "Review my progress",
-      action: "review-progress"
-    }
-  ];
 
   const getContextualSuggestion = () => {
     const { stats } = dashboardData;

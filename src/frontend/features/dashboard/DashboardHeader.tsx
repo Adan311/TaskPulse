@@ -1,14 +1,8 @@
 import React from 'react';
 import { Button } from '@/frontend/components/ui/button';
-import { Badge } from '@/frontend/components/ui/badge';
 import { 
   Settings, 
-  Layout, 
-  RefreshCw,
-  Calendar,
-  CheckSquare,
-  FolderOpen,
-  FileText
+  RefreshCw
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { GlobalTimerStatusBadge } from '@/frontend/components/timer/GlobalTimerStatusBadge';
@@ -38,14 +32,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     if (!user?.email) return 'there';
     return user.email.split('@')[0];
   };
-
-  const viewOptions = [
-    { id: 'overview', label: 'Overview', icon: Layout },
-    { id: 'calendar', label: 'Calendar', icon: Calendar },
-    { id: 'tasks', label: 'Tasks', icon: CheckSquare },
-    { id: 'projects', label: 'Projects', icon: FolderOpen },
-    { id: 'notes', label: 'Notes', icon: FileText }
-  ] as const;
 
   return (
     <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">

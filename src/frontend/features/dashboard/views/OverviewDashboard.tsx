@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/frontend/components/ui/card';
 import { Button } from '@/frontend/components/ui/button';
 import { Badge } from '@/frontend/components/ui/badge';
@@ -19,8 +19,6 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
 }) => {
   const navigate = useNavigate();
   const { todayEvents, recentTasks, stats, activeProjects, recentNotes } = dashboardData;
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [modalType, setModalType] = useState<'task' | 'event' | 'project' | 'note' | null>(null);
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString('en-US', {
@@ -44,12 +42,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
     return date.toLocaleDateString();
   };
 
-  const handleItemClick = (item: any, type: 'task' | 'event' | 'project' | 'note') => {
-    setSelectedItem(item);
-    setModalType(type);
-    // TODO: Open modal/drawer for editing
-    console.log('Opening modal for:', type, item);
-  };
+
 
   return (
     <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 ${className}`}>
@@ -96,8 +89,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                 return (
                   <div 
                     key={event.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg ${bgColors[index % 3]} border border-opacity-20 hover:shadow-md transition-all duration-200 cursor-pointer hover:scale-[1.02]`}
-                    onClick={() => handleItemClick(event, 'event')}
+                    className={`flex items-center gap-3 p-3 rounded-lg ${bgColors[index % 3]} border border-opacity-20 hover:shadow-md transition-all duration-200`}
                   >
                     <div className={`w-3 h-10 ${colors[index % 3]} rounded-full shadow-sm`}></div>
                                          <div className="flex-1 min-w-0">
@@ -197,8 +189,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                 return (
                   <div 
                     key={task.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg ${colorScheme.bg} border border-opacity-20 hover:shadow-md transition-all duration-200 cursor-pointer hover:scale-[1.02]`}
-                    onClick={() => handleItemClick(task, 'task')}
+                    className={`flex items-center gap-3 p-3 rounded-lg ${colorScheme.bg} border border-opacity-20 hover:shadow-md transition-all duration-200`}
                   >
                     <div className={`w-3 h-10 ${colorScheme.dot} rounded-full shadow-sm`}></div>
                                          <div className="flex-1 min-w-0">
@@ -292,8 +283,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                 return (
                   <div 
                     key={project.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg ${bgColors[index % 3]} border border-opacity-20 hover:shadow-md transition-all duration-200 cursor-pointer hover:scale-[1.02]`}
-                    onClick={() => handleItemClick(project, 'project')}
+                    className={`flex items-center gap-3 p-3 rounded-lg ${bgColors[index % 3]} border border-opacity-20 hover:shadow-md transition-all duration-200`}
                   >
                     <div className={`w-3 h-10 ${colors[index % 3]} rounded-full shadow-sm`}></div>
                                          <div className="flex-1 min-w-0">
@@ -376,8 +366,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                 return (
                   <div 
                     key={note.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg ${bgColors[index % 3]} border border-opacity-20 hover:shadow-md transition-all duration-200 cursor-pointer hover:scale-[1.02]`}
-                    onClick={() => handleItemClick(note, 'note')}
+                    className={`flex items-center gap-3 p-3 rounded-lg ${bgColors[index % 3]} border border-opacity-20 hover:shadow-md transition-all duration-200`}
                   >
                     <div className={`w-3 h-10 ${colors[index % 3]} rounded-full shadow-sm`}></div>
                                          <div className="flex-1 min-w-0">
