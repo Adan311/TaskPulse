@@ -3,7 +3,7 @@ import { Button } from "@/frontend/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/frontend/components/ui/card";
 import { Input } from "@/frontend/components/ui/input";
 import { Textarea } from "@/frontend/components/ui/textarea";
-import { Loader2, Send, Plus, KeyIcon, ExternalLinkIcon, Lightbulb, User, Bot, RefreshCw, Settings, AlertTriangle, Sparkles, Zap } from "lucide-react";
+import { Loader2, Send, Plus, KeyIcon, ExternalLinkIcon, Lightbulb, User, Bot, RefreshCw, Settings, AlertTriangle, Sparkles, Zap, Minimize2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/frontend/components/ui/alert";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { ChatMessage, sendMessage, createConversation, getConversation, ClarifyingQuestion } from "@/backend/api/services/ai/chat/chatService";
@@ -24,6 +24,7 @@ import {
 interface ChatWindowProps {
   conversationId?: string;
   onNewConversation?: (conversationId: string) => void;
+  onCollapse?: () => void;
 }
 
 interface ErrorState {
@@ -32,7 +33,7 @@ interface ErrorState {
   showError: boolean;
 }
 
-export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProps) {
+export function ChatWindow({ conversationId, onNewConversation, onCollapse }: ChatWindowProps) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -479,21 +480,6 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
             )}
             
             <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleGetSuggestions}
-              disabled={loading || requestingSuggestions || hasApiKey === false || !conversationId || messages.length === 0}
-              className="border-primary/20 text-primary hover:bg-primary/5"
-            >
-              {requestingSuggestions ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Sparkles className="h-4 w-4 mr-2" />
-              )}
-              Get Suggestions
-            </Button>
-            
-            <Button 
               variant="ghost" 
               size="icon" 
               onClick={handleStartNewConversation}
@@ -502,6 +488,17 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
             >
               <Plus className="h-4 w-4" />
             </Button>
+
+            {onCollapse && (
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={onCollapse}
+                className="hover:bg-primary/10"
+              >
+                <Minimize2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -556,7 +553,7 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
       )}
       
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-4 max-h-[900px]">
         {hasApiKey === false ? (
           <div className="h-full flex flex-col items-center justify-center p-8">
             <div className="max-w-md text-center">
@@ -630,7 +627,7 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
       </div>
       
       {/* Modern Input Area */}
-      <div className="border-t border-border bg-card p-4">
+      <div className="border-t border-border bg-card p-3">
         <div className="flex items-end gap-3 max-w-4xl mx-auto">
           <div className="flex-1">
             <Textarea
@@ -638,7 +635,7 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="min-h-[56px] max-h-[120px] resize-none rounded-2xl border-2 border-muted focus:border-primary/50 bg-background/50 px-4 py-3"
+              className="min-h-[40px] max-h-[80px] resize-none rounded-2xl border-2 border-muted focus:border-primary/50 bg-background/50 px-3 py-2 text-sm"
               disabled={loading || hasApiKey === false}
               rows={1}
             />
@@ -648,12 +645,12 @@ export function ChatWindow({ conversationId, onNewConversation }: ChatWindowProp
             size="icon"
             onClick={handleSendMessage} 
             disabled={loading || !input.trim() || hasApiKey === false}
-            className="h-12 w-12 rounded-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+            className="h-10 w-10 rounded-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
           >
             {loading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Send className="h-5 w-5" />
+              <Send className="h-4 w-4" />
             )}
           </Button>
         </div>
