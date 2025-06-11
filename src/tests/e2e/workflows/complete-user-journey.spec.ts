@@ -14,7 +14,7 @@ import {
 } from '../utils/test-helpers'
 import { testProjects, testEvents, aiTestMessages } from '../fixtures/test-data'
 
-test.describe('Complete User Journey - MotionMingle E2E', () => {
+test.describe('Complete User Journey - TaskPulse E2E', () => {
   let auth: AuthHelpers
   let nav: NavigationHelpers
   let tasks: TaskHelpers
@@ -329,7 +329,7 @@ test.describe('Complete User Journey - MotionMingle E2E', () => {
     })
 
     console.log('🎉 Complete User Journey Test Completed Successfully!')
-    console.log('📊 All phases passed - MotionMingle is ready for production!')
+            console.log('📊 All phases passed - TaskPulse is ready for production!')
     
     } catch (testError) {
       console.log('⚠️ Complete User Journey Test failed with error:', testError)

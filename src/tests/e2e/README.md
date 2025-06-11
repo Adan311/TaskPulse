@@ -1,4 +1,4 @@
-# 🎯 End-to-End (E2E) Testing for MotionMingle
+# 🎯 End-to-End (E2E) Testing for TaskPulse
 
 This directory contains comprehensive end-to-end tests that validate the complete user workflows and application functionality.
 
@@ -284,4 +284,4 @@ npx playwright test complete-user-journey.spec.ts --debug
 
 **Ready for Academic Excellence!** 🎓
 
-These E2E tests demonstrate comprehensive testing knowledge, real-world application, and professional development practices that will impress academic evaluators and showcase the quality of the MotionMingle application. 
+These E2E tests demonstrate comprehensive testing knowledge, real-world application, and professional development practices that will impress academic evaluators and showcase the quality of the TaskPulse application. 

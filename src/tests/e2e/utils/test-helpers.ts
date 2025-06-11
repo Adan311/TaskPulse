@@ -3,13 +3,13 @@ import { BrowserRecovery } from './browser-recovery'
 
 
 export const TEST_USER = {
-  email: 'e2e-test@motionmingle.com',
+  email: 'e2e-test@taskpulse.com',
   password: 'TestPassword123!',
   name: 'E2E Test User'
 }
 
 export const ADMIN_USER = {
-  email: 'admin@motionmingle.com',
+  email: 'admin@taskpulse.com',
   password: 'AdminPassword123!',
   name: 'Admin User'
 }
@@ -20,7 +20,7 @@ export class AuthHelpers {
 
   async login() {
     // Use the existing verified test user
-    const testEmail = 'e2e-test@motionmingle.com'
+    const testEmail = 'e2e-test@taskpulse.com'
     const testPassword = 'testpassword123'
     
     console.log(`🔐 Using existing test user: ${testEmail}`)

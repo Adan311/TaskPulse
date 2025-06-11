@@ -1,6 +1,6 @@
 # Accessibility Testing Suite
 
-This directory contains comprehensive accessibility tests for MotionMingle, designed to ensure the application meets WCAG 2.1 AA standards and provides an inclusive user experience for all users, including those using assistive technologies.
+This directory contains comprehensive accessibility tests for TaskPulse, designed to ensure the application meets WCAG 2.1 AA standards and provides an inclusive user experience for all users, including those using assistive technologies.
 
 ## 🎯 Test Coverage
 

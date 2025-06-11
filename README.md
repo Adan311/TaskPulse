@@ -1,4 +1,4 @@
-# MotionMingle
+# TaskPulse
 
 A comprehensive productivity and task management application built with modern web technologies.
 
@@ -29,7 +29,7 @@ A comprehensive productivity and task management application built with modern w
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd motionmingle
+   cd taskpulse
    ```
 
 2. **Install dependencies**

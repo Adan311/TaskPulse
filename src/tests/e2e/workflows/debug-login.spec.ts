@@ -26,7 +26,7 @@ test.describe('Debug Login Process', () => {
     
     // Step 4: Fill form
     console.log('Step 4: Filling login form...')
-    await emailInput.fill('e2e-test@motionmingle.com')
+    await emailInput.fill('e2e-test@taskpulse.com')
     await passwordInput.fill('testpassword123')
     
     // Verify values were entered

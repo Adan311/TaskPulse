@@ -137,7 +137,7 @@ export const downloadDataAsJson = (data: UserDataExport) => {
     
     const link = document.createElement('a');
     link.href = url;
-    link.download = `motionmingle-data-export-${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `taskpulse-data-export-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

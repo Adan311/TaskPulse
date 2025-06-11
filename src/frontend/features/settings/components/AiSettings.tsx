@@ -118,7 +118,7 @@ export default function AiSettings() {
         <CardHeader>
           <CardTitle>AI Features</CardTitle>
           <CardDescription>
-            Configure how AI features work in your MotionMingle experience
+                          Configure how AI features work in your TaskPulse experience
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

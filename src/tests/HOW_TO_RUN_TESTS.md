@@ -1,6 +1,6 @@
-# How to Run Tests - MotionMingle
+# How to Run Tests - TaskPulse
 
-This guide explains how to run the comprehensive test suite for MotionMingle.
+This guide explains how to run the comprehensive test suite for TaskPulse.
 
 ## Quick Start
 
@@ -199,4 +199,4 @@ Duration  750ms
 
 **Status**: Unit testing complete with 145/145 tests passing (100% success rate)  
 **Last Updated**: January 2025  
-**Maintainer**: MotionMingle Development Team 
+**Maintainer**: TaskPulse Development Team 

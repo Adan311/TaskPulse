@@ -44,7 +44,7 @@ test.describe('Google Calendar Integration E2E', () => {
 
     await nav.goToCalendar()
 
-    test.step('Create Event in MotionMingle', async () => {
+    test.step('Create Event in TaskPulse', async () => {
       // Create an event
       await calendar.createEvent(
         testEvents[0].title,
@@ -53,7 +53,7 @@ test.describe('Google Calendar Integration E2E', () => {
         testEvents[0].description
       )
 
-      console.log('✅ Event created in MotionMingle')
+              console.log('✅ Event created in TaskPulse')
     })
 
     test.step('Test Google Calendar Sync', async () => {

@@ -1,6 +1,6 @@
 # Security Testing Suite
 
-This directory contains comprehensive security tests for MotionMingle, designed to validate the application's security posture and prevent common vulnerabilities.
+This directory contains comprehensive security tests for TaskPulse, designed to validate the application's security posture and prevent common vulnerabilities.
 
 ## 🔒 Test Coverage
 

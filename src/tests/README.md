@@ -1,4 +1,4 @@
-# MotionMingle Testing Framework
+# TaskPulse Testing Framework
 
 ## 📁 Test Directory Structure
 

@@ -77,7 +77,7 @@ describe('Auth-Data Integration Tests - Real MCP Integration', () => {
         tasks: [
           {
             id: 'welcome-task-123',
-            title: 'Welcome to MotionMingle!',
+            title: 'Welcome to TaskPulse!',
             description: 'Complete this task to get started',
             project: 'default-project-123',
             user: 'new-user-123',

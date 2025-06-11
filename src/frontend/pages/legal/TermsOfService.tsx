@@ -19,7 +19,7 @@ export default function TermsOfService() {
               <CardTitle>Acceptance of Terms</CardTitle>
             </CardHeader>
             <CardContent>
-              <p>By accessing and using MotionMingle, you accept and agree to be bound by the terms and provision of this agreement.</p>
+              <p>By accessing and using TaskPulse, you accept and agree to be bound by the terms and provision of this agreement.</p>
             </CardContent>
           </Card>
 
@@ -28,7 +28,7 @@ export default function TermsOfService() {
               <CardTitle>Use License</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p>Permission is granted to temporarily use MotionMingle for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:</p>
+                              <p>Permission is granted to temporarily use TaskPulse for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:</p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Modify or copy the application materials</li>
                 <li>Use the materials for any commercial purpose or for any public display</li>
@@ -91,7 +91,7 @@ export default function TermsOfService() {
               <CardTitle>Limitation of Liability</CardTitle>
             </CardHeader>
             <CardContent>
-              <p>In no event shall MotionMingle or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use MotionMingle.</p>
+                              <p>In no event shall TaskPulse or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use TaskPulse.</p>
             </CardContent>
           </Card>
 
