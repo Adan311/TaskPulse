@@ -11,12 +11,23 @@ import { useEffect, useRef } from 'react';
 import CookieConsentBanner from "@/frontend/components/legal/CookieConsentBanner";
 import { a11y } from "@/frontend/utils/accessibility";
 import { initPerformanceMonitoring } from "@/frontend/utils/performance";
+import { useAuthCheck } from '@/frontend/hooks/useAuthCheck';
+import { useLocation } from 'react-router-dom';
 
 const queryClient = new QueryClient();
 
 const App = () => {
   // Global hooks for app-wide functionality
   useReminders();
+  
+  // Check authentication and current route
+  const { isAuthenticated } = useAuthCheck();
+  const location = useLocation();
+  
+  // Don't show sidebar on auth pages or landing page
+  const isAuthPage = location.pathname.startsWith('/auth');
+  const isLandingPage = location.pathname === '/' && !isAuthenticated;
+  const showSidebar = !isAuthPage && !isLandingPage;
   
   // Use ref instead of state to prevent re-renders
   const recurrenceInitializedRef = useRef(false);
@@ -87,15 +98,17 @@ const App = () => {
         <UserProvider>
           <GlobalTimerProvider>
             <div className="min-h-screen flex bg-background">
-              {/* Navigation landmark */}
-              <nav 
-                id="app-navigation"
-                role="navigation" 
-                aria-label="Main navigation"
-                tabIndex={-1}
-              >
-                <AppSidebar />
-              </nav>
+              {/* Navigation landmark - only show if not on landing page or auth pages */}
+              {showSidebar && (
+                <nav 
+                  id="app-navigation"
+                  role="navigation" 
+                  aria-label="Main navigation"
+                  tabIndex={-1}
+                >
+                  <AppSidebar />
+                </nav>
+              )}
               
               {/* Main content area */}
               <div className="flex-1" role="main">

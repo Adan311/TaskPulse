@@ -113,7 +113,8 @@ export function AppSidebar() {
       await logout();
       // Announce to screen readers
       a11y.announce("Logged out successfully", "polite");
-      navigate("/auth/signin");
+      // Navigate to home page, which will show landing page for logged-out users
+      navigate("/");
     } catch (error) {
       console.error("Error logging out:", error);
       a11y.announce("Error logging out. Please try again.", "assertive");
