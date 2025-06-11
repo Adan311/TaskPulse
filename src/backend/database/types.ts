@@ -9,35 +9,7 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
-      ai_metadata: {
-        Row: {
-          id: string
-          insights: Json | null
-          task: string | null
-          user: string | null
-        }
-        Insert: {
-          id: string
-          insights?: Json | null
-          task?: string | null
-          user?: string | null
-        }
-        Update: {
-          id?: string
-          insights?: Json | null
-          task?: string | null
-          user?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ai_metadata_task_fkey"
-            columns: ["task"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+
       events: {
         Row: {
           color: string | null

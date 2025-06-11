@@ -80,8 +80,7 @@ export interface Event {
   updated_at?: string;
   reminder_at?: string | null;
   reminder_sent?: boolean | null;
-  // Time tracking fields
-  actual_duration_minutes?: number | null;
+
   // Recurrence fields
   is_recurring?: boolean | null;
   recurrence_pattern?: 'daily' | 'weekly' | 'monthly' | 'yearly' | null;

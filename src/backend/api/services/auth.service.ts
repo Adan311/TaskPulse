@@ -144,14 +144,14 @@ export const deleteAccount = async (password: string) => {
       { table: 'events', userColumn: 'user' },
       { table: 'projects', userColumn: 'user' },
       { table: 'files', userColumn: 'user' },
-      { table: 'ai_metadata', userColumn: 'user' },
+
       // AI and system tables (use 'user_id' column)
       { table: 'ai_conversations', userColumn: 'user_id' },
       { table: 'ai_messages', userColumn: 'user_id' },
       { table: 'event_suggestions', userColumn: 'user_id' },
       { table: 'task_suggestions', userColumn: 'user_id' },
       { table: 'suggestion_feedback', userColumn: 'user_id' },
-      { table: 'task_activity_log', userColumn: 'user_id' },
+
       { table: 'google_calendar_tokens', userColumn: 'user_id' },
       { table: 'user_settings', userColumn: 'user_id' },
       { table: 'user_consent', userColumn: 'user_id' },

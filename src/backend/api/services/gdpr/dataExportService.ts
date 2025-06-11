@@ -11,11 +11,9 @@ export interface UserDataExport {
   files: any[];
   aiConversations: any[];
   aiMessages: any[];
-  aiMetadata: any[];
   eventSuggestions: any[];
   taskSuggestions: any[];
   suggestionFeedback: any[];
-  taskActivityLog: any[];
   googleCalendarTokens: any[];
   userSettings: any[];
   timeLogs: any[];
@@ -41,11 +39,9 @@ export const exportUserData = async (): Promise<UserDataExport> => {
       files,
       aiConversations,
       aiMessages,
-      aiMetadata,
       eventSuggestions,
       taskSuggestions,
       suggestionFeedback,
-      taskActivityLog,
       googleCalendarTokens,
       userSettings,
       timeLogs
@@ -61,8 +57,7 @@ export const exportUserData = async (): Promise<UserDataExport> => {
       supabase.from('ai_conversations').select('*').eq('user_id', userId),
       supabase.from('ai_messages').select('*').eq('user_id', userId),
       
-      // ai_metadata uses 'user' column, not 'user_id'
-      supabase.from('ai_metadata').select('*').eq('user', userId),
+
       
       // Suggestions data (use 'user_id' column)
       supabase.from('event_suggestions').select('*').eq('user_id', userId),
@@ -70,7 +65,7 @@ export const exportUserData = async (): Promise<UserDataExport> => {
       supabase.from('suggestion_feedback').select('*').eq('user_id', userId),
       
       // Activity and settings (use 'user_id' column)
-      supabase.from('task_activity_log').select('*').eq('user_id', userId),
+
       supabase.from('google_calendar_tokens').select('*').eq('user_id', userId),
       supabase.from('user_settings').select('*').eq('user_id', userId),
       supabase.from('time_logs').select('*').eq('user_id', userId)
@@ -79,9 +74,9 @@ export const exportUserData = async (): Promise<UserDataExport> => {
     // Check for errors in any of the queries
     const errors = [
       tasks.error, events.error, notes.error, projects.error, files.error,
-      aiConversations.error, aiMessages.error, aiMetadata.error,
+      aiConversations.error, aiMessages.error,
       eventSuggestions.error, taskSuggestions.error, suggestionFeedback.error,
-      taskActivityLog.error, googleCalendarTokens.error, userSettings.error,
+      googleCalendarTokens.error, userSettings.error,
       timeLogs.error
     ].filter(Boolean);
 
@@ -112,11 +107,9 @@ export const exportUserData = async (): Promise<UserDataExport> => {
       files: files.data || [],
       aiConversations: aiConversations.data || [],
       aiMessages: aiMessages.data || [],
-      aiMetadata: aiMetadata.data || [],
       eventSuggestions: eventSuggestions.data || [],
       taskSuggestions: taskSuggestions.data || [],
       suggestionFeedback: suggestionFeedback.data || [],
-      taskActivityLog: taskActivityLog.data || [],
       googleCalendarTokens: googleCalendarTokens.data || [],
       userSettings: userSettings.data || [],
       timeLogs: timeLogs.data || []
