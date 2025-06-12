@@ -593,14 +593,34 @@ export function ChatWindow({ conversationId, onNewConversation, onCollapse }: Ch
               Ask me anything about your tasks, projects, or schedule. I can help you organize your work, manage your time, or brainstorm ideas.
             </p>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-lg">
-              <div className="p-3 rounded-lg bg-muted/50 text-sm">
-                <Zap className="h-4 w-4 text-primary mb-1" />
-                "Help me plan my week"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
+              <div 
+                className="p-3 rounded-lg bg-muted/50 text-sm cursor-pointer hover:bg-muted/70 transition-colors flex items-center gap-2"
+                onClick={() => setInput("Help me plan my week")}
+              >
+                <Zap className="h-4 w-4 text-primary flex-shrink-0" />
+                <span>"Help me plan my week"</span>
               </div>
-              <div className="p-3 rounded-lg bg-muted/50 text-sm">
-                <Lightbulb className="h-4 w-4 text-amber-500 mb-1" />
-                "Suggest tasks for my project"
+              <div 
+                className="p-3 rounded-lg bg-muted/50 text-sm cursor-pointer hover:bg-muted/70 transition-colors flex items-center gap-2"
+                onClick={() => setInput("Suggest tasks for my project")}
+              >
+                <Lightbulb className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                <span>"Suggest tasks for my project"</span>
+              </div>
+              <div 
+                className="p-3 rounded-lg bg-muted/50 text-sm cursor-pointer hover:bg-muted/70 transition-colors flex items-center gap-2"
+                onClick={() => setInput("Create a task to review documentation")}
+              >
+                <Plus className="h-5 w-5 text-green-500 flex-shrink-0" />
+                <span>"Create task to review documentation"</span>
+              </div>
+              <div 
+                className="p-3 rounded-lg bg-muted/50 text-sm cursor-pointer hover:bg-muted/70 transition-colors flex items-center gap-2"
+                onClick={() => setInput("Update me on my projects")}
+              >
+                <RefreshCw className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                <span>"Update me on my projects"</span>
               </div>
             </div>
           </div>

@@ -42,6 +42,18 @@ export interface ClarifyingQuestion {
   question_text: string;
 }
 
+interface SuggestionScore {
+  relevance: number; // 0-1 score
+  confidence: number; // 0-1 score
+  reasoning: string;
+}
+
+interface SuggestionTiming {
+  shouldSuggest: boolean;
+  reasoning: string;
+  conversationMode: 'casual' | 'actionable' | 'planning';
+}
+
 /**
  * Interface for the raw extraction result from Gemini (snake_case matching prompt output)
  */
@@ -157,6 +169,203 @@ function detectConversationContexts(messages: ChatMessage[]): string[] {
 }
 
 /**
+ * Determine if suggestions should be generated based on conversation context
+ */
+function evaluateSuggestionTiming(messages: ChatMessage[]): SuggestionTiming {
+  if (!messages || messages.length === 0) {
+    return {
+      shouldSuggest: false,
+      reasoning: 'No messages to analyze',
+      conversationMode: 'casual'
+    };
+  }
+
+  const recentMessages = messages.slice(-3); // Look at last 3 messages
+  const lastUserMessage = recentMessages.filter(m => m.role === 'user').pop();
+  
+  if (!lastUserMessage) {
+    return {
+      shouldSuggest: false,
+      reasoning: 'No recent user message found',
+      conversationMode: 'casual'
+    };
+  }
+
+  const messageContent = lastUserMessage.content.toLowerCase();
+
+  // Casual conversation patterns - don't suggest
+  const casualPatterns = [
+    /^(hi|hello|hey|good morning|good afternoon|good evening)$/,
+    /^(hi|hello|hey)\s*[.!]*$/,
+    /how are you/,
+    /what's up/,
+    /how's it going/,
+    /tell me a joke/,
+    /weather/,
+    /thanks?$/,
+    /thank you$/,
+    /ok$/,
+    /okay$/,
+    /yes$/,
+    /no$/,
+    /^y$/,
+    /^n$/
+  ];
+
+  // Check for casual patterns
+  if (casualPatterns.some(pattern => pattern.test(messageContent))) {
+    return {
+      shouldSuggest: false,
+      reasoning: 'Casual conversation detected',
+      conversationMode: 'casual'
+    };
+  }
+
+  // Actionable patterns - definitely suggest
+  const actionablePatterns = [
+    /i need to/,
+    /i should/,
+    /i have to/,
+    /i must/,
+    /let's/,
+    /we need to/,
+    /we should/,
+    /create.*task/,
+    /add.*task/,
+    /schedule.*meeting/,
+    /book.*appointment/,
+    /plan.*event/,
+    /remind me/,
+    /set.*reminder/,
+    /deadline/,
+    /due.*date/,
+    /by.*friday/,
+    /by.*tomorrow/,
+    /next week/,
+    /this week/
+  ];
+
+  if (actionablePatterns.some(pattern => pattern.test(messageContent))) {
+    return {
+      shouldSuggest: true,
+      reasoning: 'Actionable intent detected',
+      conversationMode: 'actionable'
+    };
+  }
+
+  // Planning patterns - suggest with context
+  const planningPatterns = [
+    /project/,
+    /planning/,
+    /organize/,
+    /prepare/,
+    /working on/,
+    /thinking about/,
+    /considering/,
+    /might.*do/,
+    /could.*do/,
+    /ideas for/,
+    /brainstorm/
+  ];
+
+  if (planningPatterns.some(pattern => pattern.test(messageContent))) {
+    return {
+      shouldSuggest: true,
+      reasoning: 'Planning discussion detected',
+      conversationMode: 'planning'
+    };
+  }
+
+  // Default to not suggesting for ambiguous cases
+  return {
+    shouldSuggest: false,
+    reasoning: 'Ambiguous intent, avoiding noise',
+    conversationMode: 'casual'
+  };
+}
+
+/**
+ * Score suggestion relevance based on conversation context
+ */
+function scoreSuggestion(
+  suggestion: GeminiTaskExtraction | GeminiEventExtraction, 
+  conversationContext: string,
+  conversationMode: 'casual' | 'actionable' | 'planning'
+): SuggestionScore {
+  let relevance = 0.5; // Base score
+  let confidence = 0.5; // Base confidence
+  let reasoning = 'Base scoring';
+
+  const suggestionText = (suggestion.title + ' ' + (suggestion.description || '')).toLowerCase();
+  const contextText = conversationContext.toLowerCase();
+
+  // Higher relevance for actionable conversations
+  if (conversationMode === 'actionable') {
+    relevance += 0.3;
+    confidence += 0.2;
+    reasoning = 'Actionable conversation context';
+  } else if (conversationMode === 'planning') {
+    relevance += 0.1;
+    confidence += 0.1;
+    reasoning = 'Planning conversation context';
+  }
+
+  // Check for keyword overlap
+  const suggestionWords = suggestionText.split(/\s+/);
+  const contextWords = contextText.split(/\s+/);
+  const overlap = suggestionWords.filter(word => 
+    word.length > 3 && contextWords.includes(word)
+  ).length;
+
+  if (overlap > 0) {
+    relevance += Math.min(overlap * 0.1, 0.3);
+    confidence += Math.min(overlap * 0.05, 0.2);
+    reasoning += `, keyword overlap: ${overlap}`;
+  }
+
+  // Penalize vague suggestions
+  const vaguePatterns = [
+    /plan.*project/,
+    /work on/,
+    /think about/,
+    /consider/,
+    /maybe/,
+    /might/
+  ];
+
+  if (vaguePatterns.some(pattern => pattern.test(suggestionText))) {
+    relevance -= 0.2;
+    confidence -= 0.1;
+    reasoning += ', vague suggestion penalty';
+  }
+
+  // Boost specific suggestions
+  const specificPatterns = [
+    /\d{4}-\d{2}-\d{2}/, // Date pattern
+    /\d{1,2}:\d{2}/, // Time pattern
+    /deadline/,
+    /due/,
+    /meeting/,
+    /call/,
+    /email/,
+    /report/,
+    /document/
+  ];
+
+  if (specificPatterns.some(pattern => pattern.test(suggestionText))) {
+    relevance += 0.2;
+    confidence += 0.1;
+    reasoning += ', specific details bonus';
+  }
+
+  // Ensure scores stay within bounds
+  relevance = Math.max(0, Math.min(1, relevance));
+  confidence = Math.max(0, Math.min(1, confidence));
+
+  return { relevance, confidence, reasoning };
+}
+
+/**
  * Analyses a conversation using Gemini API to extract potential tasks and events
  */
 export const analyzeConversation = async (
@@ -167,6 +376,24 @@ export const analyzeConversation = async (
     // Don't analyze empty conversations
     if (!messages || messages.length === 0) {
       console.log("No messages to analyze for suggestions");
+      return {
+        tasks: [],
+        events: [],
+        taskSuggestions: [],
+        eventSuggestions: [],
+        hasOverallSuggestions: false,
+        clarifying_questions: [],
+        clarifyingQuestions: []
+      };
+    }
+
+    // Evaluate if we should generate suggestions based on conversation timing
+    const suggestionTiming = evaluateSuggestionTiming(messages);
+    console.log("Suggestion timing evaluation:", suggestionTiming);
+
+    // If conversation is casual and we shouldn't suggest, return empty result
+    if (!suggestionTiming.shouldSuggest) {
+      console.log("Skipping suggestion generation:", suggestionTiming.reasoning);
       return {
         tasks: [],
         events: [],
@@ -246,15 +473,44 @@ export const analyzeConversation = async (
       
       const extractedData = JSON.parse(jsonMatch[0]) as ExtractionResult;
       
-      // For backward compatibility, ensure we have both tasks/events and taskSuggestions/eventSuggestions
-      extractedData.taskSuggestions = extractedData.tasks || [];
-      extractedData.eventSuggestions = extractedData.events || [];
+      // Score and filter suggestions based on relevance
+      const conversationContext = formattedHistory.map(m => m.content).join(' ');
+      
+      // Filter tasks based on relevance score
+      const scoredTasks = (extractedData.tasks || []).map(task => ({
+        task,
+        score: scoreSuggestion(task, conversationContext, suggestionTiming.conversationMode)
+      }));
+      
+      const filteredTasks = scoredTasks
+        .filter(({ score }) => score.relevance >= 0.4) // Only keep suggestions with decent relevance
+        .sort((a, b) => b.score.relevance - a.score.relevance) // Sort by relevance
+        .slice(0, 5) // Limit to top 5 suggestions
+        .map(({ task }) => task);
+      
+      // Filter events based on relevance score
+      const scoredEvents = (extractedData.events || []).map(event => ({
+        event,
+        score: scoreSuggestion(event, conversationContext, suggestionTiming.conversationMode)
+      }));
+      
+      const filteredEvents = scoredEvents
+        .filter(({ score }) => score.relevance >= 0.4) // Only keep suggestions with decent relevance
+        .sort((a, b) => b.score.relevance - a.score.relevance) // Sort by relevance
+        .slice(0, 5) // Limit to top 5 suggestions
+        .map(({ event }) => event);
+      
+      // Update the extracted data with filtered results
+      extractedData.tasks = filteredTasks;
+      extractedData.events = filteredEvents;
+      extractedData.taskSuggestions = filteredTasks;
+      extractedData.eventSuggestions = filteredEvents;
       extractedData.clarifyingQuestions = extractedData.clarifying_questions || [];
       extractedData.hasOverallSuggestions = 
-        (extractedData.tasks && extractedData.tasks.length > 0) || 
-        (extractedData.events && extractedData.events.length > 0);
+        (filteredTasks && filteredTasks.length > 0) || 
+        (filteredEvents && filteredEvents.length > 0);
       
-      console.log(`Extracted ${extractedData.tasks.length} task suggestions and ${extractedData.events.length} event suggestions`);
+      console.log(`Filtered to ${filteredTasks.length} task suggestions and ${filteredEvents.length} event suggestions (from ${scoredTasks.length} and ${scoredEvents.length} original)`);
       return extractedData;
     } catch (error) {
       console.error("Failed to parse extraction result:", error);

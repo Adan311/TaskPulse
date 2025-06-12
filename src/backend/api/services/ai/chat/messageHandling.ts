@@ -18,6 +18,161 @@ import { ChatMessage, generateConversationTitle } from "./conversationLifecycle"
 import { handleUserDataQuery } from "./dataQuerying";
 import { ClarifyingQuestion } from "../suggestions/suggestionService";
 
+interface ConversationMemory {
+  recentTopics: string[];
+  userPreferences: {
+    preferredTaskPriority?: string;
+    preferredMeetingDuration?: number;
+    commonProjects?: string[];
+  };
+  followUpSuggestions: string[];
+}
+
+interface FollowUpSuggestion {
+  text: string;
+  type: 'question' | 'action' | 'clarification';
+  relevance: number;
+}
+
+/**
+ * Generate intelligent follow-up suggestions based on conversation context
+ */
+const generateFollowUpSuggestions = (
+  userMessage: string, 
+  aiResponse: string, 
+  conversationHistory: ChatMessage[]
+): FollowUpSuggestion[] => {
+  const suggestions: FollowUpSuggestion[] = [];
+  const message = userMessage.toLowerCase();
+  const response = aiResponse.toLowerCase();
+  
+  // Task-related follow-ups
+  if (message.includes('task') || message.includes('todo')) {
+    if (response.includes('created') || response.includes('added')) {
+      suggestions.push({
+        text: "Would you like to set a reminder for this task?",
+        type: 'question',
+        relevance: 0.8
+      });
+      suggestions.push({
+        text: "Should I create any related subtasks?",
+        type: 'question',
+        relevance: 0.7
+      });
+    }
+    if (!message.includes('priority')) {
+      suggestions.push({
+        text: "What priority should this task have?",
+        type: 'clarification',
+        relevance: 0.6
+      });
+    }
+  }
+  
+  // Event/meeting follow-ups
+  if (message.includes('meeting') || message.includes('event') || message.includes('schedule')) {
+    if (response.includes('created') || response.includes('scheduled')) {
+      suggestions.push({
+        text: "Should I send calendar invites to attendees?",
+        type: 'action',
+        relevance: 0.8
+      });
+      suggestions.push({
+        text: "Would you like me to create an agenda for this meeting?",
+        type: 'question',
+        relevance: 0.7
+      });
+    }
+  }
+  
+  // Project-related follow-ups
+  if (message.includes('project')) {
+    suggestions.push({
+      text: "Would you like to break this down into smaller tasks?",
+      type: 'question',
+      relevance: 0.7
+    });
+    suggestions.push({
+      text: "Should I set up milestones for this project?",
+      type: 'action',
+      relevance: 0.6
+    });
+  }
+  
+  // General productivity follow-ups
+  if (response.includes('completed') || response.includes('done')) {
+    suggestions.push({
+      text: "What would you like to work on next?",
+      type: 'question',
+      relevance: 0.6
+    });
+  }
+  
+  // Time-based follow-ups
+  const now = new Date();
+  const hour = now.getHours();
+  if (hour >= 16 && hour <= 18) { // Late afternoon
+    suggestions.push({
+      text: "Would you like a summary of what you accomplished today?",
+      type: 'question',
+      relevance: 0.5
+    });
+  }
+  
+  // Sort by relevance and return top 3
+  return suggestions
+    .sort((a, b) => b.relevance - a.relevance)
+    .slice(0, 3);
+};
+
+/**
+ * Build conversation memory from recent messages
+ */
+const buildConversationMemory = (history: ChatMessage[]): ConversationMemory => {
+  const recentMessages = history.slice(-10); // Last 10 messages
+  const topics = new Set<string>();
+  const preferences = {
+    preferredTaskPriority: undefined as string | undefined,
+    preferredMeetingDuration: undefined as number | undefined,
+    commonProjects: [] as string[]
+  };
+  
+  recentMessages.forEach(msg => {
+    const content = msg.content.toLowerCase();
+    
+    // Extract topics
+    if (content.includes('task') || content.includes('todo')) topics.add('tasks');
+    if (content.includes('meeting') || content.includes('event')) topics.add('meetings');
+    if (content.includes('project')) topics.add('projects');
+    if (content.includes('deadline') || content.includes('due')) topics.add('deadlines');
+    if (content.includes('calendar')) topics.add('calendar');
+    
+    // Extract preferences
+    if (content.includes('high priority') || content.includes('urgent')) {
+      preferences.preferredTaskPriority = 'high';
+    } else if (content.includes('low priority')) {
+      preferences.preferredTaskPriority = 'low';
+    }
+    
+    // Extract common project names (simple pattern matching)
+    const projectMatches = content.match(/project\s+([a-zA-Z0-9\s]+)/g);
+    if (projectMatches) {
+      projectMatches.forEach(match => {
+        const projectName = match.replace('project ', '').trim();
+        if (projectName && !preferences.commonProjects.includes(projectName)) {
+          preferences.commonProjects.push(projectName);
+        }
+      });
+    }
+  });
+  
+  return {
+    recentTopics: Array.from(topics),
+    userPreferences: preferences,
+    followUpSuggestions: []
+  };
+};
+
 /**
  * Send a message and get AI response
  */
@@ -35,6 +190,8 @@ export const sendMessage = async (
     entities: any;
     message: string;
   };
+  followUpSuggestions?: FollowUpSuggestion[];
+  conversationMemory?: ConversationMemory;
 } | null> => {
   try {
     // Validate inputs to prevent UUID errors
@@ -454,7 +611,19 @@ export const sendMessage = async (
       console.error("Error extracting passive suggestions:", error);
     }
 
-    return { userMessage, aiMessage, hasOverallSuggestions, clarifyingQuestions };
+    // Generate conversation intelligence features
+    const updatedHistoryWithBoth = [...history, userMessage, aiMessage];
+    const conversationMemory = buildConversationMemory(updatedHistoryWithBoth);
+    const followUpSuggestions = generateFollowUpSuggestions(message, aiResponseText, updatedHistoryWithBoth);
+
+    return { 
+      userMessage, 
+      aiMessage, 
+      hasOverallSuggestions, 
+      clarifyingQuestions,
+      followUpSuggestions: followUpSuggestions.length > 0 ? followUpSuggestions : undefined,
+      conversationMemory
+    };
   } catch (error) {
     console.error("Error sending message:", error);
     // Return null or throw, depending on desired error handling for the caller (ChatWindow.tsx)

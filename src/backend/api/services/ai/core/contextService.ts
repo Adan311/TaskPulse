@@ -77,6 +77,12 @@ interface ContextualPrompt {
   responseGuidelines: string;
 }
 
+interface AIMode {
+  mode: 'general' | 'project_focused' | 'hybrid';
+  confidence: number;
+  reasoning: string;
+}
+
 /**
  * Get comprehensive user context
  */
@@ -245,6 +251,285 @@ const getRecentActivity = async (userId: string): Promise<ActivitySummary> => {
 };
 
 /**
+ * Detect AI mode based on user message and conversation context
+ */
+const detectAIMode = (userMessage: string, conversationHistory?: any[]): AIMode => {
+  const message = userMessage.toLowerCase().trim();
+  
+  // Project update/status keywords - these override greeting patterns
+  const projectUpdatePatterns = [
+    /update/,
+    /status/,
+    /progress/,
+    /overview/,
+    /summary/,
+    /what's.*going.*on/,
+    /catch.*up/,
+    /brief.*me/,
+    /fill.*me.*in/,
+    /what.*happening/,
+    /dashboard/,
+    /report/
+  ];
+  
+  // Simple greeting patterns - general mode (unless combined with project keywords)
+  const greetingPatterns = [
+    /^(hi|hello|hey|good morning|good afternoon|good evening)$/,
+    /^(hi|hello|hey)\s*[.!]*$/,
+    /^how are you\??$/,
+    /^what's up\??$/,
+    /^how's it going\??$/
+  ];
+  
+  // General conversation patterns
+  const generalPatterns = [
+    /weather/,
+    /how are you/,
+    /tell me a joke/,
+    /what can you do/,
+    /help me understand/,
+    /explain/,
+    /what is/,
+    /who is/,
+    /when is/,
+    /where is/
+  ];
+  
+  // Project-focused patterns
+  const projectPatterns = [
+    /create.*task/,
+    /add.*task/,
+    /schedule.*meeting/,
+    /create.*event/,
+    /my.*project/,
+    /show.*task/,
+    /list.*task/,
+    /deadline/,
+    /due date/,
+    /project.*status/,
+    /task.*status/,
+    /calendar/,
+    /meeting/,
+    /event/,
+    /reminder/,
+    /priority/
+  ];
+  
+  // Check for project update keywords first (highest priority)
+  if (projectUpdatePatterns.some(pattern => pattern.test(message))) {
+    return {
+      mode: 'project_focused',
+      confidence: 0.95,
+      reasoning: 'Project update/status request detected'
+    };
+  }
+  
+  // Check for greeting patterns
+  if (greetingPatterns.some(pattern => pattern.test(message))) {
+    return {
+      mode: 'general',
+      confidence: 0.9,
+      reasoning: 'Simple greeting detected'
+    };
+  }
+  
+  // Check for explicit project-related requests
+  if (projectPatterns.some(pattern => pattern.test(message))) {
+    return {
+      mode: 'project_focused',
+      confidence: 0.8,
+      reasoning: 'Project-related keywords detected'
+    };
+  }
+  
+  // Check for general conversation
+  if (generalPatterns.some(pattern => pattern.test(message))) {
+    return {
+      mode: 'general',
+      confidence: 0.7,
+      reasoning: 'General conversation pattern detected'
+    };
+  }
+  
+  // Default to hybrid for ambiguous cases
+  return {
+    mode: 'hybrid',
+    confidence: 0.5,
+    reasoning: 'Ambiguous intent, using hybrid mode'
+  };
+};
+
+/**
+ * Build greeting context based on user's current state
+ */
+const buildGreetingContext = async (userId: string): Promise<string> => {
+  try {
+    const now = new Date();
+    const hour = now.getHours();
+    
+    // Time-based greeting
+    let timeGreeting = '';
+    if (hour < 12) {
+      timeGreeting = 'Good morning!';
+    } else if (hour < 17) {
+      timeGreeting = 'Good afternoon!';
+    } else {
+      timeGreeting = 'Good evening!';
+    }
+    
+    // Get today's tasks and events
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const [tasksResult, eventsResult] = await Promise.all([
+      supabase
+        .from('tasks')
+        .select('title, due_date, priority')
+        .eq('user', userId)
+        .eq('status', 'todo')
+        .gte('due_date', today.toISOString())
+        .lt('due_date', tomorrow.toISOString())
+        .limit(3),
+      supabase
+        .from('events')
+        .select('title, start_time')
+        .eq('user', userId)
+        .gte('start_time', today.toISOString())
+        .lt('start_time', tomorrow.toISOString())
+        .order('start_time')
+        .limit(3)
+    ]);
+    
+    let contextInfo = '';
+    
+    if (tasksResult.data && tasksResult.data.length > 0) {
+      contextInfo += ` You have ${tasksResult.data.length} task${tasksResult.data.length > 1 ? 's' : ''} due today.`;
+    }
+    
+    if (eventsResult.data && eventsResult.data.length > 0) {
+      const nextEvent = eventsResult.data[0];
+      const eventTime = new Date(nextEvent.start_time);
+      contextInfo += ` Your next meeting is "${nextEvent.title}" at ${eventTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}.`;
+    }
+    
+    return timeGreeting + contextInfo;
+  } catch (error) {
+    console.error('Error building greeting context:', error);
+    return 'Hello! How can I help you today?';
+  }
+};
+
+/**
+ * Build comprehensive project status overview
+ */
+const buildProjectOverview = async (userId: string): Promise<string> => {
+  try {
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    // Get comprehensive project data
+    const [projectsResult, tasksResult, eventsResult, overdueTasks] = await Promise.all([
+      // Active projects with progress
+      supabase
+        .from('projects')
+        .select('name, status, progress, due_date')
+        .eq('user', userId)
+        .eq('status', 'active')
+        .order('updated_at', { ascending: false })
+        .limit(5),
+      
+      // Upcoming tasks
+      supabase
+        .from('tasks')
+        .select('title, due_date, priority, status')
+        .eq('user', userId)
+        .in('status', ['todo', 'in_progress'])
+        .not('due_date', 'is', null)
+        .gte('due_date', now.toISOString())
+        .lte('due_date', nextWeek.toISOString())
+        .order('due_date')
+        .limit(5),
+      
+      // Upcoming events
+      supabase
+        .from('events')
+        .select('title, start_time')
+        .eq('user', userId)
+        .gte('start_time', now.toISOString())
+        .lte('start_time', nextWeek.toISOString())
+        .order('start_time')
+        .limit(5),
+      
+      // Overdue tasks
+      supabase
+        .from('tasks')
+        .select('title, due_date, priority')
+        .eq('user', userId)
+        .eq('status', 'todo')
+        .not('due_date', 'is', null)
+        .lt('due_date', now.toISOString())
+        .order('due_date')
+        .limit(3)
+    ]);
+    
+    let overview = '';
+    
+    // Projects overview
+    if (projectsResult.data && projectsResult.data.length > 0) {
+      overview += '\n**📊 Active Projects:**\n';
+      projectsResult.data.forEach(project => {
+        const dueInfo = project.due_date ? ` (due ${new Date(project.due_date).toLocaleDateString()})` : '';
+        overview += `• ${project.name}: ${project.progress}% complete${dueInfo}\n`;
+      });
+    }
+    
+    // Overdue tasks (high priority)
+    if (overdueTasks.data && overdueTasks.data.length > 0) {
+      overview += '\n**⚠️ Overdue Tasks:**\n';
+      overdueTasks.data.forEach(task => {
+        const daysOverdue = Math.floor((now.getTime() - new Date(task.due_date).getTime()) / (1000 * 60 * 60 * 24));
+        overview += `• ${task.title} (${daysOverdue} day${daysOverdue > 1 ? 's' : ''} overdue)\n`;
+      });
+    }
+    
+    // Upcoming tasks
+    if (tasksResult.data && tasksResult.data.length > 0) {
+      overview += '\n**📋 Upcoming Tasks:**\n';
+      tasksResult.data.forEach(task => {
+        const dueDate = new Date(task.due_date);
+        const isToday = dueDate.toDateString() === now.toDateString();
+        const dateStr = isToday ? 'today' : dueDate.toLocaleDateString();
+        overview += `• ${task.title} (${task.priority} priority, due ${dateStr})\n`;
+      });
+    }
+    
+    // Upcoming events
+    if (eventsResult.data && eventsResult.data.length > 0) {
+      overview += '\n**📅 Upcoming Events:**\n';
+      eventsResult.data.forEach(event => {
+        const eventDate = new Date(event.start_time);
+        const isToday = eventDate.toDateString() === now.toDateString();
+        const dateStr = isToday ? 'today' : eventDate.toLocaleDateString();
+        const timeStr = eventDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        overview += `• ${event.title} (${dateStr} at ${timeStr})\n`;
+      });
+    }
+    
+    if (!overview) {
+      overview = '\n**✅ All caught up!** No urgent tasks or upcoming deadlines.';
+    }
+    
+    return overview;
+  } catch (error) {
+    console.error('Error building project overview:', error);
+    return '\n**📊 Project Overview:** Unable to load project data at the moment.';
+  }
+};
+
+/**
  * Build contextual prompt with user and conversation context
  */
 export const buildContextualPrompt = async (
@@ -253,31 +538,83 @@ export const buildContextualPrompt = async (
   userMessage: string
 ): Promise<ContextualPrompt> => {
   const result = await withErrorHandling(async () => {
+    // Detect AI mode first
+    const aiMode = detectAIMode(userMessage);
+    
     const userContext = await getUserContext(userId);
     
-    // Build user context string
-    const userContextString = userContext ? `
+    // Build different prompts based on AI mode
+    let basePrompt = '';
+    let userContextString = '';
+    let relevantDataContext = '';
+    
+    if (aiMode.mode === 'general') {
+      // General conversation mode
+      basePrompt = `You are a helpful AI assistant. You can have general conversations and also help with productivity tasks when asked.
+
+Current user message: "${userMessage}"`;
+      
+      // For greetings, add personalized context
+      if (aiMode.reasoning === 'Simple greeting detected') {
+        const greetingContext = await buildGreetingContext(userId);
+        basePrompt += `\n\nGreeting context: ${greetingContext}`;
+      }
+      
+      // Minimal user context for general mode
+      userContextString = userContext ? `
+**User Preferences:**
+- Response style: ${userContext.preferences.preferredResponseStyle}
+` : '';
+      
+    } else if (aiMode.mode === 'project_focused') {
+      // Project-focused mode
+      basePrompt = `You are an AI assistant specialized in productivity, project management, and personal organization. You help users manage their tasks, projects, calendar events, notes, and files efficiently.
+
+Current user message: "${userMessage}"`;
+      
+      // For project update requests, add comprehensive overview
+      if (aiMode.reasoning === 'Project update/status request detected') {
+        const projectOverview = await buildProjectOverview(userId);
+        basePrompt += `\n\nProject Overview: ${projectOverview}`;
+      }
+      
+      // Full user context for project mode
+      userContextString = userContext ? `
 **User Context:**
 - Preferred response style: ${userContext.preferences.preferredResponseStyle}
 - Working hours: ${userContext.workingHours.start} - ${userContext.workingHours.end} (${userContext.timezone})
 - Active projects (${userContext.currentProjects.length}): ${userContext.currentProjects.map(p => `${p.name} (${p.progress}% complete)`).join(', ')}
 - Recent activity: ${userContext.recentActivity.recentTasks.length} tasks, ${userContext.recentActivity.recentEvents.length} events
 ` : '';
-    
-    // Generate relevant data context
-    const relevantDataContext = await generateRelevantDataContext(userId, userMessage);
+      
+      // Generate relevant data context
+      relevantDataContext = await generateRelevantDataContext(userId, userMessage);
+      
+    } else {
+      // Hybrid mode - balanced approach
+      basePrompt = `You are an AI assistant that can help with both general questions and productivity tasks. Adapt your response based on what the user is asking for.
+
+Current user message: "${userMessage}"`;
+      
+      // Moderate user context for hybrid mode
+      userContextString = userContext ? `
+**User Context:**
+- Response style: ${userContext.preferences.preferredResponseStyle}
+- Active projects: ${userContext.currentProjects.length}
+- Recent activity: ${userContext.recentActivity.recentTasks.length} tasks, ${userContext.recentActivity.recentEvents.length} events
+` : '';
+      
+      // Generate relevant data context
+      relevantDataContext = await generateRelevantDataContext(userId, userMessage);
+    }
     
     // Build response guidelines based on user preferences
     const responseGuidelines = buildResponseGuidelines(userContext?.preferences);
     
-    const basePrompt = `You are an AI assistant specialized in productivity, project management, and personal organization. You help users manage their tasks, projects, calendar events, notes, and files efficiently.
-
-Current user message: "${userMessage}"`;
-    
     return {
       basePrompt,
       userContext: userContextString,
-      conversationContext: '', // Simplified for now
+      conversationContext: `AI Mode: ${aiMode.mode} (${aiMode.reasoning})`,
       relevantData: relevantDataContext,
       responseGuidelines
     };
