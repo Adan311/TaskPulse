@@ -495,7 +495,7 @@ export interface SuggestionFeedback {
   suggestionId: string;
   suggestionType: 'task' | 'event';
   originalSuggestion?: TaskSuggestion | EventSuggestion | GeminiTaskExtraction | GeminiEventExtraction; // Store the original suggestion that was shown to the user
-  feedbackType: 'accurate' | 'inaccurate' | 'helpful' | 'unhelpful' | 'other';
+  feedbackType: 'accurate' | 'inaccurate' | 'other';
   comments?: string;
   createdAt?: string;
   updatedAt?: string;

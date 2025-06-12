@@ -19,7 +19,7 @@ interface SuggestionItemProps {
 const SuggestionItem: React.FC<SuggestionItemProps> = ({ suggestion, type, userId, onStatusChange }) => {
   const { toast } = useToast();
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [feedbackType, setFeedbackType] = useState<'helpful' | 'unhelpful' | 'accurate' | 'inaccurate' | 'other' | null>(null);
+  const [feedbackType, setFeedbackType] = useState<'accurate' | 'inaccurate' | 'other' | null>(null);
   const [feedbackComment, setFeedbackComment] = useState('');
   const [showAcceptDialog, setShowAcceptDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
@@ -51,7 +51,7 @@ const SuggestionItem: React.FC<SuggestionItemProps> = ({ suggestion, type, userI
     }
   };
 
-  const openFeedbackModal = (fType: 'helpful' | 'unhelpful' | 'accurate' | 'inaccurate' | 'other') => {
+  const openFeedbackModal = (fType: 'accurate' | 'inaccurate' | 'other') => {
     setFeedbackType(fType);
     setShowFeedbackModal(true);
   };
@@ -115,12 +115,6 @@ const SuggestionItem: React.FC<SuggestionItemProps> = ({ suggestion, type, userI
           </Button>
           <Button variant="ghost" size="icon" onClick={() => openFeedbackModal('inaccurate')} title="Inaccurate">
             <ThumbsDown className="h-4 w-4 text-red-500" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => openFeedbackModal('helpful')} title="Helpful">
-            <MessageSquare className="h-4 w-4 text-blue-500" /> <span className="sr-only">Helpful</span>
-          </Button>
-           <Button variant="ghost" size="icon" onClick={() => openFeedbackModal('unhelpful')} title="Unhelpful">
-            <MessageSquare className="h-4 w-4 text-orange-500" /> <span className="sr-only">Unhelpful</span>
           </Button>
         </div>
       </CardFooter>

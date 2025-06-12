@@ -1,6 +1,6 @@
 import { supabase } from "../../../../database/client";
 import { v4 as uuidv4 } from "uuid";
-import { getGeminiApiKey, callGeminiApiDirectly, FormattedMessage } from "../core/geminiService";
+import { getGeminiApiKey, callGeminiApiDirectly, FormattedMessage, getAiSettings } from "../core/geminiService";
 import { analyzeConversation, saveTaskSuggestions, saveEventSuggestions } from "../suggestions/suggestionService";
 import { 
   detectCommandIntent, 
@@ -413,34 +413,42 @@ export const sendMessage = async (
       .update({ updated_at: new Date().toISOString() })
       .eq('id', conversationId);
 
-    // Analyze conversation for passive suggestions
+    // Check user settings before analyzing conversation for passive suggestions
     let hasOverallSuggestions = false;
     let clarifyingQuestions: ClarifyingQuestion[] | undefined = undefined;
+    
     try {
-      const updatedHistoryWithAiResponse = [...history, aiMessage]; // Use history *including* the latest AI response
-      console.log("Analyzing conversation for passive suggestions after AI response...");
-      const extractionResult = await analyzeConversation(user.id, updatedHistoryWithAiResponse);
+      const aiSettings = await getAiSettings();
+      const suggestionsEnabled = aiSettings?.ai_suggestions_enabled !== false; // Default to true if not set
       
-      if (extractionResult) {
-        console.log(`Passive extraction found ${extractionResult.tasks?.length || 0} tasks, ${extractionResult.events?.length || 0} events, ${extractionResult.clarifying_questions?.length || 0} questions.`);
-        const hasActualSuggestions = (extractionResult.tasks && extractionResult.tasks.length > 0) || 
-                                   (extractionResult.events && extractionResult.events.length > 0);
+      if (suggestionsEnabled) {
+        const updatedHistoryWithAiResponse = [...history, aiMessage]; // Use history *including* the latest AI response
+        console.log("Analyzing conversation for passive suggestions after AI response...");
+        const extractionResult = await analyzeConversation(user.id, updatedHistoryWithAiResponse);
+        
+        if (extractionResult) {
+          console.log(`Passive extraction found ${extractionResult.tasks?.length || 0} tasks, ${extractionResult.events?.length || 0} events, ${extractionResult.clarifying_questions?.length || 0} questions.`);
+          const hasActualSuggestions = (extractionResult.tasks && extractionResult.tasks.length > 0) || 
+                                     (extractionResult.events && extractionResult.events.length > 0);
 
-        if (hasActualSuggestions) {
-          if (extractionResult.tasks && extractionResult.tasks.length > 0) {
-            await saveTaskSuggestions(user.id, extractionResult.tasks, aiMessage.id);
+          if (hasActualSuggestions) {
+            if (extractionResult.tasks && extractionResult.tasks.length > 0) {
+              await saveTaskSuggestions(user.id, extractionResult.tasks, aiMessage.id);
+            }
+            if (extractionResult.events && extractionResult.events.length > 0) {
+              await saveEventSuggestions(user.id, extractionResult.events, aiMessage.id);
+            }
+            hasOverallSuggestions = true;
           }
-          if (extractionResult.events && extractionResult.events.length > 0) {
-            await saveEventSuggestions(user.id, extractionResult.events, aiMessage.id);
+          if (extractionResult.clarifying_questions && extractionResult.clarifying_questions.length > 0) {
+            clarifyingQuestions = extractionResult.clarifying_questions;
+            // Potentially set hasOverallSuggestions to true even for questions, if UI should react
           }
-          hasOverallSuggestions = true;
-        }
-        if (extractionResult.clarifying_questions && extractionResult.clarifying_questions.length > 0) {
-          clarifyingQuestions = extractionResult.clarifying_questions;
-          // Potentially set hasOverallSuggestions to true even for questions, if UI should react
+        } else {
+          console.log("No passive extraction result from analysis.");
         }
       } else {
-        console.log("No passive extraction result from analysis.");
+        console.log("AI suggestions disabled by user, skipping passive suggestion analysis.");
       }
     } catch (error) {
       console.error("Error extracting passive suggestions:", error);

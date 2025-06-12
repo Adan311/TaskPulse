@@ -675,6 +675,16 @@ export const requestSuggestions = async (
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
     
+    // Import and check AI settings
+    const { getAiSettings } = await import("../core/geminiService");
+    const aiSettings = await getAiSettings();
+    const suggestionsEnabled = aiSettings?.ai_suggestions_enabled !== false; // Default to true if not set
+    
+    if (!suggestionsEnabled) {
+      console.log(`AI suggestions disabled for user ${user.id}, skipping suggestion request.`);
+      return { hasSuggestions: false };
+    }
+    
     console.log(`Requesting suggestions for conversation: ${conversationId} by user ${user.id}`);
     
     const { data: messagesData, error: messagesError } = await supabase
@@ -744,7 +754,7 @@ export interface SuggestionFeedback {
   suggestionId: string;
   suggestionType: 'task' | 'event';
   originalSuggestion?: TaskSuggestion | EventSuggestion | GeminiTaskExtraction | GeminiEventExtraction; // Store the original suggestion that was shown to the user
-  feedbackType: 'accurate' | 'inaccurate' | 'helpful' | 'unhelpful' | 'other';
+  feedbackType: 'accurate' | 'inaccurate' | 'other';
   comments?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -801,5 +811,82 @@ export const recordSuggestionFeedback = async (feedback: SuggestionFeedback): Pr
     // Depending on how the caller handles errors, you might re-throw or return null
     // For now, re-throwing to let the caller decide.
     throw error;
+  }
+};
+
+/**
+ * Delete all task suggestions for a user
+ */
+export const deleteAllTaskSuggestions = async (userId: string): Promise<boolean> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || user.id !== userId) {
+      throw new Error("User not authenticated or ID mismatch");
+    }
+
+    const { error } = await supabase
+      .from('task_suggestions')
+      .delete()
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error("Error deleting all task suggestions:", error);
+      throw error;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Exception in deleteAllTaskSuggestions:", error);
+    return false;
+  }
+};
+
+/**
+ * Delete all event suggestions for a user
+ */
+export const deleteAllEventSuggestions = async (userId: string): Promise<boolean> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || user.id !== userId) {
+      throw new Error("User not authenticated or ID mismatch");
+    }
+
+    const { error } = await supabase
+      .from('event_suggestions')
+      .delete()
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error("Error deleting all event suggestions:", error);
+      throw error;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Exception in deleteAllEventSuggestions:", error);
+    return false;
+  }
+};
+
+/**
+ * Delete all suggestions (both tasks and events) for a user
+ */
+export const deleteAllSuggestions = async (userId: string): Promise<boolean> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || user.id !== userId) {
+      throw new Error("User not authenticated or ID mismatch");
+    }
+
+    // Delete both task and event suggestions in parallel
+    const [taskResult, eventResult] = await Promise.all([
+      deleteAllTaskSuggestions(userId),
+      deleteAllEventSuggestions(userId)
+    ]);
+
+    return taskResult && eventResult;
+  } catch (error) {
+    console.error("Exception in deleteAllSuggestions:", error);
+    return false;
   }
 }; 
