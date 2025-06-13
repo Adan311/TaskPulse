@@ -305,8 +305,9 @@ export function FileList({
   // Default list view
   return (
     <div>
-      <div className="space-y-2">
-        {files.map((file) => (
+      {sortedFiles.length > 0 ? (
+        <div className="space-y-2">
+          {sortedFiles.map((file) => (
           <div 
             key={file.id} 
             className="flex items-center justify-between p-3 bg-card border rounded-md shadow-sm hover:bg-accent/10 transition-colors"
@@ -380,7 +381,12 @@ export function FileList({
             </div>
           </div>
         ))}
-      </div>
+        </div>
+      ) : (
+        <div className="text-sm text-muted-foreground text-center py-8">
+          No files found
+        </div>
+      )}
       
       {/* Preview Dialog */}
       {previewFile && (

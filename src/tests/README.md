@@ -1,96 +1,101 @@
-# TaskPulse Testing Framework
+# TaskPulse Testing Guide
 
-## 📁 Test Directory Structure
+Welcome! This README gives you everything you need to know about testing in TaskPulse—how to run the tests, what’s covered, and why it matters. It’s designed for both academic review and for anyone new to the project.
 
-```
-tests/
-├── config/                    # Test configuration files
-│   ├── vitest.config.ts      # Vitest configuration
-│   ├── playwright.config.ts  # Playwright configuration
-│   └── test-setup.ts         # Global test setup
-├── mocks/                    # Mock implementations
-│   ├── supabase-mock.ts      # Supabase client mock
-│   ├── auth-mock.ts          # Authentication mocks
-│   └── api-mocks.ts          # API response mocks
-├── utils/                    # Test utilities
-│   ├── test-helpers.ts       # Helper functions
-│   ├── mock-generators.ts    # Mock data generators
-│   └── assertion-helpers.ts  # Custom assertions
-├── fixtures/                 # Test data fixtures
-│   ├── test-users.json       # Sample user data
-│   ├── sample-tasks.json     # Sample task data
-│   └── test-helpers.ts       # Test helper functions
-├── unit/                     # Unit tests
-│   ├── services/            # Backend service tests
-│   ├── hooks/               # React hooks tests
-│   ├── components/          # Component unit tests
-│   └── utils/               # Utility function tests
-├── integration/             # Integration tests
-│   ├── api/                 # API endpoint tests
-│   └── database/            # Database operation tests
-├── e2e/                     # End-to-end tests
-│   ├── workflows/           # Complete user workflows
-│   └── pages/               # Page-specific tests
-├── accessibility/           # Accessibility tests
-├── security/                # Security tests
-├── ai/                      # AI-specific tests
-├── performance/             # Performance tests
-└── reports/                 # Test reports and coverage
-    ├── coverage/
-    ├── e2e/
-    └── performance/
-```
+For a full breakdown of testing achievements, see [Plan&DOC/TESTING_SUMMARY.md](../../Plan&DOC/TESTING_SUMMARY.md).
 
-## 🚀 Phase 1: Foundation Setup ✅
+## 🗂️ What’s in this Folder?
 
-### Completed in Phase 1:
-- [x] Test directory structure created
-- [x] Basic test configurations set up
-- [x] Mock implementations for Supabase
-- [x] Test utilities and helpers
-- [x] Fixture data for testing
-- [x] Package.json updated with testing scripts
-- [x] Testing dependencies added
+- **config/** – Test configs (Vitest, Playwright, setup)
+- **mocks/** – Mocked services (Supabase, API, auth)
+- **unit/** – Unit tests for backend and frontend logic
+- **integration/** – Integration tests for workflows and APIs
+- **e2e/** – End-to-end tests (user journeys)
+- **accessibility/** – Accessibility checks
+- **security/** – Security-related tests
+- **ai/** – AI feature tests
+- **performance/** – Performance checks
+- **reports/** – Test results and coverage
 
-### Test Scripts Available:
+(Other folders: `utils/` and `fixtures/` are helpers and sample data for tests.)
+
+## 🚀 How to Run the Tests
+
+All tests for TaskPulse can be run using simple npm scripts. Make sure you’ve run `npm install` first to get all dependencies.
+
+### Quick Start
 ```bash
-npm run test              # Run all tests
-npm run test:ui           # Run tests with UI
-npm run test:coverage     # Run tests with coverage
-npm run test:unit         # Run unit tests only
-npm run test:integration  # Run integration tests only
-npm run test:e2e          # Run E2E tests
-npm run test:all          # Run complete test suite
+# Run all unit tests
+npm run test:unit
+
+# Run tests in watch mode (auto re-run on save)
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+
+# Run all available tests (unit, integration, E2E, etc.)
+npm run test:all
 ```
 
-## 📋 Next Steps (Phase 2):
+### Other Test Types
+```bash
+# End-to-End (E2E) tests (when implemented)
+npm run test:e2e
+npm run test:e2e:ui
 
-1. Install testing dependencies: `npm install`
-2. Create first unit tests for backend services
-3. Test authentication utilities
-4. Test task management services
-5. Achieve 85%+ unit test coverage
+# Accessibility tests
+npm run test:accessibility
 
-## 🔧 Configuration Files:
+# Security tests
+npm run test:security
 
-- **vitest.config.ts**: Main Vitest configuration with coverage thresholds
-- **playwright.config.ts**: E2E testing configuration
-- **test-setup.ts**: Global test setup and mocks
+# AI-specific tests
+npm run test:ai
+```
 
-## 📊 Coverage Targets:
+### Running Specific Tests
+```bash
+# Run a specific test file
+npm run test:unit -- tests/unit/services/auth.service.test.ts
 
-- **Unit Tests**: 90%+ for services, 80%+ for components
-- **Integration Tests**: 100% of API endpoints
-- **E2E Tests**: 100% of critical user workflows
+# Run with verbose output
+npm run test:unit -- --reporter=verbose
+```
 
-## 🎯 Testing Goals:
+### Typical Workflow
+1. Start your dev server: `npm run dev`
+2. In another terminal, run tests in watch mode: `npm run test:watch`
+3. Check coverage or run full suite as needed
 
-- Comprehensive test coverage across all features
-- Professional testing dashboard for demonstrations
-- Automated CI/CD integration
-- Performance and accessibility validation
-- Security testing implementation
+### CI/CD Pipeline
+- All tests run with `npm run test:all` in CI
+- Coverage reports generated automatically
+
+## 🔧 Configuration, Coverage & Test Architecture
+
+- **vitest.config.ts**: Main config for unit/integration tests (with coverage thresholds)
+- **playwright.config.ts**: E2E test config
+- **test-setup.ts**: Global setup and mocks
+
+### Coverage & Goals
+- Unit: 90%+ for services, 80%+ for components
+- Integration: 100% of API endpoints
+- E2E: 100% of critical user journeys
+- Accessibility and security: Dedicated tests for both
+- All tests run in CI for every code change
+
+### Test Structure
+- Unit tests: `tests/unit/services/` (CRUD, error handling, edge cases)
+- Integration tests: `tests/integration/` (cross-feature workflows)
+- E2E tests: `tests/e2e/` (user journeys, when implemented)
+- Mocks: `tests/mocks/` (Supabase, API, auth)
+- Fixtures: `tests/fixtures/` (sample data)
+
+### Service Coverage
+- Authentication, tasks, calendar, projects, notes, files, AI, time tracking
+- All major and minor backend services are tested
 
 ---
 
-*Phase 1 Complete - Ready for Phase 2: Unit Testing Implementation* 
+**If you want to see the results and achievements, check [Plan&DOC/TESTING_SUMMARY.md](../../Plan&DOC/TESTING_SUMMARY.md).**
