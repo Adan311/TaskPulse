@@ -8,7 +8,6 @@ import {
     updateEventSuggestionStatus,
     deleteAllTaskSuggestions,
     deleteAllEventSuggestions,
-    deleteAllSuggestions,
     TaskSuggestion,
     EventSuggestion
 } from '@/backend/api/services/ai/suggestions/suggestionService';
@@ -174,7 +173,13 @@ const SuggestionList: React.FC<SuggestionListProps> = ({ className }) => {
     if (!currentUser) return;
     setIsDeleting(true);
     try {
-      const success = await deleteAllSuggestions(currentUser.id);
+      // Delete both task and event suggestions in parallel
+      const [taskResult, eventResult] = await Promise.all([
+        deleteAllTaskSuggestions(currentUser.id),
+        deleteAllEventSuggestions(currentUser.id)
+      ]);
+      
+      const success = taskResult && eventResult;
       if (success) {
         setTaskSuggestions([]);
         setEventSuggestions([]);

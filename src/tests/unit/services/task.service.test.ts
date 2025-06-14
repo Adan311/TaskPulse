@@ -6,7 +6,7 @@ import {
   fetchTasks,
   mapDbTaskToTask,
   updateProjectProgress 
-} from '../../../backend/api/services/tasks/taskOperations'
+} from '../../../backend/api/services/task.service'
 
 // Mock the Supabase client properly
 vi.mock('../../../backend/database/client', () => {
@@ -232,7 +232,7 @@ describe('TaskService', () => {
     })
 
     // Import the function we need to test
-    const { fetchProjectTasks } = await import('../../../backend/api/services/tasks/taskOperations')
+          const { fetchProjectTasks } = await import('../../../backend/api/services/task.service')
 
     // Act
     const result = await fetchProjectTasks(projectId)
@@ -262,7 +262,7 @@ describe('TaskService', () => {
     }
 
     // Act & Assert
-    await expect(createTask(taskData)).rejects.toThrow('User must be authenticated to create tasks')
+    await expect(createTask(taskData)).rejects.toThrow('User not authenticated')
   })
 
   test('updateTask should handle task not found', async () => {

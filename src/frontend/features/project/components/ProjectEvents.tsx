@@ -1,7 +1,7 @@
 import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { Event } from '@/frontend/types/calendar';
 import { EventList } from '@/frontend/features/calendar/components/EventList';
-import { getEvents, updateEvent, deleteEvent } from '@/backend/api/services/eventService';
+import { getEvents, updateEvent, deleteEvent } from '@/backend/api/services/event.service';
 import { Card, CardContent } from '@/frontend/components/ui/card';
 import { format, isPast } from 'date-fns';
 import { CalendarIcon, ClockIcon, PencilIcon, EyeIcon, EyeOffIcon, Trash2, Unlink } from 'lucide-react';

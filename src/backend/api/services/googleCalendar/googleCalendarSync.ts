@@ -2,6 +2,7 @@
 import { supabase } from '../../../database/client';
 import { DatabaseEvent } from '@/backend/database/schema';
 import { hasGoogleCalendarConnected } from './googleCalendarService';
+import { validateUser } from '@/shared/utils/authUtils';
 
 /**
  * Event synchronization functions for Google Calendar
@@ -12,12 +13,7 @@ export const GoogleCalendarSync = {
    */
   saveEventToGoogleCalendar: async (event: DatabaseEvent): Promise<boolean> => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        console.log("No user found, cannot sync to Google Calendar");
-        return false;
-      }
+      const user = await validateUser();
 
       // Check if user has connected Google Calendar
       const isConnected = await hasGoogleCalendarConnected();
@@ -84,12 +80,7 @@ export const GoogleCalendarSync = {
    */
   deleteEventFromGoogleCalendar: async (eventId: string): Promise<boolean> => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        console.log("No user found, cannot delete from Google Calendar");
-        return false;
-      }
+      const user = await validateUser();
 
       // Check if user has connected Google Calendar
       const isConnected = await hasGoogleCalendarConnected();

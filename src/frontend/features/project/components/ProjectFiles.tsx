@@ -14,10 +14,31 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/frontend/lib/utils';
 import { useToast } from '@/frontend/hooks/use-toast';
+import { formatFileSize } from "@/shared/utils/fileUtils";
+
 
 interface ProjectFilesProps {
   projectId: string;
 }
+
+// File Icon based on file type
+const getFileIcon = (fileType: string, className = "h-5 w-5", withColor = true) => {
+  if (fileType.startsWith('image/')) {
+    return <ImageIcon className={cn(className, withColor ? "text-blue-500" : "")} />;
+  } else if (fileType === 'application/pdf') {
+    return <FileIcon className={cn(className, withColor ? "text-red-500" : "")} />;
+  } else if (
+    fileType === 'text/plain' || 
+    fileType === 'application/msword' || 
+    fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ) {
+    return <FileText className={cn(className, withColor ? "text-green-500" : "")} />;
+  } else {
+    return <FileIcon className={cn(className, withColor ? "text-gray-500" : "")} />;
+  }
+};
+
+
 
 export const ProjectFiles = forwardRef<{ refreshFiles: () => void }, ProjectFilesProps>(({ projectId }, ref) => {
   const { 
@@ -93,30 +114,7 @@ export const ProjectFiles = forwardRef<{ refreshFiles: () => void }, ProjectFile
     }
   };
 
-  const getFileIcon = (fileType: string) => {
-    if (fileType.includes('pdf')) {
-      return <FileText className="h-8 w-8 text-red-500" />;
-    } else if (fileType.includes('image')) {
-      return <ImageIcon className="h-8 w-8 text-blue-500" />;
-    } else if (fileType.includes('text') || fileType.includes('document')) {
-      return <FileText className="h-8 w-8 text-yellow-500" />;
-    } else if (fileType.includes('zip') || fileType.includes('compressed')) {
-      return <ArchiveIcon className="h-8 w-8 text-purple-500" />;
-    } else {
-      return <FileIcon className="h-8 w-8 text-gray-500" />;
-    }
-  };
 
-  const formatFileSize = (bytes?: number) => {
-    if (!bytes) return 'Unknown size';
-    if (bytes < 1024) {
-      return bytes + ' B';
-    } else if (bytes < 1024 * 1024) {
-      return (bytes / 1024).toFixed(1) + ' KB';
-    } else {
-      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-    }
-  };
 
   if (loading) {
     return (
@@ -143,7 +141,7 @@ export const ProjectFiles = forwardRef<{ refreshFiles: () => void }, ProjectFile
               <CardContent className="p-0">
                 <div className="flex items-center p-4">
                   <div className="mr-4">
-                    {getFileIcon(file.type)}
+                    {getFileIcon(file.type, "h-8 w-8", false)}
                   </div>
                   <div className="flex-grow min-w-0">
                     <h3 className="font-medium truncate">{file.name}</h3>

@@ -1,6 +1,7 @@
 import { supabase } from "../../../../database/client";
 import { v4 as uuidv4 } from "uuid";
 import { getGeminiApiKey, callGeminiApiDirectly, FormattedMessage } from "../core/geminiService";
+import { getCurrentUser } from "@/shared/utils/authUtils";
 
 /**
  * Types for chat messages
@@ -28,7 +29,7 @@ export interface ChatConversation {
  */
 export const createConversation = async (title?: string): Promise<ChatConversation | null> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       console.error("User must be authenticated to create a conversation");
@@ -72,7 +73,7 @@ export const createConversation = async (title?: string): Promise<ChatConversati
  */
 export const getConversations = async (): Promise<ChatConversation[]> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       console.error("User must be authenticated to get conversations");
@@ -108,7 +109,7 @@ export const getConversations = async (): Promise<ChatConversation[]> => {
  */
 export const getConversation = async (conversationId: string): Promise<ChatConversation | null> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       console.error("User must be authenticated to get a conversation");
@@ -220,7 +221,7 @@ export const updateConversationTitle = async (
   title?: string
 ): Promise<boolean> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       console.error("User must be authenticated to update conversation title");
@@ -257,7 +258,7 @@ export const updateConversationTitle = async (
  */
 export const deleteConversation = async (conversationId: string): Promise<boolean> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       console.error("User must be authenticated to delete a conversation");

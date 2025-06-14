@@ -1,9 +1,10 @@
 import { supabase } from "../../../../database/client";
 import { v4 as uuidv4 } from "uuid";
 import { callGeminiApiDirectly, getGeminiApiKey, FormattedMessage } from "../core/geminiService";
+import { validateUser, getCurrentUser } from "@/shared/utils/authUtils";
 import type { ChatMessage } from "../chat/chatService";
 import { createTask } from "@/backend/api/services/task.service";
-import { createEvent } from "@/backend/api/services/eventService";
+import { createEvent } from "@/backend/api/services/event.service";
 
 /**
  * Interface for a detected task from AI suggestion (application-facing, camelCase)
@@ -147,14 +148,14 @@ const CONTEXT_ADDONS = {
   PROJECT_MANAGEMENT: `The conversation seems project-related. Focus on identifying action items, project deliverables, deadlines, and responsibilities. If a project name is mentioned, try to associate the task with it. Suggest tasks like 'Finalize [document] by [date]' or 'Assign [task] to [person].'`,
   CALENDAR_SCHEDULING: `The conversation mentions scheduling or specific times/dates. Prioritize extracting specific dates, times, and the purpose of meetings or events. Suggest events like 'Meeting about [topic] on [date] at [time].'`,
   CASUAL_PERSONAL: `The conversation seems more casual or personal. Identify potential personal tasks or reminders. Only suggest if there seems to be a clear intent or a self-assigned to-do. If vague, prefer asking a clarifying question like, 'Would you like me to create a task for [action]?'`,
-  TRAVEL: `The conversation appears to be about travel. Focus on travel-related actions such as booking flights/hotels, creating itineraries, or packing lists. Extract destinations and travel dates. Example: 'Plan trip to [Destination]' or 'Book flight for [Destination] on [Date].'`,
+  TRAVEL: `The conversation appears to be about travel planning. Focus on comprehensive travel preparation tasks such as: booking flights and accommodation, researching destinations, creating itineraries, obtaining visas, booking transportation (like Japan Rail Pass), researching activities and attractions, budgeting, packing preparation, and cultural research. For Japan trips specifically, consider tasks like researching specific cities (Tokyo, Kyoto, Osaka), booking JR Pass, researching cultural etiquette, finding specific activities (anime/manga spots, food experiences, historical sites), and creating day-by-day itineraries. Extract travel dates when mentioned and suggest realistic deadlines based on departure dates.`,
 };
 
 const KEYWORD_SETS = {
   PROJECT_MANAGEMENT: ["deadline", "assign", "task", "report", "client", "budget", "milestone", "project", "deliverable", "sprint", "roadmap"],
   CALENDAR_SCHEDULING: ["meeting", "schedule", "call", "event", "appointment", "calendar", "invite", "conference", "webinar", "10am", "2pm", "next week", "tomorrow", "friday"],
   CASUAL_PERSONAL: ["should", "need to", "planning to", "thinking of", "friend", "organize", "personal"],
-  TRAVEL: ["trip", "travel", "vacation", "dubai", "flight", "hotel", "itinerary", "booking", "destination", "journey"],
+  TRAVEL: ["trip", "travel", "vacation", "dubai", "flight", "hotel", "itinerary", "booking", "destination", "journey", "japan", "tokyo", "kyoto", "osaka", "okinawa", "august", "budget", "luxury", "accommodation", "visa", "rail pass", "activities", "attractions", "culture", "food", "history", "nature", "anime", "manga", "shopping"],
 };
 
 function detectConversationContexts(messages: ChatMessage[]): string[] {
@@ -193,7 +194,50 @@ function evaluateSuggestionTiming(messages: ChatMessage[]): SuggestionTiming {
 
   const messageContent = lastUserMessage.content.toLowerCase();
 
-  // Casual conversation patterns - don't suggest
+  // Explicit suggestion requests - always suggest
+  const suggestionRequestPatterns = [
+    /suggest.*me/,
+    /generate.*suggestions?/,
+    /give.*me.*suggestions?/,
+    /show.*me.*suggestions?/,
+    /create.*suggestions?/,
+    /get.*suggestions?/,
+    /any.*suggestions?/,
+    /suggest.*tasks?/,
+    /suggest.*events?/
+  ];
+
+  if (suggestionRequestPatterns.some(pattern => pattern.test(messageContent))) {
+    return {
+      shouldSuggest: true,
+      reasoning: 'Explicit suggestion request detected',
+      conversationMode: 'actionable'
+    };
+  }
+
+  // If conversation has rich context (many messages), be more lenient
+  const hasRichContext = messages.length >= 5;
+  const conversationText = messages.slice(-10).map(m => m.content).join(' ').toLowerCase();
+  
+  // Rich context indicators
+  const richContextPatterns = [
+    /japan/,
+    /trip/,
+    /travel/,
+    /vacation/,
+    /project/,
+    /planning/,
+    /budget/,
+    /deadline/,
+    /august/,
+    /tokyo/,
+    /kyoto/,
+    /osaka/
+  ];
+
+  const hasRichContextIndicators = richContextPatterns.some(pattern => pattern.test(conversationText));
+
+  // Casual conversation patterns - don't suggest (unless rich context)
   const casualPatterns = [
     /^(hi|hello|hey|good morning|good afternoon|good evening)$/,
     /^(hi|hello|hey)\s*[.!]*$/,
@@ -212,8 +256,15 @@ function evaluateSuggestionTiming(messages: ChatMessage[]): SuggestionTiming {
     /^n$/
   ];
 
-  // Check for casual patterns
+  // Check for casual patterns - but allow if rich context
   if (casualPatterns.some(pattern => pattern.test(messageContent))) {
+    if (hasRichContext && hasRichContextIndicators) {
+      return {
+        shouldSuggest: true,
+        reasoning: 'Casual message but rich conversation context available',
+        conversationMode: 'planning'
+      };
+    }
     return {
       shouldSuggest: false,
       reasoning: 'Casual conversation detected',
@@ -242,7 +293,11 @@ function evaluateSuggestionTiming(messages: ChatMessage[]): SuggestionTiming {
     /by.*friday/,
     /by.*tomorrow/,
     /next week/,
-    /this week/
+    /this week/,
+    /going.*for/,
+    /wanna.*go/,
+    /need.*to.*book/,
+    /help.*me.*plan/
   ];
 
   if (actionablePatterns.some(pattern => pattern.test(messageContent))) {
@@ -265,13 +320,27 @@ function evaluateSuggestionTiming(messages: ChatMessage[]): SuggestionTiming {
     /might.*do/,
     /could.*do/,
     /ideas for/,
-    /brainstorm/
+    /brainstorm/,
+    /vacation/,
+    /trip/,
+    /travel/,
+    /visit/,
+    /going.*to/
   ];
 
   if (planningPatterns.some(pattern => pattern.test(messageContent))) {
     return {
       shouldSuggest: true,
       reasoning: 'Planning discussion detected',
+      conversationMode: 'planning'
+    };
+  }
+
+  // If we have rich context, suggest even for ambiguous cases
+  if (hasRichContext && hasRichContextIndicators) {
+    return {
+      shouldSuggest: true,
+      reasoning: 'Rich conversation context suggests actionable content',
       conversationMode: 'planning'
     };
   }
@@ -437,9 +506,7 @@ export const analyzeConversation = async (
       });
     }
 
-    // Add the conversation history itself to the prompt
-    // For now, we'll append it to the user message that contains the main instructions
-    // A more sophisticated approach might involve structuring it as part of the history for Gemini
+
 
     const extractionPromptMessage: FormattedMessage = {
       role: "user",
@@ -532,10 +599,7 @@ export const saveTaskSuggestions = async (
 ): Promise<TaskSuggestion[]> => {
   try {
     // Verify the user
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.id !== userId) {
-      throw new Error("User not authenticated or ID mismatch");
-    }
+    const user = await validateUser(userId);
     
     if (!geminiTasks || geminiTasks.length === 0) {
       return [];
@@ -595,10 +659,7 @@ export const saveEventSuggestions = async (
 ): Promise<EventSuggestion[]> => {
   try {
     // Verify the user
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.id !== userId) {
-      throw new Error("User not authenticated or ID mismatch");
-    }
+    const user = await validateUser(userId);
     
     if (!geminiEvents || geminiEvents.length === 0) {
       return [];
@@ -650,8 +711,7 @@ export const saveEventSuggestions = async (
  * Gets all suggestion counts for a user
  */
 export const getSuggestionCounts = async (userId: string): Promise<{ tasks: number; events: number }> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user || user.id !== userId) throw new Error("User not authenticated or ID mismatch for getSuggestionCounts");
+  const user = await validateUser(userId);
 
   const [{ count: taskCount, error: taskError }, { count: eventCount, error: eventError }] = await Promise.all([
         supabase.from('task_suggestions').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'suggested'),
@@ -670,8 +730,7 @@ export const getSuggestionCounts = async (userId: string): Promise<{ tasks: numb
  * Gets all task suggestions for a user
  */
 export const getTaskSuggestions = async (userId: string): Promise<TaskSuggestion[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user || user.id !== userId) throw new Error("User not authenticated or ID mismatch for getTaskSuggestions");
+  const user = await validateUser(userId);
 
   const { data, error } = await supabase
     .from('task_suggestions')
@@ -702,8 +761,7 @@ export const getTaskSuggestions = async (userId: string): Promise<TaskSuggestion
  * Gets all event suggestions for a user
  */
 export const getEventSuggestions = async (userId: string): Promise<EventSuggestion[]> => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.id !== userId) throw new Error("User not authenticated or ID mismatch for getEventSuggestions");
+    const user = await validateUser(userId);
     
     const { data, error } = await supabase
     .from('event_suggestions')
@@ -733,8 +791,7 @@ export const getEventSuggestions = async (userId: string): Promise<EventSuggesti
  * Updates the status of a task suggestion and creates a real task if accepted
  */
 export const updateTaskSuggestionStatus = async (userId: string, suggestionId: string, status: 'accepted' | 'rejected'): Promise<TaskSuggestion | null> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user || user.id !== userId) throw new Error("User not authenticated or ID mismatch for updateTaskSuggestionStatus");
+  const user = await validateUser(userId);
 
   // First get the suggestion data
   const { data: suggestionData, error: suggestionError } = await supabase
@@ -812,28 +869,21 @@ export const updateTaskSuggestionStatus = async (userId: string, suggestionId: s
 };
 
 /**
- * Finds a project ID by its name (fuzzy matching)
+ * Finds a project ID by its name using shared project resolution logic
  */
 export const findProjectIdByName = async (projectName: string): Promise<string | null> => {
   if (!projectName || projectName.trim() === "") {
     return null;
   }
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) return null;
 
-    const { data: projects, error } = await supabase
-      .from('projects')
-      .select('id')
-      .eq('user_id', user.id)
-      .ilike('name', `%${projectName.trim()}%`) // Case-insensitive search
-      .limit(1);
-
-    if (error) {
-      console.error('Error fetching project by name:', error);
-      return null;
-    }
-    return projects && projects.length > 0 ? projects[0].id : null;
+    // Use shared project resolution utility from projectOperations
+    const { getProjectProgress } = await import('../core/projectOperations');
+    const projectProgress = await getProjectProgress(user.id, projectName.trim());
+    
+    return projectProgress?.project?.id || null;
   } catch (e) {
     console.error('Exception in findProjectIdByName:', e);
     return null;
@@ -844,8 +894,7 @@ export const findProjectIdByName = async (projectName: string): Promise<string |
  * Updates the status of an event suggestion and creates a real event if accepted
  */
 export const updateEventSuggestionStatus = async (userId: string, suggestionId: string, status: 'accepted' | 'rejected'): Promise<EventSuggestion | null> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user || user.id !== userId) throw new Error("User not authenticated or ID mismatch for updateEventSuggestionStatus");
+  const user = await validateUser(userId);
 
   // First get the suggestion data
   const { data: suggestionData, error: suggestionError } = await supabase
@@ -928,8 +977,7 @@ export const requestSuggestions = async (
   conversationId: string
 ): Promise<{ hasSuggestions: boolean; clarifyingQuestions?: ClarifyingQuestion[] }> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser();
     
     // Import and check AI settings
     const { getAiSettings } = await import("../core/geminiService");
@@ -1018,10 +1066,10 @@ export interface SuggestionFeedback {
 
 export const recordSuggestionFeedback = async (feedback: SuggestionFeedback): Promise<SuggestionFeedback | null> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.id !== feedback.userId) {
-      console.error("User not authenticated or feedback userId mismatch.");
-      throw new Error("User not authenticated or feedback user ID mismatch.");
+    const user = await validateUser(feedback.userId);
+    if (user.id !== feedback.userId) {
+      console.error("Feedback userId mismatch.");
+      throw new Error("User ID mismatch for feedback.");
     }
 
     const feedbackToInsert = {
@@ -1075,10 +1123,7 @@ export const recordSuggestionFeedback = async (feedback: SuggestionFeedback): Pr
  */
 export const deleteAllTaskSuggestions = async (userId: string): Promise<boolean> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.id !== userId) {
-      throw new Error("User not authenticated or ID mismatch");
-    }
+    const user = await validateUser(userId);
 
     const { error } = await supabase
       .from('task_suggestions')
@@ -1102,10 +1147,7 @@ export const deleteAllTaskSuggestions = async (userId: string): Promise<boolean>
  */
 export const deleteAllEventSuggestions = async (userId: string): Promise<boolean> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.id !== userId) {
-      throw new Error("User not authenticated or ID mismatch");
-    }
+    const user = await validateUser(userId);
 
     const { error } = await supabase
       .from('event_suggestions')
@@ -1124,25 +1166,3 @@ export const deleteAllEventSuggestions = async (userId: string): Promise<boolean
   }
 };
 
-/**
- * Delete all suggestions (both tasks and events) for a user
- */
-export const deleteAllSuggestions = async (userId: string): Promise<boolean> => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.id !== userId) {
-      throw new Error("User not authenticated or ID mismatch");
-    }
-
-    // Delete both task and event suggestions in parallel
-    const [taskResult, eventResult] = await Promise.all([
-      deleteAllTaskSuggestions(userId),
-      deleteAllEventSuggestions(userId)
-    ]);
-
-    return taskResult && eventResult;
-  } catch (error) {
-    console.error("Exception in deleteAllSuggestions:", error);
-    return false;
-  }
-}; 

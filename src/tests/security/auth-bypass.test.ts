@@ -62,7 +62,7 @@ describe('Authentication Bypass Security Tests', () => {
     // Act & Assert
     try {
       // Import and call the actual service function
-      const { fetchTasks } = await import('../../backend/api/services/tasks/taskOperations')
+      const { fetchTasks } = await import('../../backend/api/services/task.service')
       await fetchTasks()
       // Should not reach here
       expect(true).toBe(false)
@@ -82,17 +82,18 @@ describe('Authentication Bypass Security Tests', () => {
     // Act & Assert
     try {
       // Import and call the actual service function - use createEvent which throws on auth failure
-      const { createEvent } = await import('../../backend/api/services/calendar.service')
+      const { createEvent } = await import('../../backend/api/services/event.service')
       await createEvent({
         title: 'Test Event',
-        start_time: '2024-01-01T10:00:00Z',
-        end_time: '2024-01-01T11:00:00Z'
+        startTime: '2024-01-01T10:00:00Z',
+        endTime: '2024-01-01T11:00:00Z',
+        participants: []
       })
       // Should not reach here
       expect(true).toBe(false)
     } catch (error) {
       expect(error).toBeDefined()
-      expect(error.message).toContain('User must be authenticated')
+      expect(error.message).toContain('User not authenticated')
     }
   })
 
@@ -135,7 +136,7 @@ describe('Authentication Bypass Security Tests', () => {
     // Arrange - Test various session validation scenarios
     const sensitiveOperations = [
       { service: 'project.service', function: 'deleteProject' },
-      { service: 'calendar.service', function: 'deleteEvent' }
+      { service: 'event.service', function: 'deleteEvent' }
     ]
 
     // Mock expired/invalid session
@@ -209,7 +210,7 @@ describe('Authentication Bypass Security Tests', () => {
     // Act & Assert
     for (const input of maliciousInputs) {
       try {
-        const { fetchTasks } = await import('../../backend/api/services/tasks/taskOperations')
+        const { fetchTasks } = await import('../../backend/api/services/task.service')
         await fetchTasks()
         
         // If successful, verify safe handling

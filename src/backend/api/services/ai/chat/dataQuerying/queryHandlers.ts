@@ -5,9 +5,9 @@ import {
   MONTH_DISPLAY_NAMES,
   extractProjectInfo, 
   parseDateFromQuery,
-  hasTimeReference,
-  formatFileSize
+  hasTimeReference
 } from "./queryParser";
+import { formatFileSize } from "@/shared/utils/fileUtils";
 
 /**
  * Handle queries about user data like "What events do I have on June 5th?"

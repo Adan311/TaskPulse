@@ -4,6 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/frontend/components/
 import { Button } from "@/frontend/components/ui/button";
 import { Download, X } from "lucide-react";
 import { format } from 'date-fns';
+import { formatFileSize } from "@/shared/utils/fileUtils";
+
 
 interface FilePreviewProps {
   fileUrl: string;
@@ -15,12 +17,7 @@ interface FilePreviewProps {
   onDownload: () => void;
 }
 
-function formatFileSize(size?: number) {
-  if (size === undefined) return '~';
-  if (size < 1024) return `${size} B`;
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-  return `${(size / (1024 * 1024)).toFixed(2)} MB`;
-}
+
 
 export function FilePreview({ fileUrl, fileName, fileType, fileSize, uploadedAt, onClose, onDownload }: FilePreviewProps) {
   const [previewMode, setPreviewMode] = useState<'preview' | 'info'>('preview');

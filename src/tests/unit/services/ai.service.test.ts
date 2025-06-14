@@ -47,12 +47,12 @@ vi.mock('../../../backend/api/services/ai/core/geminiService', () => ({
 }))
 
 // Mock other services
-vi.mock('../../../backend/api/services/tasks/taskOperations', () => ({
+vi.mock('../../../backend/api/services/task.service', () => ({
   createTask: vi.fn()
 }))
 
 // Mock event service
-vi.mock('../../../backend/api/services/events/eventOperations', () => ({
+vi.mock('../../../backend/api/services/event.service', () => ({
   createEvent: vi.fn()
 }))
 
@@ -122,7 +122,7 @@ describe('AIService', () => {
   })
 
   test('generateSuggestions should return valid task breakdowns', async () => {
-    // Arrange
+    // Arrange - Use actionable conversation that will trigger suggestions
     const conversationMessages = [
       { 
         id: 'msg-1', 
@@ -145,7 +145,7 @@ describe('AIService', () => {
         conversationId: 'conv-1', 
         userId: 'test-user-id', 
         role: 'user' as const, 
-        content: 'Research, slides, and practice session',
+        content: 'I need to do research, slides, and practice session',
         createdAt: new Date().toISOString()
       }
     ]
@@ -223,12 +223,13 @@ describe('AIService', () => {
     const mockGetGeminiApiKey = getGeminiApiKey as any
     mockGetGeminiApiKey.mockResolvedValue(null)
 
+    // Use an actionable message that would normally trigger suggestions
     const messages = [{ 
       id: 'test-msg', 
       conversationId: 'test-conv', 
       userId: 'test-user-id', 
       role: 'user' as const, 
-      content: 'Test message',
+      content: 'I need to create a task for this project',
       createdAt: new Date().toISOString()
     }]
 

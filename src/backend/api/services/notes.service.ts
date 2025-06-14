@@ -1,5 +1,6 @@
 import { supabase } from "../../database/client";
 import { v4 as uuidv4 } from "uuid";
+import { validateUser } from '@/shared/utils/authUtils';
 
 // Types for Notes based on actual database schema
 export interface Note {
@@ -35,8 +36,7 @@ export interface UpdateNoteData {
  * Get all notes for the authenticated user
  */
 export async function getUserNotes(): Promise<NoteWithProject[]> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("User not authenticated");
+  const user = await validateUser();
 
   const { data, error } = await supabase
     .from("notes")
@@ -55,8 +55,7 @@ export async function getUserNotes(): Promise<NoteWithProject[]> {
  * Get a specific note by ID
  */
 export async function getNoteById(noteId: string): Promise<NoteWithProject | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("User not authenticated");
+  const user = await validateUser();
 
   const { data, error } = await supabase
     .from("notes")
@@ -79,8 +78,7 @@ export async function getNoteById(noteId: string): Promise<NoteWithProject | nul
  * Create a new note
  */
 export async function createNote(noteData: CreateNoteData): Promise<Note> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("User not authenticated");
+  const user = await validateUser();
 
   const newNote = {
     id: uuidv4(),
@@ -105,8 +103,7 @@ export async function createNote(noteData: CreateNoteData): Promise<Note> {
  * Update an existing note
  */
 export async function updateNote(noteId: string, updates: UpdateNoteData): Promise<Note> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("User not authenticated");
+  const user = await validateUser();
 
   const updateData = {
     ...updates,
@@ -129,8 +126,7 @@ export async function updateNote(noteId: string, updates: UpdateNoteData): Promi
  * Delete a note
  */
 export async function deleteNote(noteId: string): Promise<void> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("User not authenticated");
+  const user = await validateUser();
 
   const { error } = await supabase
     .from("notes")
@@ -145,8 +141,7 @@ export async function deleteNote(noteId: string): Promise<void> {
  * Get notes by project
  */
 export async function getNotesByProject(projectId: string): Promise<Note[]> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("User not authenticated");
+  const user = await validateUser();
 
   const { data, error } = await supabase
     .from("notes")
@@ -163,8 +158,7 @@ export async function getNotesByProject(projectId: string): Promise<Note[]> {
  * Get pinned notes
  */
 export async function getPinnedNotes(): Promise<NoteWithProject[]> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("User not authenticated");
+  const user = await validateUser();
 
   const { data, error } = await supabase
     .from("notes")
@@ -184,8 +178,7 @@ export async function getPinnedNotes(): Promise<NoteWithProject[]> {
  * Toggle note pinned status
  */
 export async function toggleNotePinned(noteId: string): Promise<Note> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("User not authenticated");
+  const user = await validateUser();
 
   // First get the current pinned status
   const { data: currentNote, error: fetchError } = await supabase
@@ -217,8 +210,7 @@ export async function toggleNotePinned(noteId: string): Promise<Note> {
  * Search notes by content
  */
 export async function searchNotes(searchTerm: string): Promise<NoteWithProject[]> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("User not authenticated");
+  const user = await validateUser();
 
   const { data, error } = await supabase
     .from("notes")
@@ -243,8 +235,7 @@ export async function fetchNotesWithProjects(
   projectName?: string,
   pinnedOnly?: boolean
 ): Promise<NoteWithProject[]> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("User not authenticated");
+  const user = await validateUser();
 
   let query = supabase
     .from('notes')

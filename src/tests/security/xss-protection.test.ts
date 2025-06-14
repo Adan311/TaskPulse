@@ -108,7 +108,7 @@ describe('XSS Protection Security Tests', () => {
       })
     })
 
-    const { createTask } = await import('../../backend/api/services/tasks/taskOperations')
+    const { createTask } = await import('../../backend/api/services/task.service')
     const result = await createTask({
       title: xssPayload,
       description: 'Safe description',
@@ -156,11 +156,12 @@ describe('XSS Protection Security Tests', () => {
       })
     })
 
-    const { createEvent } = await import('../../backend/api/services/calendar.service')
+    const { createEvent } = await import('../../backend/api/services/event.service')
     const result = await createEvent({
       title: xssTitle,
-      start_time: '2024-01-01T10:00:00Z',
-      end_time: '2024-01-01T11:00:00Z'
+      startTime: '2024-01-01T10:00:00Z',
+      endTime: '2024-01-01T11:00:00Z',
+      participants: []
     })
 
     expect(result).toBeDefined()

@@ -1,4 +1,5 @@
 import { supabase } from '../../../database/client';
+import { validateUser, getCurrentUser } from '@/shared/utils/authUtils';
 
 export interface UserConsent {
   id?: string;
@@ -12,7 +13,7 @@ export interface UserConsent {
 
 export const recordCookieConsent = async (accepted: boolean): Promise<boolean> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       console.error("User not authenticated");
@@ -66,7 +67,7 @@ export const recordCookieConsent = async (accepted: boolean): Promise<boolean> =
 
 export const recordPolicyAcceptance = async (policyType: 'privacy' | 'terms'): Promise<boolean> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       console.error("User not authenticated");
@@ -124,7 +125,7 @@ export const recordPolicyAcceptance = async (policyType: 'privacy' | 'terms'): P
 
 export const getUserConsent = async (): Promise<UserConsent | null> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       return null;

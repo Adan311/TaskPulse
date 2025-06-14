@@ -4,7 +4,7 @@ import { useToast } from '@/frontend/hooks/use-toast';
 import { useGlobalTimer } from '@/frontend/context/TimerContext';
 
 // Import services
-import { getEvents, Event } from '@/backend/api/services/eventService';
+import { getEvents, Event } from '@/backend/api/services/event.service';
 import { fetchTasks } from '@/backend/api/services/task.service';
 import { fetchProjects } from '@/backend/api/services/project.service';
 import { getUserNotes, type NoteWithProject } from '@/backend/api/services/notes.service';

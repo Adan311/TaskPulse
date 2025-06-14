@@ -1,7 +1,8 @@
 import { supabase } from "../../../../database/client";
 import { v4 as uuidv4 } from "uuid";
 import { getGeminiApiKey, callGeminiApiDirectly, FormattedMessage, getAiSettings } from "../core/geminiService";
-import { analyzeConversation, saveTaskSuggestions, saveEventSuggestions } from "../suggestions/suggestionService";
+import { validateUser } from "@/shared/utils/authUtils";
+import { analyzeConversation, saveTaskSuggestions, saveEventSuggestions, requestSuggestions } from "../suggestions/suggestionService";
 import { 
   detectCommandIntent, 
   createTaskFromCommand, 
@@ -15,8 +16,33 @@ import {
 } from "../commands/commandService";
 import { buildContextualPrompt } from "../core/contextService";
 import { ChatMessage, generateConversationTitle } from "./conversationLifecycle";
-import { handleUserDataQuery } from "./dataQuerying";
+import { handleUserDataQuery } from "./dataQuerying/queryHandlers";
 import { ClarifyingQuestion } from "../suggestions/suggestionService";
+
+/**
+ * Helper function to create and save AI messages to the database
+ * Eliminates the duplicated pattern used 9 times in this file
+ */
+async function saveAiMessage(
+  message: ChatMessage,
+  metadata?: any
+): Promise<void> {
+  const insertData: any = {
+    id: message.id,
+    conversation_id: message.conversationId,
+    user_id: message.userId,
+    content: message.content,
+    role: message.role,
+    created_at: message.createdAt
+  };
+  
+  if (metadata) {
+    insertData.metadata = metadata;
+  }
+  
+  const { error } = await supabase.from('ai_messages').insert(insertData);
+  if (error) throw error;
+}
 
 interface ConversationMemory {
   recentTopics: string[];
@@ -202,8 +228,7 @@ export const sendMessage = async (
       throw new Error("Message cannot be empty");
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser();
 
     const userMessage: ChatMessage = {
       id: uuidv4(),
@@ -214,16 +239,7 @@ export const sendMessage = async (
       createdAt: new Date().toISOString(),
     };
 
-    const { error: userMessageError } = await supabase.from('ai_messages').insert({
-      id: userMessage.id,
-      conversation_id: conversationId,
-      user_id: user.id,
-      content: message,
-      role: 'user',
-      created_at: userMessage.createdAt
-    });
-
-    if (userMessageError) throw userMessageError;
+    await saveAiMessage(userMessage);
 
     const { data: messagesData, error: messagesError } = await supabase
       .from('ai_messages')
@@ -303,14 +319,7 @@ export const sendMessage = async (
           createdAt: new Date().toISOString(),
         };
         
-        await supabase.from('ai_messages').insert({
-          id: aiResponseMessage.id,
-          conversation_id: conversationId,
-          user_id: user.id,
-          content: aiResponseMessage.content,
-          role: 'assistant',
-          created_at: aiResponseMessage.createdAt
-        });
+        await saveAiMessage(aiResponseMessage);
         
         return { userMessage, aiMessage: aiResponseMessage };
       }
@@ -354,14 +363,7 @@ export const sendMessage = async (
           createdAt: new Date().toISOString(),
         };
         
-        await supabase.from('ai_messages').insert({
-          id: aiResponseMessage.id,
-          conversation_id: conversationId,
-          user_id: user.id,
-          content: commandResponseText,
-          role: 'assistant',
-          created_at: aiResponseMessage.createdAt
-        });
+        await saveAiMessage(aiResponseMessage);
         
         return { userMessage, aiMessage: aiResponseMessage };
       }
@@ -371,6 +373,49 @@ export const sendMessage = async (
     const commandResult = await detectCommandIntent(message, history);
     
     if (commandResult.hasCommand && commandResult.commandType) {
+      // Handle suggestion requests
+      if (commandResult.commandType === 'request_suggestions') {
+        try {
+          const result = await requestSuggestions(conversationId);
+          
+          let responseText = "";
+          if (result.hasSuggestions) {
+            responseText = "✅ I've analyzed your conversation and generated new suggestions! Check the suggestions page to see them.";
+          } else {
+            responseText = "I couldn't find any actionable tasks or events to suggest from our conversation. Try discussing specific projects, goals, or upcoming activities.";
+          }
+          
+          const aiSuggestionResponseMessage: ChatMessage = {
+            id: uuidv4(),
+            conversationId,
+            userId: user.id,
+            content: responseText,
+            role: 'assistant',
+            createdAt: new Date().toISOString(),
+          };
+          
+          await saveAiMessage(aiSuggestionResponseMessage);
+          
+          return { userMessage, aiMessage: aiSuggestionResponseMessage };
+        } catch (error) {
+          console.error("Error handling suggestion request:", error);
+          const errorMessage = "Sorry, I couldn't generate suggestions right now. Please try again later.";
+          
+          const aiErrorMessage: ChatMessage = {
+            id: uuidv4(),
+            conversationId,
+            userId: user.id,
+            content: errorMessage,
+            role: 'assistant',
+            createdAt: new Date().toISOString(),
+          };
+          
+          await saveAiMessage(aiErrorMessage);
+          
+          return { userMessage, aiMessage: aiErrorMessage };
+        }
+      }
+      
       // If the command requires confirmation (e.g., delete operations)
       if (commandResult.requiresConfirmation) {
         let itemType = "item";
@@ -411,15 +456,7 @@ export const sendMessage = async (
         };
         
         // Store command data in the metadata column that won't be shown in the UI
-        await supabase.from('ai_messages').insert({
-          id: aiConfirmationMessage.id,
-          conversation_id: conversationId,
-          user_id: user.id,
-          content: visibleMessage, // Only the visible message here
-          role: 'assistant',
-          created_at: aiConfirmationMessage.createdAt,
-          metadata: JSON.parse(pendingCommandInfo) // Store command info in metadata
-        });
+        await saveAiMessage(aiConfirmationMessage, JSON.parse(pendingCommandInfo));
         
         return { 
           userMessage, 
@@ -435,7 +472,7 @@ export const sendMessage = async (
       // For non-confirmation commands, process immediately
       let commandResponseText = "";
       if (commandResult.commandType === 'create_task') {
-        const taskResult = await createTaskFromCommand(user.id, commandResult.entities);
+        const taskResult = await createTaskFromCommand(user.id, commandResult.entities, history);
         commandResponseText = taskResult.success 
           ? `✅ Created task: "${taskResult.title}"`
           : `❌ Failed to create task: ${taskResult.error}`;
@@ -473,14 +510,7 @@ export const sendMessage = async (
         role: 'assistant',
         createdAt: new Date().toISOString(),
       };
-      await supabase.from('ai_messages').insert({
-        id: aiCommandResponseMessage.id,
-        conversation_id: conversationId,
-        user_id: user.id,
-        content: commandResponseText,
-        role: 'assistant',
-        created_at: aiCommandResponseMessage.createdAt
-      });
+      await saveAiMessage(aiCommandResponseMessage);
       return { userMessage, aiMessage: aiCommandResponseMessage };
     }
 
@@ -495,14 +525,7 @@ export const sendMessage = async (
         role: 'assistant',
         createdAt: new Date().toISOString(),
       };
-      await supabase.from('ai_messages').insert({
-        id: aiDataResponseMessage.id,
-        conversation_id: conversationId,
-        user_id: user.id,
-        content: userDataResponse,
-        role: 'assistant',
-        created_at: aiDataResponseMessage.createdAt
-      });
+      await saveAiMessage(aiDataResponseMessage);
       return { userMessage, aiMessage: aiDataResponseMessage };
     }
 
@@ -544,16 +567,7 @@ export const sendMessage = async (
       createdAt: new Date().toISOString(),
     };
 
-    const { error: aiMessageError } = await supabase.from('ai_messages').insert({
-      id: aiMessage.id,
-      conversation_id: conversationId,
-      user_id: user.id,
-      content: aiResponseText,
-      role: 'assistant',
-      created_at: aiMessage.createdAt
-    });
-
-    if (aiMessageError) throw aiMessageError;
+    await saveAiMessage(aiMessage);
 
     // Generate title for new conversations (after first AI response)
     if (history.length <= 2) { // Allow for user message + AI response

@@ -21,6 +21,60 @@ import {
   AIError 
 } from "@/backend/api/services/ai/core/errorService";
 
+// Auto-expanding textarea component
+interface AutoExpandingTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  maxRows?: number;
+}
+
+const AutoExpandingTextarea = React.forwardRef<HTMLTextAreaElement, AutoExpandingTextareaProps>(
+  ({ maxRows = 5, className, onChange, ...props }, ref) => {
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const combinedRef = ref || textareaRef;
+
+    const adjustHeight = () => {
+      const textarea = typeof combinedRef === 'function' ? textareaRef.current : combinedRef?.current;
+      if (textarea) {
+        // Reset height to auto to get the correct scrollHeight
+        textarea.style.height = 'auto';
+        
+        // Calculate the line height
+        const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight) || 20;
+        const maxHeight = lineHeight * maxRows;
+        
+        // Set the height to either scrollHeight or maxHeight, whichever is smaller
+        const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+        textarea.style.height = `${newHeight}px`;
+        
+        // Enable scrolling if content exceeds maxRows
+        textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
+      }
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      adjustHeight();
+      if (onChange) {
+        onChange(e);
+      }
+    };
+
+    useEffect(() => {
+      adjustHeight();
+    }, [props.value]);
+
+    return (
+      <textarea
+        ref={combinedRef}
+        className={`min-h-[40px] ${className}`}
+        onChange={handleChange}
+        rows={1}
+        {...props}
+      />
+    );
+  }
+);
+
+AutoExpandingTextarea.displayName = "AutoExpandingTextarea";
+
 interface ChatWindowProps {
   conversationId?: string;
   onNewConversation?: (conversationId: string) => void;
@@ -320,10 +374,14 @@ export function ChatWindow({ conversationId, onNewConversation, onCollapse }: Ch
       if (!user) return;
       
       const counts = await getSuggestionCounts(user.id);
+      const previousCounts = suggestionCounts.tasks + suggestionCounts.events;
+      const newCounts = counts.tasks + counts.events;
+      
       setSuggestionCounts(counts);
       
-      // Mark messages that have suggestions
-      if (counts.tasks > 0 || counts.events > 0) {
+      // Only mark messages with suggestions if there are NEW suggestions
+
+      if (newCounts > previousCounts && newCounts > 0) {
         // Find the last AI message manually (since findLast isn't available)
         let lastAiMessage = null;
         for (let i = messages.length - 1; i >= 0; i--) {
@@ -446,7 +504,7 @@ export function ChatWindow({ conversationId, onNewConversation, onCollapse }: Ch
   const totalSuggestions = suggestionCounts.tasks + suggestionCounts.events;
   
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-screen bg-background">
       {/* Modern Header */}
       <div className="bg-card border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
@@ -553,7 +611,7 @@ export function ChatWindow({ conversationId, onNewConversation, onCollapse }: Ch
       )}
       
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 max-h-[900px]">
+      <div className="flex-1 overflow-y-auto p-4">
         {hasApiKey === false ? (
           <div className="h-full flex flex-col items-center justify-center p-8">
             <div className="max-w-md text-center">
@@ -648,16 +706,16 @@ export function ChatWindow({ conversationId, onNewConversation, onCollapse }: Ch
       
       {/* Modern Input Area */}
       <div className="border-t border-border bg-card p-3">
-        <div className="flex items-end gap-3 max-w-4xl mx-auto">
-          <div className="flex-1">
-            <Textarea
+        <div className="flex items-end gap-3 w-full max-w-none">
+          <div className="flex-1 min-w-0">
+            <AutoExpandingTextarea
               placeholder={hasApiKey === false ? "Add your API key in settings to use AI chat" : "Type your message..."}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="min-h-[40px] max-h-[80px] resize-none rounded-2xl border-2 border-muted focus:border-primary/50 bg-background/50 px-3 py-2 text-sm"
               disabled={loading || hasApiKey === false}
-              rows={1}
+              maxRows={15}
+              className="w-full resize-none rounded-2xl border-2 border-muted focus:border-primary/50 bg-background/50 px-3 py-2 text-sm transition-all duration-200"
             />
           </div>
           
@@ -665,7 +723,7 @@ export function ChatWindow({ conversationId, onNewConversation, onCollapse }: Ch
             size="icon"
             onClick={handleSendMessage} 
             disabled={loading || !input.trim() || hasApiKey === false}
-            className="h-10 w-10 rounded-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+            className="h-10 w-10 rounded-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 flex-shrink-0"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />

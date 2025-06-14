@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/frontend/components/ui/dropdown-menu";
-import { Event, deleteEvent } from "@/backend/api/services/eventService";
+import { Event, deleteEvent } from "@/backend/api/services/event.service";
 import { EventTimeTracker } from "./EventTimeTracker";
 
 interface EventItemProps {

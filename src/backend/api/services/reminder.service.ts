@@ -1,6 +1,7 @@
 import { supabase } from "../../database/client";
 import { Task } from '@/backend/database/schema';
 import { Event } from '@/frontend/types/calendar';
+import { validateUser, getCurrentUser } from '@/shared/utils/authUtils';
 
 // Type for reminders
 export interface Reminder {
@@ -18,7 +19,7 @@ export interface Reminder {
  */
 export const checkPendingReminders = async (): Promise<Reminder[]> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       console.log("No authenticated user found when checking reminders");
@@ -95,7 +96,7 @@ export const checkPendingReminders = async (): Promise<Reminder[]> => {
  */
 export const markReminderAsSent = async (reminderId: string, type: 'task' | 'event'): Promise<void> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       console.log("No authenticated user found when marking reminder as sent");
@@ -125,7 +126,7 @@ export const markReminderAsSent = async (reminderId: string, type: 'task' | 'eve
  */
 export const setTaskReminder = async (taskId: string, reminderAt: string | null): Promise<void> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       console.log("No authenticated user found when setting task reminder");
@@ -157,7 +158,7 @@ export const setTaskReminder = async (taskId: string, reminderAt: string | null)
  */
 export const setEventReminder = async (eventId: string, reminderAt: string | null): Promise<void> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       console.log("No authenticated user found when setting event reminder");

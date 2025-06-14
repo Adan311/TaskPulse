@@ -17,6 +17,8 @@ import {
   DropdownMenuTrigger
 } from "@/frontend/components/ui/dropdown-menu";
 import { useProjects } from "@/frontend/features/project/hooks/useProjects";
+import { formatFileSize } from "@/shared/utils/fileUtils";
+
 
 interface FileListProps {
   project_id?: string;
@@ -85,9 +87,14 @@ export function FileList({
       fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ) {
       return <FileText className="h-5 w-5 mr-2 text-green-500" />;
+    } else {
+      return <File className="h-5 w-5 mr-2 text-gray-500" />;
     }
-    return <File className="h-5 w-5 mr-2 text-gray-500" />;
   };
+
+
+
+
 
   // Filter files based on type
   const filteredFiles = useMemo(() => {
@@ -113,13 +120,7 @@ export function FileList({
     });
   }, [files, typeFilter]);
 
-  // Add a helper to format file size
-  function formatFileSize(size?: number) {
-    if (size === undefined) return '~';
-    if (size < 1024) return `${size} B`;
-    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-    return `${(size / (1024 * 1024)).toFixed(2)} MB`;
-  }
+
 
   // Sort files
   const sortedFiles = useMemo(() => {

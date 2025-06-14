@@ -1,13 +1,14 @@
 import { supabase } from '../../../database/client';
 import { GoogleCalendarAuth } from './googleCalendarAuth';
 import { GoogleCalendarSync } from './googleCalendarSync';
+import { validateUser, getCurrentUser } from '@/shared/utils/authUtils';
 
 /**
  * Checks if the user has connected their Google Calendar
  */
 export async function hasGoogleCalendarConnected(): Promise<boolean> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       console.log("No authenticated user, cannot check Google Calendar connection");
@@ -38,7 +39,7 @@ export async function hasGoogleCalendarConnected(): Promise<boolean> {
  */
 export async function getConnectedCalendars(): Promise<any[]> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       console.log("No authenticated user, cannot get connected calendars");
@@ -72,7 +73,7 @@ export async function getConnectedCalendars(): Promise<any[]> {
  */
 export async function syncWithGoogleCalendar(): Promise<{success: boolean, imported?: number, pushed?: number, error?: string}> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       console.log("No user found, cannot sync with Google Calendar");

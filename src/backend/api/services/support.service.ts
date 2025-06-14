@@ -238,4 +238,4 @@ export async function getSupportContactStats() {
     console.error('Error in getSupportContactStats:', error);
     throw error;
   }
-} 
+}

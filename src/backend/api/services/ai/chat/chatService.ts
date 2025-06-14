@@ -29,7 +29,6 @@ export {
 
 // Re-export data querying functions
 export {
-  handleUserDataQuery,
-  formatFileSize
-} from './dataQuerying';
+  handleUserDataQuery
+} from './dataQuerying/queryHandlers';
 

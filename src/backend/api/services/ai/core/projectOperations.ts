@@ -1,4 +1,94 @@
 import { supabase } from "../../../../database/client";
+import { validateUser } from "@/shared/utils/authUtils";
+
+/**
+ * Helper function to resolve project ID from name or UUID
+ * Returns project data and the resolved ID
+ */
+async function resolveProjectId(
+  userId: string, 
+  projectId: string
+): Promise<{ project: any; actualProjectId: string } | null> {
+  // Check if projectId is a UUID format
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(projectId)) {
+    // This is not a UUID, so it's likely a project name
+    let projects = null;
+    let error = null;
+    
+    // Try 1: Exact match (case insensitive)
+    ({ data: projects, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('user', userId)
+      .ilike('name', projectId)
+      .limit(1));
+    
+    // Try 2: Partial match if exact match fails
+    if (!projects || projects.length === 0) {
+      ({ data: projects, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user', userId)
+        .ilike('name', `%${projectId}%`)
+        .limit(5));
+    }
+    
+    // Try 3: Remove common words and try again
+    if (!projects || projects.length === 0) {
+      const cleanedName = projectId.replace(/\b(project|the|my|a|an)\b/gi, '').trim();
+      if (cleanedName && cleanedName !== projectId) {
+        ({ data: projects, error } = await supabase
+          .from('projects')
+          .select('*')
+          .eq('user', userId)
+          .ilike('name', `%${cleanedName}%`)
+          .limit(5));
+      }
+    }
+    
+    if (error || !projects || projects.length === 0) {
+      return null;
+    }
+    
+    // If multiple matches, prefer exact or closest match
+    let selectedProject;
+    if (projects.length > 1) {
+      const exactMatch = projects.find(p => p.name.toLowerCase() === projectId.toLowerCase());
+      if (exactMatch) {
+        selectedProject = exactMatch;
+      } else {
+        // Find the shortest name (likely the best match)
+        selectedProject = projects.reduce((prev, curr) => 
+          prev.name.length <= curr.name.length ? prev : curr
+        );
+      }
+    } else {
+      selectedProject = projects[0];
+    }
+    
+    return {
+      project: selectedProject,
+      actualProjectId: selectedProject.id
+    };
+  } else {
+    // It's already a UUID, fetch the project data
+    const { data: projectData, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', projectId)
+      .eq('user', userId)
+      .single();
+    
+    if (error || !projectData) {
+      return null;
+    }
+    
+    return {
+      project: projectData,
+      actualProjectId: projectId
+    };
+  }
+}
 
 /**
  * Get all items (tasks, events, notes, files) for a specific project
@@ -11,76 +101,21 @@ export const getProjectItems = async (
 ): Promise<{tasks: any[], events: any[], notes: any[], files: any[]}> => {
   try {
     // Verify the user making the request
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.id !== userId) {
-      throw new Error("User not authenticated or ID mismatch");
+    const user = await validateUser(userId);
+    
+    // Resolve project ID using shared helper
+    const projectResolution = await resolveProjectId(user.id, projectId);
+    
+    if (!projectResolution) {
+      return {
+        tasks: [],
+        events: [],
+        notes: [],
+        files: []
+      };
     }
     
-    // Enhanced project matching - handle both UUID and project names
-    let actualProjectId = projectId;
-    
-    // Check if projectId is a UUID format
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(projectId)) {
-      // This is not a UUID, so it's likely a project name
-      let projects = null;
-      let error = null;
-      
-      // Try 1: Exact match (case insensitive)
-      ({ data: projects, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('user', user.id)
-        .ilike('name', projectId)
-        .limit(1));
-      
-      // Try 2: Partial match if exact match fails
-      if (!projects || projects.length === 0) {
-        ({ data: projects, error } = await supabase
-          .from('projects')
-          .select('*')
-          .eq('user', user.id)
-          .ilike('name', `%${projectId}%`)
-          .limit(5));
-      }
-      
-      // Try 3: Remove common words and try again
-      if (!projects || projects.length === 0) {
-        const cleanedName = projectId.replace(/\b(project|the|my|a|an)\b/gi, '').trim();
-        if (cleanedName && cleanedName !== projectId) {
-          ({ data: projects, error } = await supabase
-            .from('projects')
-            .select('*')
-            .eq('user', user.id)
-            .ilike('name', `%${cleanedName}%`)
-            .limit(5));
-        }
-      }
-      
-      if (error || !projects || projects.length === 0) {
-        return {
-          tasks: [],
-          events: [],
-          notes: [],
-          files: []
-        };
-      }
-      
-      // If multiple matches, prefer exact or closest match
-      if (projects.length > 1) {
-        const exactMatch = projects.find(p => p.name.toLowerCase() === projectId.toLowerCase());
-        if (exactMatch) {
-          actualProjectId = exactMatch.id;
-        } else {
-          // Find the shortest name (likely the best match)
-          const bestMatch = projects.reduce((prev, curr) => 
-            prev.name.length <= curr.name.length ? prev : curr
-          );
-          actualProjectId = bestMatch.id;
-        }
-      } else {
-        actualProjectId = projects[0].id;
-      }
-    }
+    const { actualProjectId } = projectResolution;
     
     // Get all project-related items
     const [tasksResult, eventsResult, notesResult, filesResult] = await Promise.all([
@@ -152,85 +187,16 @@ export const getProjectProgress = async (
 } | null> => {
   try {
     // Verify the user making the request
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.id !== userId) {
-      throw new Error("User not authenticated or ID mismatch");
+    const user = await validateUser(userId);
+    
+    // Resolve project ID using shared helper
+    const projectResolution = await resolveProjectId(user.id, projectId);
+    
+    if (!projectResolution) {
+      return null;
     }
     
-    // Enhanced project matching (same as getProjectItems)
-    let actualProjectId = projectId;
-    let project;
-    
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(projectId)) {
-      // This is not a UUID, so it's likely a project name
-      let projects = null;
-      let error = null;
-      
-      // Try 1: Exact match (case insensitive)
-      ({ data: projects, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('user', user.id)
-        .ilike('name', projectId)
-        .limit(1));
-      
-      // Try 2: Partial match if exact match fails
-      if (!projects || projects.length === 0) {
-        ({ data: projects, error } = await supabase
-          .from('projects')
-          .select('*')
-          .eq('user', user.id)
-          .ilike('name', `%${projectId}%`)
-          .limit(5));
-      }
-      
-      // Try 3: Remove common words and try again
-      if (!projects || projects.length === 0) {
-        const cleanedName = projectId.replace(/\b(project|the|my|a|an)\b/gi, '').trim();
-        if (cleanedName && cleanedName !== projectId) {
-          ({ data: projects, error } = await supabase
-            .from('projects')
-            .select('*')
-            .eq('user', user.id)
-            .ilike('name', `%${cleanedName}%`)
-            .limit(5));
-        }
-      }
-      
-      if (error || !projects || projects.length === 0) {
-        return null;
-      }
-      
-      // If multiple matches, prefer exact or closest match
-      if (projects.length > 1) {
-        const exactMatch = projects.find(p => p.name.toLowerCase() === projectId.toLowerCase());
-        if (exactMatch) {
-          project = exactMatch;
-        } else {
-          // Find the shortest name (likely the best match)
-          project = projects.reduce((prev, curr) => 
-            prev.name.length <= curr.name.length ? prev : curr
-          );
-        }
-      } else {
-        project = projects[0];
-      }
-      
-      actualProjectId = project.id;
-    } else {
-      const { data: projectData, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('id', projectId)
-        .eq('user', user.id)
-        .single();
-      
-      if (error || !projectData) {
-        return null;
-      }
-      
-      project = projectData;
-    }
+    const { project, actualProjectId } = projectResolution;
     
     // Get all project-related items
     const [tasksResult, eventsResult, notesResult, filesResult] = await Promise.all([
@@ -329,87 +295,17 @@ export const getProjectTimeline = async (
 } | null> => {
   try {
     // Verify the user making the request
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.id !== userId) {
-      throw new Error("User not authenticated or ID mismatch");
+    const user = await validateUser(userId);
+    
+    // Resolve project ID using shared helper
+    const projectResolution = await resolveProjectId(user.id, projectId);
+    
+    if (!projectResolution) {
+      return null;
     }
     
-    // Enhanced project matching (same as getProjectProgress)
-    let actualProjectId = projectId;
-    let projectName = projectId;
-    
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(projectId)) {
-      // This is not a UUID, so it's likely a project name
-      let projects = null;
-      let error = null;
-      
-      // Try 1: Exact match (case insensitive)
-      ({ data: projects, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('user', user.id)
-        .ilike('name', projectId)
-        .limit(1));
-      
-      // Try 2: Partial match if exact match fails
-      if (!projects || projects.length === 0) {
-        ({ data: projects, error } = await supabase
-          .from('projects')
-          .select('*')
-          .eq('user', user.id)
-          .ilike('name', `%${projectId}%`)
-          .limit(5));
-      }
-      
-      // Try 3: Remove common words and try again
-      if (!projects || projects.length === 0) {
-        const cleanedName = projectId.replace(/\b(project|the|my|a|an)\b/gi, '').trim();
-        if (cleanedName && cleanedName !== projectId) {
-          ({ data: projects, error } = await supabase
-            .from('projects')
-            .select('*')
-            .eq('user', user.id)
-            .ilike('name', `%${cleanedName}%`)
-            .limit(5));
-        }
-      }
-      
-      if (error || !projects || projects.length === 0) {
-        return null;
-      }
-      
-      // If multiple matches, prefer exact or closest match
-      let selectedProject;
-      if (projects.length > 1) {
-        const exactMatch = projects.find(p => p.name.toLowerCase() === projectId.toLowerCase());
-        if (exactMatch) {
-          selectedProject = exactMatch;
-        } else {
-          // Find the shortest name (likely the best match)
-          selectedProject = projects.reduce((prev, curr) => 
-            prev.name.length <= curr.name.length ? prev : curr
-          );
-        }
-      } else {
-        selectedProject = projects[0];
-      }
-      
-      actualProjectId = selectedProject.id;
-      projectName = selectedProject.name;
-    } else {
-      const { data: projectData, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('id', projectId)
-        .eq('user', user.id)
-        .single();
-      
-      if (error || !projectData) {
-        return null;
-      }
-      
-      projectName = projectData.name;
-    }
+    const { project: projectData, actualProjectId } = projectResolution;
+    const projectName = projectData.name;
     
     // Calculate date range
     const now = new Date();

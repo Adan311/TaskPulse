@@ -419,7 +419,7 @@ describe('ProjectService', () => {
     }
 
     // Act & Assert
-    await expect(createProject(projectData)).rejects.toThrow('User must be authenticated to create projects')
+    await expect(createProject(projectData)).rejects.toThrow('User not authenticated')
   })
 
   test('updateProject should handle project not found', async () => {

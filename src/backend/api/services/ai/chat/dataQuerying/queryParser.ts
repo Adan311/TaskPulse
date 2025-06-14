@@ -51,7 +51,17 @@ export const STATUS_KEYWORDS = {
 };
 
 // Question words that should NOT be treated as project names
-export const QUESTION_WORDS = ['what', 'which', 'how', 'when', 'where', 'who', 'why', 'tell', 'show', 'list', 'get', 'give'];
+export const QUESTION_WORDS = ['what', 'which', 'how', 'when', 'where', 'who', 'why', 'tell', 'show', 'list', 'get', 'give', 'suggest', 'generate', 'create'];
+
+// Suggestion request patterns that should NOT be treated as project queries
+export const SUGGESTION_PATTERNS = [
+  /suggest\s+me\s+(tasks?|events?|suggestions?)/i,
+  /generate\s+(tasks?|events?|suggestions?)/i,
+  /give\s+me\s+(tasks?|events?|suggestions?)/i,
+  /create\s+suggestions?/i,
+  /get\s+suggestions?/i,
+  /show\s+me\s+suggestions?/i
+];
 
 /**
  * Project name extraction patterns
@@ -113,6 +123,11 @@ export const MONTH_DISPLAY_NAMES = {
  * Extract project name and item type from query
  */
 export function extractProjectInfo(query: string): { projectName: string | null; itemType: string | null } {
+  // Skip project extraction for suggestion requests and command queries
+  if (isSuggestionRequest(query) || isCommandQuery(query)) {
+    return { projectName: null, itemType: null };
+  }
+
   let projectNameFromQuery: string | null = null;
   let requestedItemType: string | null = null;
   
@@ -280,15 +295,24 @@ export function hasTimeReference(query: string, targetDate: string | null, start
     /(?:january|february|march|april|may|june|july|august|september|october|november|december)/.test(lowercaseQuery));
 }
 
+
+
 /**
- * Utility function to format file size
+ * Check if query is a suggestion request
  */
-export const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes';
+export function isSuggestionRequest(query: string): boolean {
+  return SUGGESTION_PATTERNS.some(pattern => pattern.test(query));
+}
+
+/**
+ * Check if a query contains command words that should not be treated as project queries
+ */
+export function isCommandQuery(query: string): boolean {
+  const commandPatterns = [
+    /^(create|add|make|schedule|set up|delete|remove|update|change|suggest|generate|give me|show me|list|tell me)/i,
+    /(create|add|make|schedule|set up|delete|remove|update|change) (a |an |the )?(task|event|project|reminder)/i,
+    /(suggest|generate|give me|show me) (tasks?|events?|suggestions?)/i
+  ];
   
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}; 
+  return commandPatterns.some(pattern => pattern.test(query.trim()));
+} 

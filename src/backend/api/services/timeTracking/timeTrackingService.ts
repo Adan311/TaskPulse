@@ -1,5 +1,6 @@
 import { supabase } from '../../../database/client';
 import { v4 as uuidv4 } from 'uuid';
+import { validateUser, getCurrentUser } from '@/shared/utils/authUtils';
 
 export interface TimeLog {
   id: string;
@@ -49,8 +50,7 @@ export const startTimeTracking = async (params: {
   timerMode?: 'manual' | 'pomodoro' | 'continuous';
 }): Promise<TimeLog> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser();
 
     // Check if there are ANY active sessions (improved duplicate prevention)
     const { data: activeSessions, error: checkError } = await supabase
@@ -97,7 +97,7 @@ export const startTimeTracking = async (params: {
  */
 export const getActiveTimeLog = async (): Promise<TimeLog | null> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) return null;
 
     const { data, error } = await supabase
@@ -123,8 +123,7 @@ export const getActiveTimeLog = async (): Promise<TimeLog | null> => {
  */
 export const pauseTimeTracking = async (): Promise<TimeLog> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser();
 
     // First, get the most recent active session
     const { data: activeSessions, error: selectError } = await supabase
@@ -169,8 +168,7 @@ export const pauseTimeTracking = async (): Promise<TimeLog> => {
  */
 export const resumeTimeTracking = async (): Promise<TimeLog> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser();
 
     // First, get the most recent paused session
     const { data: pausedSessions, error: selectError } = await supabase
@@ -210,8 +208,7 @@ export const resumeTimeTracking = async (): Promise<TimeLog> => {
  */
 export const stopTimeTracking = async (): Promise<TimeLog> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser();
 
     const endTime = new Date().toISOString();
 
@@ -267,8 +264,7 @@ export const stopTimeTracking = async (): Promise<TimeLog> => {
  */
 export const cancelTimeTracking = async (): Promise<void> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser();
 
     const { error } = await supabase
       .from('time_logs')
@@ -288,8 +284,7 @@ export const cancelTimeTracking = async (): Promise<void> => {
  */
 export const getTimeLogs = async (filters?: TimeLogFilters): Promise<TimeLog[]> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser();
 
     let query = supabase
       .from('time_logs')
@@ -325,8 +320,7 @@ export const getTimeLogs = async (filters?: TimeLogFilters): Promise<TimeLog[]> 
  */
 export const getTimeStats = async (filters?: TimeLogFilters): Promise<TimeStats> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser();
 
     // Get all completed time logs for calculations
     const timeLogs = await getTimeLogs({ 
@@ -379,8 +373,7 @@ export const updateTimeLog = async (
   updates: Partial<Pick<TimeLog, 'description' | 'session_type' | 'end_time'>>
 ): Promise<TimeLog> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser();
 
     const { data, error } = await supabase
       .from('time_logs')
@@ -403,8 +396,7 @@ export const updateTimeLog = async (
  */
 export const deleteTimeLog = async (timeLogId: string): Promise<void> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser();
 
     const { error } = await supabase
       .from('time_logs')
@@ -424,8 +416,7 @@ export const deleteTimeLog = async (timeLogId: string): Promise<void> => {
  */
 export const getProjectTimeLogs = async (projectId: string): Promise<TimeLog[]> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser();
 
     const { data, error } = await supabase
       .from('time_logs')
@@ -447,8 +438,7 @@ export const getProjectTimeLogs = async (projectId: string): Promise<TimeLog[]> 
  */
 export const getTaskTimeLogs = async (taskId: string): Promise<TimeLog[]> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser();
 
     const { data, error } = await supabase
       .from('time_logs')
@@ -470,8 +460,7 @@ export const getTaskTimeLogs = async (taskId: string): Promise<TimeLog[]> => {
  */
 export const getEventTimeLogs = async (eventId: string): Promise<TimeLog[]> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser();
 
     const { data, error } = await supabase
       .from('time_logs')
@@ -520,8 +509,7 @@ export const getProjectTimeStats = async (projectId: string): Promise<{
   thisWeekMinutes: number;
 }> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser();
 
     const timeLogs = await getProjectTimeLogs(projectId);
     
@@ -560,8 +548,7 @@ export const getTimeAnalyticsByType = async (days: number = 7): Promise<{
   planning: number;
 }> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser();
 
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
@@ -618,8 +605,7 @@ export const getProductivityInsights = async (): Promise<{
   taskCompletionRate: number;
 }> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser();
 
     const today = new Date();
     const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());

@@ -5,8 +5,6 @@ export interface TimerSession {
   projectId?: string;
   description?: string;
   sessionType: 'work' | 'break' | 'meeting' | 'planning';
-}
-
 /**
  * Start a timer session with time tracking
  */
@@ -22,7 +20,6 @@ export const startTimerSession = async (session: TimerSession): Promise<TimeLog>
   } catch (error) {
     console.error('Error starting timer session:', error);
     throw error;
-  }
 };
 
 /**
@@ -34,13 +31,10 @@ export const completeTimerSession = async (): Promise<TimeLog | null> => {
     if (!activeSession) {
       console.warn('No active timer session to complete');
       return null;
-    }
-
     return await stopTimeTracking();
   } catch (error) {
     console.error('Error completing timer session:', error);
     throw error;
-  }
 };
 
 /**
@@ -52,7 +46,6 @@ export const getCurrentTimerSession = async (): Promise<TimeLog | null> => {
   } catch (error) {
     console.error('Error getting current timer session:', error);
     return null;
-  }
 };
 
 /**
@@ -65,5 +58,4 @@ export const hasActiveTimerSession = async (): Promise<boolean> => {
   } catch (error) {
     console.error('Error checking active timer session:', error);
     return false;
-  }
 }; 

@@ -92,7 +92,7 @@ describe('Injection Attack Security Tests', () => {
       select: vi.fn().mockReturnThis()
     })
 
-    const { createTask } = await import('../../backend/api/services/tasks/taskOperations')
+    const { createTask } = await import('../../backend/api/services/task.service')
 
     // Act & Assert
     for (const payload of nosqlPayloads) {

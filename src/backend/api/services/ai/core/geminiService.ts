@@ -1,4 +1,5 @@
 import { supabase } from "../../../../database/client";
+import { getCurrentUser } from "@/shared/utils/authUtils";
 
 /**
  * Service for interacting with Google's Gemini API
@@ -38,7 +39,7 @@ export interface FormattedMessage {
  */
 export const getGeminiApiKey = async (): Promise<string | null> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       console.error("No authenticated user found when getting Gemini API key");
@@ -163,7 +164,7 @@ export const callGeminiApiDirectly = async (
  */
 export const saveGeminiApiKey = async (apiKey: string, useOwnKey: boolean): Promise<boolean> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       console.error("User must be authenticated to save API key");
@@ -220,7 +221,7 @@ export const saveGeminiApiKey = async (apiKey: string, useOwnKey: boolean): Prom
  */
 export const getAiSettings = async () => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       console.error("No authenticated user found when getting AI settings");
@@ -258,7 +259,7 @@ export const updateAiSettings = async (settings: {
   ai_suggestions_enabled?: boolean;
 }): Promise<boolean> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     
     if (!user) {
       console.error("User must be authenticated to update AI settings");

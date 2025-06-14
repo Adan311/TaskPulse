@@ -1,5 +1,6 @@
 
 import { supabase } from '../../../database/client';
+import { validateUser } from '@/shared/utils/authUtils';
 
 /**
  * Authentication related functions for Google Calendar
@@ -11,12 +12,7 @@ export const GoogleCalendarAuth = {
    */
   initiateGoogleCalendarAuth: async (): Promise<string | null> => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        console.error("User must be authenticated to connect Google Calendar");
-        return null;
-      }
+      const user = await validateUser();
       
       // Generate a random state parameter for security
       const state = Math.random().toString(36).substring(2, 15);
@@ -70,12 +66,7 @@ export const GoogleCalendarAuth = {
    */
   revokeGoogleCalendarAccess: async (calendarId: string): Promise<boolean> => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        console.log("No user found, cannot revoke Google Calendar");
-        return false;
-      }
+      const user = await validateUser();
 
       console.log("Attempting to revoke Google Calendar access for calendar ID:", calendarId);
 

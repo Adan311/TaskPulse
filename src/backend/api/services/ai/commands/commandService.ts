@@ -1,15 +1,77 @@
 import { supabase } from "../../../../database/client";
 import { getGeminiApiKey, callGeminiApiDirectly, FormattedMessage } from "../core/geminiService";
+import { validateUser } from "@/shared/utils/authUtils";
 import { createTask, deleteTask, updateTask } from "../../task.service";
-import { createEvent, deleteEvent, updateEvent } from "../../eventService";
+import { createEvent, deleteEvent, updateEvent } from "../../event.service";
 import { createProject, deleteProject, updateProject } from "../../project.service";
+
+/**
+ * Helper function for common validation and error responses
+ */
+const createErrorResponse = (error: string) => ({ success: false, error });
+
+/**
+ * Helper function to find an item (task/event/project) by ID or name
+ */
+const findItemByIdOrName = async (
+  table: 'tasks' | 'events' | 'projects',
+  userId: string,
+  entities: { id?: string; item_name?: string }
+): Promise<{ success: boolean; item?: any; error?: string }> => {
+  try {
+    if (!entities.id && !entities.item_name) {
+      return createErrorResponse(`${table.slice(0, -1)} ID or name is required`);
+    }
+
+    let item;
+    
+    if (entities.id) {
+      // Find by ID
+      const { data, error } = await supabase
+        .from(table)
+        .select("*")
+        .eq("id", entities.id)
+        .eq("user", userId)
+        .single();
+      
+      if (error) throw error;
+      item = data;
+    } else {
+      // Find by name (title)
+      const titleColumn = table === 'projects' ? 'name' : 'title';
+      const { data, error } = await supabase
+        .from(table)
+        .select("*")
+        .eq("user", userId)
+        .ilike(titleColumn, `%${entities.item_name}%`)
+        .limit(1);
+      
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        return createErrorResponse(`${table.slice(0, -1)} "${entities.item_name}" not found`);
+      }
+      item = data[0];
+    }
+
+    if (!item) {
+      return createErrorResponse(`${table.slice(0, -1)} not found`);
+    }
+
+    return { success: true, item };
+  } catch (error) {
+    console.error(`Error finding ${table.slice(0, -1)}:`, error);
+    return createErrorResponse(
+      error instanceof Error ? error.message : `Unknown error finding ${table.slice(0, -1)}`
+    );
+  }
+};
 
 /**
  * Interface for command detection results
  */
 export interface CommandDetectionResult {
   hasCommand: boolean;
-  commandType: 'create_task' | 'create_event' | 'create_project' | 'set_reminder' | 'delete_task' | 'delete_event' | 'delete_project' | 'update_task' | 'update_event' | 'update_project' | null;
+  commandType: 'create_task' | 'create_event' | 'create_project' | 'set_reminder' | 'delete_task' | 'delete_event' | 'delete_project' | 'update_task' | 'update_event' | 'update_project' | 'request_suggestions' | null;
   entities: any;
   requiresConfirmation?: boolean;
 }
@@ -49,7 +111,7 @@ export const detectCommandIntent = async (
       Return ONLY a JSON object with the following structure:
       {
         "hasCommand": true/false,
-        "commandType": one of ["create_task", "create_event", "create_project", "set_reminder", "delete_task", "delete_event", "delete_project", "update_task", "update_event", "update_project"] or null,
+        "commandType": one of ["create_task", "create_event", "create_project", "set_reminder", "delete_task", "delete_event", "delete_project", "update_task", "update_event", "update_project", "request_suggestions"] or null,
         "requiresConfirmation": true/false (set to true for all delete operations),
         "entities": {
           // For tasks:
@@ -87,23 +149,30 @@ export const detectCommandIntent = async (
           "priority": "low/medium/high",
           "status": "active/completed/on-hold",
           
-          // For reminders:
-          "task_id": null, // This will be filled in later
-          "reminder_time": "YYYY-MM-DDTHH:MM:SS"
+          // For reminders (can be added to tasks/events):
+          "reminder_time": "YYYY-MM-DDTHH:MM:SS", // When to send reminder
+          "due_date": "YYYY-MM-DD", // Set due date when reminder is specified
+          
+          // For suggestion requests:
+          "type": "tasks" or "events" or "both" // What type of suggestions to generate
         }
       }
       
-      IMPORTANT: ONLY return hasCommand: true if the message is CLEARLY and EXPLICITLY an instruction to create, update, or delete something.
-      The message must include a direct command verb like "create", "add", "make", "schedule", "set up", "delete", "remove", "update", "change", etc.
+      IMPORTANT: ONLY return hasCommand: true if the message is CLEARLY and EXPLICITLY an instruction to create, update, delete something, OR request suggestions.
+      The message must include a direct command verb like "create", "add", "make", "schedule", "set up", "delete", "remove", "update", "change", "suggest", "generate", etc.
       
-      Special case: If user says something like "create the event" without specifics, set hasCommand: true and 
-      commandType: "create_event", and extract any event details from the conversation context.
+      Special cases: 
+      - If user says something like "create the event" without specifics, set hasCommand: true and commandType: "create_event", and extract any event details from the conversation context.
+      - If user says "create a task" without specifics, use conversation context to infer a reasonable title. If no context available, set title to "New Task" and let the system ask for details.
+      - For suggestion requests like "suggest me tasks", "generate suggestions", "give me task suggestions", set commandType: "request_suggestions".
       
       Examples of commands that should return hasCommand: true:
       - "Create a task to finish the report by Friday"
       - "Add a meeting with John tomorrow at 3pm"
       - "Make a reminder for the presentation on Monday"
       - "Schedule a call with the team next week"
+      - "Remind me to submit the report by 5pm"
+      - "Set a reminder to call mom at 7pm"
       - "Create the event" (when context mentions an event)
       - "Create a new project called Website Redesign"
       - "Make a project for the marketing campaign"
@@ -117,6 +186,14 @@ export const detectCommandIntent = async (
       - "Move the lunch meeting to 1:30"
       - "Can you edit this for 3pm?"
       - "Reschedule it to 4 o'clock"
+      - "Create a task" (use context or set generic title)
+      - "Suggest me tasks"
+      - "Generate task suggestions"
+      - "Give me some suggestions"
+      - "Show me suggestions"
+      - "Remind me to call John at 3pm tomorrow"
+      - "Set a reminder for the meeting in 30 minutes"
+      - "Create a task with reminder for next week"
       
       For time parsing, convert common formats to ISO format:
       - "2pm" or "2 pm" → "14:00:00"
@@ -125,10 +202,22 @@ export const detectCommandIntent = async (
       - "noon" → "12:00:00"
       - "midnight" → "00:00:00"
       
+      IMPORTANT: When a reminder is specified, ALWAYS set a due_date as well:
+      - If reminder is "tomorrow at 3pm", set due_date to tomorrow's date
+      - If reminder is "in 30 minutes", set due_date to current date 
+      - If reminder is "next Friday", set due_date to next Friday
+      - The frontend requires due_date to properly display reminders
+      
       For event updates, use the "updates" field to specify what changed:
       - If user says "change time to 3pm", set updates: {"time": "YYYY-MM-DDTHH:MM:SS"}
       - If user says "update title to Meeting", set updates: {"title": "Meeting"}
       - If user says "move to tomorrow at 2pm", set updates: {"start_time": "YYYY-MM-DDTHH:MM:SS"}
+      
+      For task/event identification when user says "it", "this", "that", "the task", etc:
+      - Look at recent conversation context to find the most recently created/mentioned task/event
+      - If user just created a task called "call mom", and then says "link it to project alpha", 
+        set item_name: "call mom" and project_name: "alpha"
+      - Use conversation history to infer which item the user is referring to
       
       Examples of statements that should return hasCommand: false (these are just informational):
       - "I need to research topics about cars and make a ppt"
@@ -176,33 +265,68 @@ export const detectCommandIntent = async (
  */
 export const createTaskFromCommand = async (
   userId: string, 
-  entities: any
+  entities: any,
+  conversationHistory?: any[]
 ): Promise<{ success: boolean; title?: string; error?: string }> => {
   try {
     // First check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
-    
-    // Ensure the user ID matches
-    if (user.id !== userId) throw new Error("User ID mismatch");
+    const user = await validateUser(userId);
     
     // Check for required fields
     if (!entities.title) {
-      return { success: false, error: "Task title is required" };
+      // If no title provided, try to infer from conversation context or provide a default
+      if (conversationHistory && conversationHistory.length > 0) {
+        // Look for task-related context in recent conversation
+        const recentContext = conversationHistory.slice(-3).map(msg => msg.content).join(' ');
+        const contextLower = recentContext.toLowerCase();
+        
+        // Try to extract a task from context
+        if (contextLower.includes('japan') || contextLower.includes('trip')) {
+          entities.title = "Plan Japan trip";
+        } else if (contextLower.includes('project') || contextLower.includes('work')) {
+          entities.title = "Work on project";
+        } else if (contextLower.includes('meeting') || contextLower.includes('call')) {
+          entities.title = "Prepare for meeting";
+        } else {
+          entities.title = "New Task";
+        }
+      } else {
+        entities.title = "New Task";
+      }
     }
     
     // Find project if specified
     let projectId = undefined;
     if (entities.project_name) {
-      const { data, error } = await supabase
+      // First try exact match
+      const { data: exactMatch, error: exactError } = await supabase
         .from("projects")
-        .select("id")
+        .select("id, name")
         .eq("user", userId)
-        .ilike("name", `%${entities.project_name}%`)
+        .eq("name", entities.project_name)
         .limit(1);
       
-      if (!error && data && data.length > 0) {
-        projectId = data[0].id;
+      if (!exactError && exactMatch && exactMatch.length > 0) {
+        projectId = exactMatch[0].id;
+        console.log(`Task linked to project: ${exactMatch[0].name} (ID: ${projectId})`);
+      } else {
+        // Try case-insensitive match
+        const { data: allProjects, error: allError } = await supabase
+          .from("projects")
+          .select("id, name")
+          .eq("user", userId);
+        
+        if (!allError && allProjects) {
+          const matchingProject = allProjects.find(p => 
+            p.name.toLowerCase() === entities.project_name.toLowerCase()
+          );
+          if (matchingProject) {
+            projectId = matchingProject.id;
+            console.log(`Task linked to project (case-insensitive): ${matchingProject.name} (ID: ${projectId})`);
+          } else {
+            console.log(`No project found matching: "${entities.project_name}". Available projects:`, allProjects.map(p => p.name));
+          }
+        }
       }
     }
     
@@ -215,6 +339,7 @@ export const createTaskFromCommand = async (
       status: 'todo',
       project: projectId,
       labels: entities.labels || [],
+      reminder_at: entities.reminder_time || null,
     });
     
     return { success: true, title: task.title };
@@ -236,11 +361,7 @@ export const createEventFromCommand = async (
 ): Promise<{ success: boolean; title?: string; time?: string; error?: string }> => {
   try {
     // First check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
-    
-    // Ensure the user ID matches
-    if (user.id !== userId) throw new Error("User ID mismatch");
+    const user = await validateUser(userId);
     
     // Check for required fields and attempt to auto-complete missing ones
     let eventTitle = entities.title;
@@ -253,7 +374,7 @@ export const createEventFromCommand = async (
     
     // If still no title, provide a generic error
     if (!eventTitle) {
-      return { success: false, error: "Event title is required" };
+      return createErrorResponse("Event title is required");
     }
     
     // If start time is missing but we have a date, try to set a default time
@@ -264,7 +385,7 @@ export const createEventFromCommand = async (
     }
     
     if (!startTime) {
-      return { success: false, error: "Event start time is required" };
+      return createErrorResponse("Event start time is required");
     }
     
     // Set end time if not provided (default to 1 hour)
@@ -280,15 +401,35 @@ export const createEventFromCommand = async (
     // Find project if specified
     let projectId = undefined;
     if (entities.project_name) {
-      const { data, error } = await supabase
+      // First try exact match
+      const { data: exactMatch, error: exactError } = await supabase
         .from("projects")
-        .select("id")
+        .select("id, name")
         .eq("user", userId)
-        .ilike("name", `%${entities.project_name}%`)
+        .eq("name", entities.project_name)
         .limit(1);
       
-      if (!error && data && data.length > 0) {
-        projectId = data[0].id;
+      if (!exactError && exactMatch && exactMatch.length > 0) {
+        projectId = exactMatch[0].id;
+        console.log(`Event linked to project: ${exactMatch[0].name} (ID: ${projectId})`);
+      } else {
+        // Try case-insensitive match
+        const { data: allProjects, error: allError } = await supabase
+          .from("projects")
+          .select("id, name")
+          .eq("user", userId);
+        
+        if (!allError && allProjects) {
+          const matchingProject = allProjects.find(p => 
+            p.name.toLowerCase() === entities.project_name.toLowerCase()
+          );
+          if (matchingProject) {
+            projectId = matchingProject.id;
+            console.log(`Event linked to project (case-insensitive): ${matchingProject.name} (ID: ${projectId})`);
+          } else {
+            console.log(`No project found matching: "${entities.project_name}". Available projects:`, allProjects.map(p => p.name));
+          }
+        }
       }
     }
     
@@ -301,6 +442,7 @@ export const createEventFromCommand = async (
       source: 'app',
       project: projectId,
       participants: [],
+      reminderAt: entities.reminder_time || undefined,
     });
     
     // Format time for response with consistent 12-hour format
@@ -325,8 +467,7 @@ export const createProjectFromCommand = async (
 ): Promise<{ success: boolean; name?: string; error?: string }> => {
   try {
     // First check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser(userId);
     
     // Ensure the user ID matches
     if (user.id !== userId) throw new Error("User ID mismatch");
@@ -364,52 +505,16 @@ export const deleteTaskFromCommand = async (
 ): Promise<{ success: boolean; title?: string; error?: string }> => {
   try {
     // First check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser(userId);
     
-    // Ensure the user ID matches
-    if (user.id !== userId) throw new Error("User ID mismatch");
+    // Find the task using the helper function
+    const result = await findItemByIdOrName('tasks', userId, entities);
     
-    // Check for task identification info
-    if (!entities.id && !entities.item_name) {
-      return { success: false, error: "Task ID or name is required for deletion" };
+    if (!result.success) {
+      return { success: false, error: result.error };
     }
     
-    // Try to find the task by ID or name
-    let taskToDelete;
-    
-    if (entities.id) {
-      // Find by ID
-      const { data, error } = await supabase
-        .from("tasks")
-        .select("*")
-        .eq("id", entities.id)
-        .eq("user", userId)
-        .single();
-      
-      if (error) throw error;
-      taskToDelete = data;
-    } else {
-      // Find by name (title)
-      const { data, error } = await supabase
-        .from("tasks")
-        .select("*")
-        .eq("user", userId)
-        .ilike("title", `%${entities.item_name}%`)
-        .limit(1);
-      
-      if (error) throw error;
-      if (!data || data.length === 0) {
-        return { success: false, error: `Task "${entities.item_name}" not found` };
-      }
-      taskToDelete = data[0];
-    }
-    
-    if (!taskToDelete) {
-      return { success: false, error: "Task not found" };
-    }
-    
-    // Store title for response before deletion
+    const taskToDelete = result.item;
     const title = taskToDelete.title;
     
     // Delete the task
@@ -434,52 +539,16 @@ export const deleteEventFromCommand = async (
 ): Promise<{ success: boolean; title?: string; error?: string }> => {
   try {
     // First check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser(userId);
     
-    // Ensure the user ID matches
-    if (user.id !== userId) throw new Error("User ID mismatch");
+    // Find the event using the helper function
+    const result = await findItemByIdOrName('events', userId, entities);
     
-    // Check for event identification info
-    if (!entities.id && !entities.item_name) {
-      return { success: false, error: "Event ID or name is required for deletion" };
+    if (!result.success) {
+      return { success: false, error: result.error };
     }
     
-    // Try to find the event by ID or name
-    let eventToDelete;
-    
-    if (entities.id) {
-      // Find by ID
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .eq("id", entities.id)
-        .eq("user", userId)
-        .single();
-      
-      if (error) throw error;
-      eventToDelete = data;
-    } else {
-      // Find by name (title)
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .eq("user", userId)
-        .ilike("title", `%${entities.item_name}%`)
-        .limit(1);
-      
-      if (error) throw error;
-      if (!data || data.length === 0) {
-        return { success: false, error: `Event "${entities.item_name}" not found` };
-      }
-      eventToDelete = data[0];
-    }
-    
-    if (!eventToDelete) {
-      return { success: false, error: "Event not found" };
-    }
-    
-    // Store title for response before deletion
+    const eventToDelete = result.item;
     const title = eventToDelete.title;
     
     // Delete the event
@@ -504,50 +573,16 @@ export const updateEventFromCommand = async (
 ): Promise<{ success: boolean; title?: string; time?: string; error?: string }> => {
   try {
     // First check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser(userId);
     
-    // Ensure the user ID matches
-    if (user.id !== userId) throw new Error("User ID mismatch");
+    // Find the event using the helper function
+    const result = await findItemByIdOrName('events', userId, entities);
     
-    // Check for event identification info
-    if (!entities.id && !entities.item_name) {
-      return { success: false, error: "Event ID or name is required for updating" };
+    if (!result.success) {
+      return { success: false, error: result.error };
     }
     
-    // Try to find the event by ID or name
-    let eventToUpdate;
-    
-    if (entities.id) {
-      // Find by ID
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .eq("id", entities.id)
-        .eq("user", userId)
-        .single();
-      
-      if (error) throw error;
-      eventToUpdate = data;
-    } else {
-      // Find by name (title)
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .eq("user", userId)
-        .ilike("title", `%${entities.item_name}%`)
-        .limit(1);
-      
-      if (error) throw error;
-      if (!data || data.length === 0) {
-        return { success: false, error: `Event "${entities.item_name}" not found` };
-      }
-      eventToUpdate = data[0];
-    }
-    
-    if (!eventToUpdate) {
-      return { success: false, error: "Event not found" };
-    }
+    const eventToUpdate = result.item;
     
     // Check if updates are provided
     if (!entities.updates && !entities.title && !entities.description && !entities.start_time && !entities.end_time) {
@@ -636,11 +671,7 @@ export const deleteProjectFromCommand = async (
 ): Promise<{ success: boolean; title?: string; error?: string }> => {
   try {
     // First check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
-    
-    // Ensure the user ID matches
-    if (user.id !== userId) throw new Error("User ID mismatch");
+    const user = await validateUser(userId);
     
     // Check for project identification info
     if (!entities.id && !entities.item_name) {
@@ -730,58 +761,24 @@ export const updateTaskFromCommand = async (
 ): Promise<{ success: boolean; title?: string; error?: string }> => {
   try {
     // First check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
+    const user = await validateUser(userId);
     
-    // Ensure the user ID matches
-    if (user.id !== userId) throw new Error("User ID mismatch");
+    // Find the task using the helper function
+    const result = await findItemByIdOrName('tasks', userId, entities);
     
-    // Check for task identification info
-    if (!entities.id && !entities.item_name) {
-      return { success: false, error: "Task ID or name is required for updating" };
+    if (!result.success) {
+      return { success: false, error: result.error };
     }
     
-    // Try to find the task by ID or name
-    let taskToUpdate;
-    
-    if (entities.id) {
-      // Find by ID
-      const { data, error } = await supabase
-        .from("tasks")
-        .select("*")
-        .eq("id", entities.id)
-        .eq("user", userId)
-        .single();
-      
-      if (error) throw error;
-      taskToUpdate = data;
-    } else {
-      // Find by name (title)
-      const { data, error } = await supabase
-        .from("tasks")
-        .select("*")
-        .eq("user", userId)
-        .ilike("title", `%${entities.item_name}%`)
-        .limit(1);
-      
-      if (error) throw error;
-      if (!data || data.length === 0) {
-        return { success: false, error: `Task "${entities.item_name}" not found` };
-      }
-      taskToUpdate = data[0];
-    }
-    
-    if (!taskToUpdate) {
-      return { success: false, error: "Task not found" };
-    }
+    const taskToUpdate = result.item;
     
     // Check if updates are provided
     if (!entities.updates && !entities.title && !entities.description && !entities.due_date && !entities.priority && !entities.status) {
       return { success: false, error: "No updates provided" };
     }
     
-    // Prepare updates
-    const updates: any = { ...taskToUpdate };
+    // Prepare updates - start with empty object, not copy of original task
+    const updates: any = {};
     
     // Apply updates from entities.updates if provided
     if (entities.updates) {
@@ -817,22 +814,62 @@ export const updateTaskFromCommand = async (
     
     // Handle project assignment if specified
     if (entities.project_name) {
-      const { data, error } = await supabase
+      // First try exact match
+      const { data: exactMatch, error: exactError } = await supabase
         .from("projects")
-        .select("id")
+        .select("id, name")
         .eq("user", userId)
-        .ilike("name", `%${entities.project_name}%`)
+        .eq("name", entities.project_name)
         .limit(1);
       
-      if (!error && data && data.length > 0) {
-        updates.project = data[0].id;
+      if (!exactError && exactMatch && exactMatch.length > 0) {
+        updates.project = exactMatch[0].id;
+        console.log(`Task linked to project: ${exactMatch[0].name} (ID: ${updates.project})`);
+      } else {
+        // Try case-insensitive match
+        const { data: allProjects, error: allError } = await supabase
+          .from("projects")
+          .select("id, name")
+          .eq("user", userId);
+        
+        if (!allError && allProjects) {
+          const matchingProject = allProjects.find(p => 
+            p.name.toLowerCase() === entities.project_name.toLowerCase()
+          );
+          if (matchingProject) {
+            updates.project = matchingProject.id;
+            console.log(`Task linked to project (case-insensitive): ${matchingProject.name} (ID: ${updates.project})`);
+          } else {
+            console.log(`No project found matching: "${entities.project_name}". Available projects:`, allProjects.map(p => p.name));
+          }
+        }
       }
     }
     
-    // Update the task
-    await updateTask(taskToUpdate.id, updates);
+    console.log(`Original task project: ${taskToUpdate.project}`);
+    console.log(`Updates object:`, updates);
     
-    return { success: true, title: updates.title };
+    // Update the task - only pass the fields that have changed
+    const updateFields: any = {};
+    
+    // Only include fields that are different from the original
+    if (updates.title && updates.title !== taskToUpdate.title) updateFields.title = updates.title;
+    if (updates.description && updates.description !== taskToUpdate.description) updateFields.description = updates.description;
+    if (updates.due_date && updates.due_date !== taskToUpdate.due_date) updateFields.due_date = updates.due_date;
+    if (updates.priority && updates.priority !== taskToUpdate.priority) updateFields.priority = updates.priority;
+    if (updates.status && updates.status !== taskToUpdate.status) updateFields.status = updates.status;
+    if (updates.project !== undefined && updates.project !== taskToUpdate.project) updateFields.project = updates.project;
+    
+    console.log(`Updating task ${taskToUpdate.id} with fields:`, updateFields);
+    
+    // Only update if there are actually fields to update
+    if (Object.keys(updateFields).length === 0) {
+      return { success: false, error: "No changes detected - task is already up to date" };
+    }
+    
+    const updatedTask = await updateTask(taskToUpdate.id, updateFields);
+    
+    return { success: true, title: updatedTask.title };
   } catch (error) {
     console.error("Error updating task from command:", error);
     return {
@@ -859,11 +896,7 @@ export const createTaskFromSuggestion = async (
 ): Promise<{ success: boolean; title?: string; error?: string }> => {
   try {
     // First check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
-    
-    // Ensure the user ID matches
-    if (user.id !== userId) throw new Error("User ID mismatch");
+    const user = await validateUser(userId);
     
     // Fetch the suggestion
     const { data: suggestion, error: suggestionError } = await supabase
@@ -942,11 +975,7 @@ export const createEventFromSuggestion = async (
 ): Promise<{ success: boolean; title?: string; time?: string; error?: string }> => {
   try {
     // First check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
-    
-    // Ensure the user ID matches
-    if (user.id !== userId) throw new Error("User ID mismatch");
+    const user = await validateUser(userId);
     
     // Fetch the suggestion
     const { data: suggestion, error: suggestionError } = await supabase

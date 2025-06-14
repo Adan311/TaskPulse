@@ -188,42 +188,51 @@ export const getUserContext = async (userId: string): Promise<UserContext | null
 const getRecentActivity = async (userId: string): Promise<ActivitySummary> => {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const dateFilter = sevenDaysAgo.toISOString();
   
-  // Recent tasks
-  const { data: recentTasks } = await supabase
-    .from('tasks')
-    .select('id, title, status, due_date')
-    .eq('user', userId)
-    .gte('updated_at', sevenDaysAgo.toISOString())
-    .order('updated_at', { ascending: false })
-    .limit(10);
-  
-  // Recent events
-  const { data: recentEvents } = await supabase
-    .from('events')
-    .select('id, title, start_time')
-    .eq('user', userId)
-    .gte('start_time', sevenDaysAgo.toISOString())
-    .order('start_time', { ascending: false })
-    .limit(10);
-  
-  // Recent notes
-  const { data: recentNotes } = await supabase
-    .from('notes')
-    .select('id, title, updated_at')
-    .eq('user', userId)
-    .gte('updated_at', sevenDaysAgo.toISOString())
-    .order('updated_at', { ascending: false })
-    .limit(10);
-  
-  // Suggestion history
-  const { data: suggestionHistory } = await supabase
-    .from('suggestion_feedback')
-    .select('suggestion_type, accepted, created_at')
-    .eq('user_id', userId)
-    .gte('created_at', sevenDaysAgo.toISOString())
-    .order('created_at', { ascending: false })
-    .limit(20);
+  // Run all queries in parallel for better performance
+  const [
+    { data: recentTasks },
+    { data: recentEvents },
+    { data: recentNotes },
+    { data: suggestionHistory }
+  ] = await Promise.all([
+    // Recent tasks
+    supabase
+      .from('tasks')
+      .select('id, title, status, due_date')
+      .eq('user', userId)
+      .gte('updated_at', dateFilter)
+      .order('updated_at', { ascending: false })
+      .limit(10),
+    
+    // Recent events
+    supabase
+      .from('events')
+      .select('id, title, start_time')
+      .eq('user', userId)
+      .gte('start_time', dateFilter)
+      .order('start_time', { ascending: false })
+      .limit(10),
+    
+    // Recent notes
+    supabase
+      .from('notes')
+      .select('id, title, updated_at')
+      .eq('user', userId)
+      .gte('updated_at', dateFilter)
+      .order('updated_at', { ascending: false })
+      .limit(10),
+    
+    // Suggestion history
+    supabase
+      .from('suggestion_feedback')
+      .select('suggestion_type, accepted, created_at')
+      .eq('user_id', userId)
+      .gte('created_at', dateFilter)
+      .order('created_at', { ascending: false })
+      .limit(20)
+  ]);
   
   return {
     recentTasks: recentTasks?.map(task => ({

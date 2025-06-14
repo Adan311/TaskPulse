@@ -1,9 +1,10 @@
 import { supabase } from '../../database/client';
 import { v4 as uuidv4 } from "uuid";
 import { Project } from '@/backend/database/schema';
+import { validateUser, getCurrentUser } from '@/shared/utils/authUtils';
 
 export const fetchProjects = async (): Promise<Project[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   
   if (!user) {
     console.log("No authenticated user found when fetching projects");
@@ -25,11 +26,7 @@ export const fetchProjects = async (): Promise<Project[]> => {
 };
 
 export const createProject = async (project: Omit<Project, "id" | "user" | "created_at" | "updated_at" | "progress">): Promise<Project> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error("User must be authenticated to create projects");
-  }
+  const user = await validateUser();
   
   const newProject = {
     id: uuidv4(),
@@ -59,11 +56,7 @@ export const createProject = async (project: Omit<Project, "id" | "user" | "crea
 };
 
 export const updateProject = async (projectId: string, updates: Partial<Omit<Project, "id" | "user" | "created_at">>): Promise<Project> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error("User must be authenticated to update projects");
-  }
+  const user = await validateUser();
 
   const { data, error } = await supabase
     .from("projects")
@@ -85,11 +78,7 @@ export const updateProject = async (projectId: string, updates: Partial<Omit<Pro
 };
 
 export const deleteProject = async (projectId: string): Promise<boolean> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error("User must be authenticated to delete projects");
-  }
+  const user = await validateUser();
 
   const { error } = await supabase
     .from("projects")
@@ -117,11 +106,7 @@ export const calculateProjectProgress = async (
   projectId: string, 
   updateProjectProgress: boolean = true
 ): Promise<number> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error("User must be authenticated");
-  }
+  const user = await validateUser();
 
   // First, check if the project uses auto or manual progress
   const { data: projectData, error: projectError } = await supabase
@@ -180,11 +165,7 @@ export const calculateProjectProgress = async (
  * @returns The updated project
  */
 export const setAutoProgress = async (projectId: string): Promise<Project> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error("User must be authenticated");
-  }
+  const user = await validateUser();
 
   // Calculate the current progress
   const progress = await calculateProjectProgress(projectId, false);
@@ -204,11 +185,7 @@ export const setAutoProgress = async (projectId: string): Promise<Project> => {
  * @returns The updated project
  */
 export const setManualProgress = async (projectId: string, manualProgress: number): Promise<Project> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error("User must be authenticated");
-  }
+  const user = await validateUser();
 
   // Validate the progress value
   if (manualProgress < 0 || manualProgress > 100) {
@@ -232,11 +209,7 @@ export const setManualProgress = async (projectId: string, manualProgress: numbe
  */
 export const updateProjectProgressOnTaskChange = async (projectId: string): Promise<number> => {
   // Check if the project exists and uses auto progress
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error("User must be authenticated");
-  }
+  const user = await validateUser();
 
   const { data: project, error } = await supabase
     .from("projects")

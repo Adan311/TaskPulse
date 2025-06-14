@@ -1,7 +1,8 @@
 import { supabase } from "../../../../database/client";
-import { getEvents } from "@/backend/api/services/eventService";
+import { getEvents } from "@/backend/api/services/event.service";
 import { fetchTasks } from "@/backend/api/services/task.service";
 import { fetchNotesWithProjects } from "@/backend/api/services/notes.service";
+import { validateUser } from "@/shared/utils/authUtils";
 
 /**
  * Get events for a specific user within a date range
@@ -20,10 +21,7 @@ export const getUserEvents = async (
 ): Promise<any[]> => {
   try {
     // Verify the user making the request
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.id !== userId) {
-      throw new Error("User not authenticated or ID mismatch");
-    }
+    const user = await validateUser(userId);
     
     // Get all events using the existing service (follows MCP pattern)
     const events = await getEvents();
@@ -150,10 +148,7 @@ export const getUserTasks = async (
 ): Promise<any[]> => {
   try {
     // Verify the user making the request
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.id !== userId) {
-      throw new Error("User not authenticated or ID mismatch");
-    }
+    const user = await validateUser(userId);
     
     // Get tasks using the existing service (follows MCP pattern)
     const tasks = await fetchTasks();
@@ -258,10 +253,7 @@ export const getUserProjects = async (
 ): Promise<any[]> => {
   try {
     // Verify the user making the request
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.id !== userId) {
-      throw new Error("User not authenticated or ID mismatch");
-    }
+    const user = await validateUser(userId);
     
     let projectQuery = supabase
       .from('projects')
@@ -316,10 +308,7 @@ export const getUserFiles = async (
 }>> => {
   try {
     // Verify the user making the request
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.id !== userId) {
-      throw new Error("User not authenticated or ID mismatch");
-    }
+    const user = await validateUser(userId);
     
     let query = supabase
       .from('files')
@@ -388,10 +377,7 @@ export const getUserNotes = async (
 }>> => {
   try {
     // Verify the user making the request
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.id !== userId) {
-      throw new Error("User not authenticated or ID mismatch");
-    }
+    const user = await validateUser(userId);
     
     // Use the new notes service (follows MCP pattern)
     const notes = await fetchNotesWithProjects(contentSearch, projectName, pinnedOnly);

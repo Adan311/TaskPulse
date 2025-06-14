@@ -1,5 +1,6 @@
 import { supabase } from "../../database/client";
 import { v4 as uuidv4 } from "uuid";
+import { validateUser, getCurrentUser } from '@/shared/utils/authUtils';
 
 export interface FileItem {
   id: string;
@@ -33,7 +34,7 @@ export const fetchFiles = async (options?: {
   task_id?: string;
   event_id?: string;
 }): Promise<FileItem[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   
   if (!user) {
     console.log("No authenticated user found when fetching files");
@@ -75,11 +76,7 @@ export const fetchFiles = async (options?: {
  * Get a single file by ID (with user permission check)
  */
 export const getFileById = async (fileId: string): Promise<FileItem> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error("User not authenticated");
-  }
+  const user = await validateUser();
 
   const { data, error } = await supabase
     .from("files")
@@ -104,11 +101,7 @@ export const getFileById = async (fileId: string): Promise<FileItem> => {
  * Upload a file to Supabase Storage and save metadata to the database
  */
 export const uploadFile = async (params: FileUploadParams): Promise<FileItem> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error("User not authenticated");
-  }
+  const user = await validateUser();
 
   try {
     const file = params.file;
@@ -179,11 +172,7 @@ export const getFileDownloadUrl = async (fileId: string): Promise<string> => {
  * Removes both the storage object and the database record
  */
 export const deleteFile = async (fileId: string): Promise<boolean> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error("User not authenticated");
-  }
+  const user = await validateUser();
 
   try {
     // Get the file first to check permissions and get the storage path
@@ -236,11 +225,7 @@ export const attachFile = async (
   entityType: 'project' | 'task' | 'event',
   entityId: string
 ): Promise<FileItem> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error("User not authenticated");
-  }
+  const user = await validateUser();
 
   // Verify file belongs to the user
   const { data: fileData } = await supabase
@@ -288,11 +273,7 @@ export const detachFile = async (
   fileId: string, 
   entityType: 'project' | 'task' | 'event'
 ): Promise<FileItem> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error("User not authenticated");
-  }
+  const user = await validateUser();
 
   // Prepare update data
   const updateData: Partial<FileItem> = {

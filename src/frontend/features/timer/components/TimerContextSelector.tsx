@@ -50,7 +50,7 @@ import { Project } from '@/backend/database/schema';
 import { Event } from '@/frontend/types/calendar';
 import { fetchTasks } from '@/backend/api/services/task.service';
 import { fetchProjects } from '@/backend/api/services/project.service';
-import { getEvents } from '@/backend/api/services/eventService';
+import { getEvents } from '@/backend/api/services/event.service';
 import { cn } from '@/frontend/lib/utils';
 import { Separator } from "@/frontend/components/ui/separator";
 

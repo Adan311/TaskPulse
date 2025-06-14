@@ -7,7 +7,7 @@ import { Button } from "@/frontend/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/frontend/components/ui/form";
 import { Input } from "@/frontend/components/ui/input";
 import { Textarea } from "@/frontend/components/ui/textarea";
-import { Event, createEvent, updateEvent, createRecurringEvent, deleteEvent } from "@/backend/api/services/eventService";
+import { Event, createEvent, updateEvent, createRecurringEvent, deleteEvent } from "@/backend/api/services/event.service";
 import { formSchema, FormValues } from "../EventFormSchema";
 import { DatePickerField } from "./FormFields/DatePickerField";
 import { TimePickerField } from "./FormFields/TimePickerField";
