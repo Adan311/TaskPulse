@@ -103,7 +103,7 @@ describe('AI Workflow Integration Tests - Real MCP Integration', () => {
     // Arrange: Mock AI command processing
     const userCommand = 'Create a task for tomorrow at 2pm called "Review documentation"'
     
-    // Act: Simulate command processing through MCP
+    
     const commandResult = {
       hasCommand: true,
       intent: 'create_task',
@@ -139,7 +139,7 @@ describe('AI Workflow Integration Tests - Real MCP Integration', () => {
       user_id: testUserId
     }
     
-    // Act: Simulate AI calendar integration through MCP
+    // Act: Simulate AI calendar integration 
     const result = {
       event: {
         id: 'ai-event-123',
@@ -174,7 +174,7 @@ describe('AI Workflow Integration Tests - Real MCP Integration', () => {
       most_productive_days: ['Monday', 'Tuesday', 'Wednesday']
     }
     
-    // Act: Simulate AI learning through MCP
+    // Act: Simulate AI learning 
     const result = {
       learning: {
         behavior_patterns: behaviorData,

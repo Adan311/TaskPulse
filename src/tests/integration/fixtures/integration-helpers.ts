@@ -4,7 +4,6 @@ import { mockSupabaseClient } from '../setup'
 // Use the mock client instead of the real one
 const supabase = mockSupabaseClient
 
-// MCP Supabase Integration Helpers
 export interface TestUser {
   id: string
   email: string
@@ -239,8 +238,6 @@ export class DatabaseCleaner {
         this.createdProjects = []
       }
 
-      // 6. Clean users - Note: In real Supabase, we typically don't delete auth.users in tests
-      // Instead we just track what we created and clean associated data
       if (this.createdUsers.length > 0) {
         console.log(`⚠️ Skipping user cleanup for safety (${this.createdUsers.length} users tracked)`)
         this.createdUsers = []

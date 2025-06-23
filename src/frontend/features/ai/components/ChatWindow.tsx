@@ -342,7 +342,7 @@ export function ChatWindow({ conversationId, onNewConversation, onCollapse }: Ch
         // Remove the temporary user message on error
         setMessages(prev => prev.filter(msg => msg.id !== userMessage.id));
         setInput(messageContent); // Restore input
-        throw error; // Re-throw to be handled by the outer error handler
+        throw error; 
       } finally {
         setLoading(false);
       }
