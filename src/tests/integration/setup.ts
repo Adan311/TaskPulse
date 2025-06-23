@@ -15,8 +15,6 @@ beforeAll(async () => {
 
 // Global test cleanup
 afterAll(async () => {
-  console.log('🧹 Cleaning up after all integration tests...')
-  
   // Final cleanup to ensure no test data is left behind
   await DatabaseCleaner.cleanAll()
   

@@ -1,4 +1,4 @@
-import { useTheme } from "next-themes"
+import { useTheme } from "@/frontend/components/theme/theme-provider"
 import { Toaster as Sonner } from "sonner"
 import * as React from "react"
 import { cn } from "@/frontend/lib/utils"

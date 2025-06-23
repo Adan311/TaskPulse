@@ -1,25 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { AppLayout } from '@/frontend/components/layout/AppLayout';
 import { FileUploadSection } from '@/frontend/features/files/components/FileUploadSection';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/frontend/components/ui/tabs';
 import { Card, CardContent } from '@/frontend/components/ui/card';
-import { supabase } from '@/backend/database/client';
 import { Button } from '@/frontend/components/ui/button';
+import { useAuthCheck } from '@/frontend/hooks/useAuthCheck';
 import { motion } from 'framer-motion';
 
-const FilesPage = () => {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
-      setLoading(false);
-    };
-
-    checkUser();
-  }, []);
+export default function Files() {
+  const { user, loading } = useAuthCheck();
 
   if (loading) {
     return (
@@ -39,7 +27,7 @@ const FilesPage = () => {
             <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
             <p className="text-muted-foreground mb-4">Please sign in to view and manage your files.</p>
             <Button asChild>
-              <a href="/auth/sign-in">Sign In</a>
+              <a href="/auth/SignIn">Sign In</a>
             </Button>
           </div>
         </div>
@@ -65,6 +53,4 @@ const FilesPage = () => {
       </div>
     </AppLayout>
   );
-};
-
-export default FilesPage;
+}

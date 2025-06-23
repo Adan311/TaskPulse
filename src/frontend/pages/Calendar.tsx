@@ -15,7 +15,7 @@ import { getEvents, Event } from "@/backend/api/services/event.service";
 import { supabase } from "@/backend/database/client";
 import { useToast } from "@/frontend/hooks/use-toast";
 import { DayView } from "@/frontend/features/calendar/components/DayView";
-
+import { useAuthCheck } from "@/frontend/hooks/useAuthCheck";
 
 export default function Calendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -23,28 +23,9 @@ export default function Calendar() {
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(undefined);
-  const [user, setUser] = useState<any>(null);
+  const { user, loading: authLoading } = useAuthCheck();
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  
-  useEffect(() => {
-    // Get the current user when component mounts
-    const getCurrentUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
-    };
-
-    getCurrentUser();
-
-    // Set up auth state change listener
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user || null);
-    });
-
-    return () => {
-      authListener?.subscription?.unsubscribe();
-    };
-  }, []);
   
   const fetchEvents = async () => {
     try {
@@ -72,8 +53,10 @@ export default function Calendar() {
   useEffect(() => {
     if (user) {
       fetchEvents();
+    } else if (!authLoading) {
+      setLoading(false);
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   // Subscribe to real-time updates for events
   useEffect(() => {
@@ -84,7 +67,6 @@ export default function Calendar() {
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'events', filter: `user=eq.${user.id}` },
         (payload) => {
-          console.log('Event changed:', payload);
           fetchEvents();
         }
       )

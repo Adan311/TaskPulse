@@ -1,52 +1,12 @@
-
-import { useState, useEffect } from "react";
 import { TaskBoard } from "@/frontend/features/tasks/components/TaskBoard";
-import { supabase } from "@/backend/database/client";
 import { Button } from "@/frontend/components/ui/button";
 import { AppLayout } from "@/frontend/components/layout/AppLayout";
 import { useToast } from "@/frontend/hooks/use-toast";
+import { useAuthCheck } from "@/frontend/hooks/useAuthCheck";
 
 const Tasks = () => {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useAuthCheck();
   const { toast } = useToast();
-
-  useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const { data, error } = await supabase.auth.getUser();
-        
-        if (error) {
-          console.error("User error:", error);
-          toast({
-            title: "Authentication error",
-            description: "Failed to get user information",
-            variant: "destructive",
-          });
-        }
-        
-        setUser(data.user);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error checking user:", error);
-        setLoading(false);
-      }
-    };
-    
-    checkUser();
-
-    // Set up auth state listener
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.id);
-        setUser(session?.user || null);
-      }
-    );
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, [toast]);
 
   if (loading) {
     return (

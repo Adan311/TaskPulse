@@ -21,6 +21,7 @@ export interface UserDataExport {
 
 export const exportUserData = async (): Promise<UserDataExport> => {
   try {
+    
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {

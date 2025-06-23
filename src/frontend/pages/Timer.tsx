@@ -13,6 +13,7 @@ import { getEvents, Event as CalendarEvent } from "@/backend/api/services/event.
 import { supabase } from "@/backend/database/client";
 import { format, addDays, subDays } from "date-fns";
 import { useGlobalTimer } from "@/frontend/context/TimerContext";
+import { useAuthCheck } from "@/frontend/hooks/useAuthCheck";
 
 export default function Timer() {
   // Global Timer state from context
@@ -54,20 +55,7 @@ export default function Timer() {
 
   // Calendar events state
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [user, setUser] = useState<any>(null);
-
-  // Fetch user and events like Calendar page
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
-    };
-    getCurrentUser();
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user || null);
-    });
-    return () => { authListener?.subscription?.unsubscribe(); };
-  }, []);
+  const { user } = useAuthCheck();
 
   const fetchEvents = async () => {
     if (!user) { setEvents([]); return; }

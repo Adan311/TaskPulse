@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/backend/database/client";
 import { useToast } from "@/frontend/hooks/use-toast";
-import { v4 as uuidv4 } from "uuid";
 import { Project as SchemaProject } from "@/backend/database/schema";
+import * as projectService from "@/backend/api/services/project.service";
+import { getCurrentUser } from "@/shared/utils/authUtils";
 
 // Export the Project type from supabaseSchema to ensure consistency
 export type Project = SchemaProject;
@@ -23,29 +24,8 @@ export function useProjects() {
       setLoading(true);
       setError(null);
       
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        setProjects([]);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('user', user.id);
-
-      if (error) throw error;
-      
-      // Ensure each project has the required fields
-      const projectsWithDefaults = (data || []).map(p => ({
-        ...p,
-        status: p.status || 'active',
-        progress: p.progress || 0,
-        priority: p.priority || 'medium',
-      })) as Project[];
-      
-      setProjects(projectsWithDefaults);
+      const projects = await projectService.fetchProjects();
+      setProjects(projects);
     } catch (err: any) {
       console.error("Error fetching projects:", err);
       setError(err);
@@ -62,7 +42,8 @@ export function useProjects() {
   // Subscribe to real-time updates for projects
   const subscribeToProjectUpdates = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Get current user to filter real-time updates
+      const user = await getCurrentUser();
       if (!user) return;
 
       // Unsubscribe from any existing subscription
@@ -122,40 +103,21 @@ export function useProjects() {
     try {
       setLoading(true);
       
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
-      const newProject: Omit<Project, 'created_at' | 'updated_at'> = {
-        id: uuidv4(),
+      const newProject = await projectService.createProject({
         name,
         description,
-        user: user.id,
         status,
-        progress: 0,
         priority,
-        auto_progress: true,
         color,
         due_date: dueDate
-      };
+      });
 
-      const { data, error } = await supabase
-        .from('projects')
-        .insert(newProject)
-        .select();
-
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        setProjects(prev => [...prev, data[0] as Project]);
-        toast({
-          title: "Project created",
-          description: "Your new project has been created successfully.",
-        });
-        return data[0] as Project;
-      }
+      setProjects(prev => [...prev, newProject]);
+      toast({
+        title: "Project created",
+        description: "Your new project has been created successfully.",
+      });
+      return newProject;
     } catch (err: any) {
       console.error("Error creating project:", err);
       toast({
@@ -173,19 +135,7 @@ export function useProjects() {
     try {
       setLoading(true);
       
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
-      const { error } = await supabase
-        .from('projects')
-        .delete()
-        .eq('id', projectId)
-        .eq('user', user.id);
-
-      if (error) throw error;
+      await projectService.deleteProject(projectId);
       
       setProjects(prev => prev.filter(project => project.id !== projectId));
       
@@ -212,33 +162,18 @@ export function useProjects() {
     try {
       setLoading(true);
       
-      const { data: { user } } = await supabase.auth.getUser();
+      const updatedProject = await projectService.updateProject(projectId, updates);
       
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
-      const { data, error } = await supabase
-        .from('projects')
-        .update(updates)
-        .eq('id', projectId)
-        .eq('user', user.id)
-        .select();
-
-      if (error) throw error;
+      setProjects(prev => prev.map(project => 
+        project.id === projectId ? updatedProject : project
+      ));
       
-      if (data && data.length > 0) {
-        setProjects(prev => prev.map(project => 
-          project.id === projectId ? data[0] as Project : project
-        ));
-        
-        toast({
-          title: "Project updated",
-          description: "Your project has been updated successfully.",
-        });
-        
-        return data[0] as Project;
-      }
+      toast({
+        title: "Project updated",
+        description: "Your project has been updated successfully.",
+      });
+      
+      return updatedProject;
     } catch (err: any) {
       console.error("Error updating project:", err);
       toast({

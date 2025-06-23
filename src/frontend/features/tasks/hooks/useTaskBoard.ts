@@ -14,6 +14,7 @@ import {
 } from '@/backend/api/services/task.service';
 import { supabase } from '@/backend/database/client';
 import { TaskFilters } from '../components/TaskFilterBar';
+import { getCurrentUser } from '@/shared/utils/authUtils';
 
 // Status mapping functions to handle UI vs database format differences
 const mapUiStatusToDb = (status: string): Task['status'] => {
@@ -44,8 +45,8 @@ export function useTaskBoard() {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
     };
     
     checkUser();

@@ -11,7 +11,7 @@ import {
     TaskSuggestion,
     EventSuggestion
 } from '@/backend/api/services/ai/suggestions/suggestionService';
-import SuggestionItem from '@/frontend/features/ai/components/SuggestionItem';
+import SuggestionItem from './SuggestionItem';
 import { Button } from '@/frontend/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/frontend/components/ui/tabs";
 import { useToast } from "@/frontend/hooks/use-toast";

@@ -1,6 +1,6 @@
 import React from 'react';
 import { AppLayout } from '@/frontend/components/layout/AppLayout';
-import SuggestionList from '@/frontend/features/ai/suggestions/components/SuggestionList';
+import SuggestionList from '@/frontend/features/ai/components/SuggestionList';
 
 export default function Suggestions() {
   return (

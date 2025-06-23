@@ -20,7 +20,6 @@ import {
 import { Label } from "@/frontend/components/ui/label";
 import { Task } from '@/backend/database/schema';
 import { useToast } from "@/frontend/hooks/use-toast";
-import { supabase } from "@/backend/database/client";
 import { useState, useEffect } from "react";
 import { Calendar } from '@/frontend/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/frontend/components/ui/popover';
@@ -30,6 +29,7 @@ import { Checkbox } from "@/frontend/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/frontend/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/frontend/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/frontend/components/ui/radio-group";
+import * as projectService from '@/backend/api/services/project.service';
 
 interface Project {
   id: string;
@@ -153,21 +153,10 @@ export function TaskDialog({ task, open, onOpenChange, onSave }: TaskDialogProps
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) {
-        console.log("No authenticated user found when fetching projects");
-        setProjects([]);
-        return;
-      }
-      
-      const { data, error } = await supabase
-        .from("projects")
-        .select("id, name")
-        .eq("user", user.id);
-      
-      if (error) throw error;
-      setProjects(data as Project[] || []);
+      // Use backend service instead of direct database access
+      const projectsData = await projectService.fetchProjects();
+      setProjects(projectsData.map(p => ({ id: p.id, name: p.name })));
     } catch (error) {
       console.error("Error fetching projects:", error);
       toast({

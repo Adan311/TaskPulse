@@ -1,5 +1,5 @@
 import React from "react";
-import { Bell, Calendar, ClipboardList, XCircle } from "lucide-react";
+import { Bell, Calendar, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { Reminder } from "@/backend/api/services/reminder.service";
 
@@ -59,25 +59,4 @@ export const showReminderNotification = (reminder: Reminder) => {
       },
     }
   );
-};
-
-/**
- * Show an error notification
- */
-export const showErrorNotification = (message: string) => {
-  toast.error(message, {
-    duration: 5000,
-    icon: <XCircle className="h-5 w-5" />,
-    className: "dark:bg-gray-800 dark:text-white dark:border-gray-700",
-  });
-};
-
-/**
- * Show a success notification
- */
-export const showSuccessNotification = (message: string) => {
-  toast.success(message, {
-    duration: 3000,
-    className: "dark:bg-gray-800 dark:text-white dark:border-gray-700",
-  });
 }; 

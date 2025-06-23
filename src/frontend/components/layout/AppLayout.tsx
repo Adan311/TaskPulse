@@ -15,7 +15,6 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const handleLogout = async () => {
     try {
-      // await supabase.auth.signOut();
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",

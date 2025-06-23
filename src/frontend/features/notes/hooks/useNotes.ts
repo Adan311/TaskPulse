@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { v4 as uuidv4 } from "uuid";
-import { supabase } from "@/backend/database/client";
 import { useToast } from "@/frontend/hooks/use-toast";
+import { getCurrentUser } from "@/shared/utils/authUtils";
+import * as notesService from "@/backend/api/services/notes.service";
+import * as projectService from "@/backend/api/services/project.service";
 
 // --- Hook returns all relevant state and functions to manage notes
 export function useNotes() {
-  const [notes, setNotes] = useState<any[]>([]);
+  const [notes, setNotes] = useState<notesService.NoteWithProject[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [selectedProject, setSelectedProject] = useState<string>("all");
@@ -19,44 +20,41 @@ export function useNotes() {
   const editInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
-      if (data.user) {
-        fetchNotes(data.user.id);
-        fetchProjects(data.user.id);
-      } else {
+    const initializeData = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
+        if (currentUser) {
+          await Promise.all([
+            loadNotes(),
+            loadProjects()
+          ]);
+        }
+      } catch (error) {
+        console.error("Error initializing data:", error);
+      } finally {
         setLoading(false);
       }
     };
 
-    getUser();
+    initializeData();
   }, []);
 
-  const fetchProjects = async (userId: string) => {
+  const loadProjects = async () => {
     try {
-      const { data, error } = await supabase.from('projects').select('*').eq('user', userId);
-      if (error) throw error;
-      setProjects(data || []);
+      const projectsData = await projectService.fetchProjects();
+      setProjects(projectsData);
     } catch (error) {
       console.error("Error fetching projects:", error);
     }
   };
 
-  const fetchNotes = async (userId: string) => {
+  const loadNotes = async () => {
     try {
-      const { data, error } = await supabase
-        .from('notes')
-        .select('*')
-        .eq('user', userId)
-        .order('pinned', { ascending: false })
-        .order('last_updated', { ascending: false });
-      if (error) throw error;
-      setNotes(data || []);
+      const notesData = await notesService.getUserNotes();
+      setNotes(notesData);
     } catch (error) {
       console.error("Error fetching notes:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -64,17 +62,22 @@ export function useNotes() {
     if (!newNote.trim() || !user) return;
     try {
       setLoading(true);
-      const newNoteData = {
-        id: uuidv4(),
+      const noteData: notesService.CreateNoteData = {
         content: newNote,
-        user: user.id,
         project: selectedProject === 'all' ? null : selectedProject,
-        last_updated: new Date().toISOString(),
         pinned: false
       };
-      const { error } = await supabase.from('notes').insert([newNoteData]);
-      if (error) throw error;
-      setNotes([newNoteData, ...notes]);
+      
+      const createdNote = await notesService.createNote(noteData);
+      
+      // Add project data for consistency with getUserNotes format
+      const noteWithProject: notesService.NoteWithProject = {
+        ...createdNote,
+        project_data: selectedProject !== 'all' && selectedProject ? 
+          projects.find(p => p.id === selectedProject) : null
+      };
+      
+      setNotes([noteWithProject, ...notes]);
       toast({
         title: "Success!",
         description: "Your note has been added.",
@@ -95,8 +98,7 @@ export function useNotes() {
 
   const deleteNote = async (id: string) => {
     try {
-      const { error } = await supabase.from('notes').delete().eq('id', id);
-      if (error) throw error;
+      await notesService.deleteNote(id);
       setNotes(notes.filter(note => note.id !== id));
       toast({
         title: "Success!",
@@ -116,9 +118,10 @@ export function useNotes() {
 
   const pinNote = async (id: string) => {
     try {
-      const { error } = await supabase.from('notes').update({ pinned: true }).eq('id', id);
-      if (error) throw error;
-      setNotes(notes => notes.map(note => note.id === id ? { ...note, pinned: true } : note));
+      const updatedNote = await notesService.updateNote(id, { pinned: true });
+      setNotes(notes => notes.map(note => 
+        note.id === id ? { ...note, pinned: true, last_updated: updatedNote.last_updated } : note
+      ));
       toast({ title: "Pinned!", description: "Note pinned to top." });
     } catch (error) {
       console.error("Error pinning note:", error);
@@ -128,9 +131,10 @@ export function useNotes() {
 
   const unpinNote = async (id: string) => {
     try {
-      const { error } = await supabase.from('notes').update({ pinned: false }).eq('id', id);
-      if (error) throw error;
-      setNotes(notes => notes.map(note => note.id === id ? { ...note, pinned: false } : note));
+      const updatedNote = await notesService.updateNote(id, { pinned: false });
+      setNotes(notes => notes.map(note => 
+        note.id === id ? { ...note, pinned: false, last_updated: updatedNote.last_updated } : note
+      ));
       toast({ title: "Unpinned!", description: "Note unpinned." });
     } catch (error) {
       console.error("Error unpinning note:", error);
@@ -149,13 +153,9 @@ export function useNotes() {
   const saveEdit = async () => {
     if (!editContent.trim() || !editingId) return false;
     try {
-      const { error } = await supabase
-        .from('notes')
-        .update({ content: editContent, last_updated: new Date().toISOString() })
-        .eq('id', editingId);
-      if (error) throw error;
+      const updatedNote = await notesService.updateNote(editingId, { content: editContent });
       setNotes(notes.map(note => note.id === editingId
-        ? { ...note, content: editContent, last_updated: new Date().toISOString() }
+        ? { ...note, content: updatedNote.content, last_updated: updatedNote.last_updated }
         : note
       ));
       setEditingId(null);
@@ -179,20 +179,18 @@ export function useNotes() {
   
   const addNoteToProject = async (noteId: string, projectId: string) => {
     try {
-      const { error } = await supabase
-        .from('notes')
-        .update({ 
-          project: projectId,
-          last_updated: new Date().toISOString() 
-        })
-        .eq('id', noteId);
-        
-      if (error) throw error;
+      const updatedNote = await notesService.updateNote(noteId, { project: projectId });
       
-      // Update local state
+      // Update local state with project data
+      const projectData = projects.find(p => p.id === projectId);
       setNotes(notes.map(note => 
         note.id === noteId 
-          ? { ...note, project: projectId, last_updated: new Date().toISOString() }
+          ? { 
+              ...note, 
+              project: projectId, 
+              last_updated: updatedNote.last_updated,
+              project_data: projectData || null
+            }
           : note
       ));
       
@@ -216,20 +214,17 @@ export function useNotes() {
   // Unlink a note from a project
   const unlinkNoteFromProject = async (noteId: string) => {
     try {
-      const { error } = await supabase
-        .from('notes')
-        .update({ 
-          project: null,
-          last_updated: new Date().toISOString() 
-        })
-        .eq('id', noteId);
-        
-      if (error) throw error;
+      const updatedNote = await notesService.updateNote(noteId, { project: null });
       
       // Update local state
       setNotes(notes.map(note => 
         note.id === noteId 
-          ? { ...note, project: null, last_updated: new Date().toISOString() }
+          ? { 
+              ...note, 
+              project: null, 
+              last_updated: updatedNote.last_updated,
+              project_data: null
+            }
           : note
       ));
       
@@ -250,6 +245,11 @@ export function useNotes() {
     }
   };
 
+  // Refresh notes - renamed from fetchNotes for consistency
+  const refreshNotes = async () => {
+    await loadNotes();
+  };
+
   return {
     notes,
     projects,
@@ -266,11 +266,14 @@ export function useNotes() {
     startEdit,
     saveEdit,
     cancelEdit,
-    fetchNotes,
+    fetchNotes: refreshNotes, // Keep the old name for compatibility
     setNotes,
     pinNote,
     unpinNote,
     addNoteToProject,
     unlinkNoteFromProject,
+    refreshNotes,
+    loadNotes,
+    loadProjects,
   };
 }
