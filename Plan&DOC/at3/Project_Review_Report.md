@@ -168,31 +168,31 @@ export const GoogleCalendarSync = {
       
       // CRITICAL: This check prevents infinite sync loops by ignoring events
       // that originated from Google Calendar in the first place.
-      if (event.source === 'google') {
-        return false;
-      }
+    if (event.source === 'google') {
+      return false;
+    }
 
-      // Securely call the edge function to save the event to Google Calendar
-      const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
-        body: { 
-          action: event.google_event_id ? 'updateEvent' : 'createEvent', 
-          event: event,
-          userId: user.id
-        },
-      });
+    // Securely call the edge function to save the event to Google Calendar
+    const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
+      body: { 
+        action: event.google_event_id ? 'updateEvent' : 'createEvent', 
+        event: event,
+        userId: user.id
+      },
+    });
 
       // If new event created, update local record with Google ID for future updates
-      if (!event.google_event_id && data && data.google_event_id) {
-        await supabase
-          .from("events")
+    if (!event.google_event_id && data && data.google_event_id) {
+      await supabase
+        .from("events")
           .update({ 
             google_event_id: data.google_event_id,
             source: 'app_synced'
           })
-          .eq('id', event.id);
-      }
+        .eq('id', event.id);
+    }
 
-      return true;
+    return true;
     } catch (error) {
       console.error('Exception saving event to Google Calendar:', error);
       return false;
@@ -275,7 +275,7 @@ A cornerstone of Supabase's security model is its powerful Row-Level Security (R
 
 My implementation in `task.service.ts` demonstrates this application-layer security:
 
-```typescript
+    ```typescript
 export const fetchTasks = async (filters?: TaskFilters): Promise<Task[]> => {
   try {
     // CRITICAL: Always validate user first - no data access without authentication
@@ -332,11 +332,13 @@ This manual implementation enforces a zero-trust approach at the application lay
 
 ## 3. Testing, Verification & Validation
 
-The quality assurance strategy for MotionMingle was designed to be as robust and multi-faceted as the application itself. Eschewing a superficial approach, a comprehensive, multi-layered testing methodology was implemented, reflecting the highest standards of modern software engineering. This commitment to quality is not merely a claim; it is substantiated by a suite of **217 automated tests**, all of which are integrated into a continuous integration (CI) pipeline and are **100% passing**. This section details the strategy, frameworks, and outcomes of this rigorous process, as documented in the `TESTING_SUMMARY.md` file.
+My approach to quality assurance was systematic and evolved alongside the project's technical architecture. My initial plan, as outlined in my AT2 report, proposed a testing strategy aligned with the technologies under consideration at the time. However, as the project solidified into a full-stack TypeScript ecosystem built on React and Supabase, I conducted new research to identify the best-in-class testing frameworks for this modern stack. This led me to adopt a more sophisticated, multi-layered strategy centered on Vitest for its high-speed unit and integration testing, and Playwright for its powerful end-to-end capabilities. This pivot ensured that my testing methodology was not only appropriate for the final technology stack but also aligned with current industry best practices. This section details the comprehensive testing suite of 217 automated tests that I implemented to ensure the final product was robust, secure, and reliable.
 
-### 3.1 Testing Strategy & Frameworks
+### 3.1 Overall Testing Strategy: The Testing Pyramid
 
-The project adopted a classic "Testing Pyramid" strategy to ensure efficient and comprehensive coverage. This approach allocates the greatest number of tests to the fastest and most isolated units of code, with progressively fewer tests at the higher, more integrated levels.
+I structured my testing approach based on the well-known "Testing Pyramid" model. This model emphasizes having a large base of fast, inexpensive unit tests, a smaller layer of integration tests, and a very focused set of end-to-end tests at the peak.
+
+The project adopted this classic "Testing Pyramid" strategy to ensure efficient and comprehensive coverage. This approach allocates the greatest number of tests to the fastest and most isolated units of code, with progressively fewer tests at the higher, more integrated levels.
 
 *   **Vitest:** Selected for **Unit and Integration Testing**. Vitest's speed, modern ESM support, and seamless integration with the Vite ecosystem made it the ideal choice for the foundational layers of the pyramid. It was used to test individual functions, React components, and backend service modules in isolation.
 *   **Playwright:** Chosen for **End-to-End (E2E), Security, and Accessibility Testing**. Playwright's powerful cross-browser capabilities, auto-waits, and rich tooling for simulating real user interactions were indispensable. It allowed for the creation of robust tests that validate entire user journeys, check for security vulnerabilities, and audit the application against accessibility standards.
@@ -448,11 +450,34 @@ To ensure the application is usable by everyone, a dedicated suite of accessibil
 
 This automated approach ensures that accessibility is not a one-time check but a continuous part of the development process, preventing regressions and upholding a commitment to inclusive design.
 
-### 3.4 Professional Verification & Validation
+### 3.4 Manual & Exploratory Testing: Validating the AI
+
+While automated tests are essential, they cannot fully capture the nuances of an AI-driven feature. Therefore, I conducted extensive manual and exploratory testing on the AI Assistant throughout its development. This was a critical part of the process, as it allowed me to assess the quality and "feel" of the AI's responses in a way automation cannot.
+
+My manual testing involved a continuous feedback loop where I acted as a user, performing actions such as:
+
+- Asking the AI to create tasks with complex, ambiguous phrasing (e.g., "remind me to call John next week").
+- Giving it commands to query my projects and notes.
+- Attempting to "break" the AI by giving it out-of-scope or nonsensical commands to test its error-handling capabilities.
+- Verifying that its suggestions for new tasks or events were contextually relevant and helpful.
+
+This hands-on, inquisitive approach was invaluable for refining the prompt engineering and ensuring the AI Assistant was not just functional but genuinely useful.
+
+### 3.5 Verifying the Backend: How I Tested Supabase
+
+Testing the Supabase backend did not require traditional API tools like Postman because there was no custom-built REST API. Instead, I verified its functionality through a multi-layered strategy:
+
+**Service-Layer Integration Tests:** As mentioned, my Vitest integration tests verified the application's service layer, which is the code that directly interacts with the Supabase client library. This confirmed my application's business logic was correct.
+
+**End-to-End Validation:** The E2E tests served as the primary validation for the Supabase backend. A successful E2E test that creates, reads, updates, and deletes data provides definitive proof that the database integration is working correctly.
+
+**Security Testing:** My security tests, which I will detail next, were specifically designed to try and bypass the application-layer authorization I built. For example, I wrote tests that attempted to directly fetch another user's data, verifying that my security rules were effective.
+
+### 3.6 Professional Verification & Validation
 
 The project employed a highly methodical and active approach to both verification (ensuring the software meets its technical specifications) and validation (ensuring the software meets the user's actual needs). This was achieved through a combination of automated checks, code reviews, and requirements traceability.
 
-#### 3.4.1 Automated Verification via Continuous Integration (CI)
+#### 3.6.1 Automated Verification via Continuous Integration (CI)
 
 Verification was primarily achieved through the automated CI pipeline configured in the project's repository. On every single commit, the pipeline would execute the following steps:
 1.  **Install Dependencies:** Run `npm install` to ensure a clean environment.
@@ -461,7 +486,7 @@ Verification was primarily achieved through the automated CI pipeline configured
 
 If any of these steps failed, the build would be marked as 'failed', preventing the faulty code from being merged into the main branch. This automated quality gate is a cornerstone of professional development, ensuring a consistently high level of technical quality.
 
-#### 3.4.2 Validation through Requirements Traceability
+#### 3.6.2 Validation through Requirements Traceability
 
 Validation was achieved by methodically mapping the initial user requirements to the test cases that prove their implementation. This creates a clear, auditable trail demonstrating that the final product meets the user's needs.
 
@@ -473,6 +498,10 @@ Validation was achieved by methodically mapping the initial user requirements to
 | "As a user, the application must be accessible to screen readers." | `accessibility.spec.ts`                                                 |
 
 This traceability matrix is direct evidence of a methodical validation process, ensuring that the final product is not just technically sound, but also genuinely useful and aligned with the user's core expectations.
+
+### 3.7 Conclusion
+
+In conclusion, my approach to quality assurance was a core pillar of this project. By implementing a comprehensive suite of 217 automated tests, complemented by rigorous manual testing of the AI, I was able to systematically de-risk the development process. This multi-layered strategy, which evolved from my initial plans to embrace industry-best-practices for my chosen tech stack, ensured that the final product was not only feature-complete but also robust, secure, and accessible, meeting a standard of quality consistent with professional, industry-grade software.
 
 ---
 
