@@ -165,3 +165,18 @@ When incorporating these diagrams into the Project Review Report:
 
 
 These diagrams collectively demonstrate the comprehensive architecture of Taskpulse from high-level system context down to detailed user workflows, showcasing a well-structured productivity platform with modern development practices, innovative AI integration, and robust external service connectivity. 
+
+
+Harvard style Refernces. 
+
+Google, 2025. Gemini API documentation. Available at: https://ai.google.dev/gemini-api/docs (Accessed: 3 July 2025).
+
+Google, 2025. Google Calendar API overview. Available at: https://developers.google.com/workspace/calendar/api/guides/overview (Accessed: 3 July 2025).
+
+Microsoft, 2025. Playwright documentation. Available at: https://playwright.dev/docs/intro (Accessed: 3 July 2025).
+
+shadcn, 2025. shadcn/ui documentation. Available at: https://ui.shadcn.com/docs (Accessed: 3 July 2025).
+
+Supabase, 2025. Supabase documentation. Available at: https://supabase.com/docs (Accessed: 3 July 2025).
+
+Vitest, 2025. Vitest documentation. Available at: https://vitest.dev/guide/ (Accessed: 3 July 2025).
