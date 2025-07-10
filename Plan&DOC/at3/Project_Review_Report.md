@@ -2,29 +2,27 @@
 
 ## Introduction
 
-In the present fast-paced technological space, the proliferation of digital tools often leads to workflow fragmentation, a significant challenge that hinders the efficiency of professionals and students alike. With users spending considerable time switching between applications, a clear need exists for a unified platform that reduces this cognitive load. This project, TaskPulse, was conceived and developed to provide a direct solution to this problem. The foundational aim, as established in the AT2 report, was to create an AI-enhanced productivity dashboard designed to streamline work by integrating task management, calendars, and files into a single, intuitive interface.
+Workflow fragmentation caused by proliferating digital tools represents a significant challenge that hinders productivity for professionals and students. The project, TaskPulse, was conceived and developed to address this problem directly through the creation of an AI-enhanced productivity dashboard. The foundational aim, established in the AT2 report, was to unify task management, calendars, and files into a single, intuitive interface reducing cognitive load and the inefficiency of application switching.
 
-The journey from that initial concept to the final product involved a significant and strategic evolution. While the core aim remained constant, the technical approach was refined through research, leading to a pivot towards a more modern and robust full-stack TypeScript ecosystem. This decision proved fundamental to the project's success, enabling the development of features far more sophisticated than originally envisioned. The result is a production-ready application featuring a powerful, context-aware AI Assistant driven by advanced prompt engineering, a professional-grade testing suite of 217 automated tests, and a deep integration with external services like Google Calendar.
-
-This Project Review Report provides a comprehensive and critical analysis of the entire development lifecycle. It begins by detailing the project's evolution from the initial plans, the adaptive management strategies employed, and the meticulous monitoring processes that ensured quality and schedule adherence. Following this, the report offers a deep dive into the final technical architecture, showcasing the implementation of the most innovative and complex systems. The subsequent sections document the exhaustive testing and validation strategy that guarantees the application's reliability and security. Finally, this report culminates in a critical evaluation of the project's successes, challenges, and the personal learning journey, before offering a summary conclusion of the key achievements.
+The project underwent significant strategic evolution through a research-informed pivot to a modern full-stack TypeScript ecosystem. This technological transformation proved fundamental to success, enabling the development of features far more sophisticated than originally envisioned and resulting in a production-ready application with three key outcomes: a context-aware AI Assistant driven by advanced prompt engineering, a comprehensive suite of 217 automated tests across multiple quality dimensions, and deep integration with external services including Google Calendar. This Project Review Report provides a comprehensive analysis of the development lifecycle, covering the project's evolution and management strategies, detailed technical architecture showcasing innovative systems, exhaustive testing methodologies, and a critical evaluation of the project's outcomes.
 
 ## 1. Evolution, Planning & Monitoring
 
 ### 1.1 The Initial Plan: Foundation from AT2
 
-The project was founded on a comprehensive plan documented in the AT2 report, which established the hybrid Agile-Waterfall methodology and initial technical approach. This foundational document articulated core objectives, functional and non-functional requirements, and a structured timeline visualized in the Gantt Chart (Figure 7), which outlined eight distinct development sprints.
+The project was founded on a comprehensive plan documented in the AT2 report, establishing the hybrid Agile-Waterfall methodology and initial technical approach. This foundational document articulated core objectives, functional and non-functional requirements, and a structured timeline outlining eight distinct development sprints.
 
-The chosen methodology was deliberately hybrid: Waterfall-style upfront planning ensured academic deadlines were met with clear deliverables, while Agile sprint execution maintained implementation flexibility. Each two-week sprint included planning sessions, daily progress tracking, and retrospectives to adapt to technical discoveries and challenges.
+The chosen methodology was deliberately hybrid: Waterfall-style upfront planning ensured academic deadlines were met with clear deliverables, while Agile sprint execution maintained implementation flexibility through planning sessions, daily progress tracking, and retrospectives to adapt to technical discoveries and challenges.
 
-The initial technical specification considered a standard web stack with Python backend for data processing and AI integration, utilizing `pytest` for testing. This baseline plan provided essential direction and established success criteria, serving as the launching point for the significantly evolved technical architecture that emerged.
+The initial technical specification considered a standard web stack with Python backend for data processing and AI integration, utilizing `pytest` for testing. This baseline plan provided direction and established success criteria, serving as the foundation for the project's final, evolved architecture.
 
 ### 1.2 The Strategic Pivot: Research-Informed Technology Evolution
 
-During the implementation phase, a deliberate, research-informed decision was made to pivot to a full-stack TypeScript ecosystem. This represented a professional decision to improve code quality, reliability, and development speed based on extensive research into modern web development best practices.
+During the implementation phase, a deliberate, research-informed decision was made to pivot to a full-stack TypeScript ecosystem. This professional decision improved code quality, reliability, and development speed was based on extensive research into modern web development best practices.
 
-The architectural review of contemporary web technologies revealed that the full-stack TypeScript approach offered significant advantages over the originally considered Python/JavaScript hybrid. The pivot was driven by three key considerations:
+The architectural review revealed that the full-stack TypeScript approach offered significant advantages over the originally considered Python/JavaScript hybrid. The pivot was driven by three key considerations:
 
-**Enhanced Code Quality & Reliability:** TypeScript across the entire stack eliminated runtime errors common in multi-language systems. For TaskPulse, which manages complex interconnected user data across tasks, projects, events, and files, compile-time type checking was crucial. Shared interfaces like `Task` and `Project` could be defined once in `src/frontend/types/` and used consistently across frontend components and backend service functions.
+**Enhanced Code Quality & Reliability:** TypeScript across the entire stack eliminated runtime errors common in multi-language systems. For TaskPulse, which manages complex interconnected user data, compile-time type checking was crucial. Shared interfaces like `Task` and `Project` could be defined once in `src/frontend/types/` and used consistently across frontend components and backend service functions.
 
 **Accelerated Development Velocity:** A unified TypeScript codebase removed cognitive overhead and integration friction of managing multiple languages, enabling shared types and utilities across the entire application while dramatically reducing errors.
 
@@ -39,9 +37,9 @@ This technological pivot proved fundamental to project success, enabling more so
 
 ### 1.3 The Monitoring Process: Single Source of Truth System
 
-The management system was built around two critical documents serving as the "single source of truth": `PROJECT_PROGRESS.md` and `AI_IMPLEMENTATION_CHECKLIST.md`. These comprehensive project management tools enabled precise control over scope, timeline, and quality throughout development.
+The management system utilized two documents as a "single source of truth": `PROJECT_PROGRESS.md` and `AI_IMPLEMENTATION_CHECKLIST.md`. These project management tools enabled precise control over scope, timeline, and quality throughout development.
 
-**Granular Task Breakdown:** High-level tasks from the Gantt Chart (Figure 7) were systematically decomposed into granular, actionable sub-tasks within tracking files. This meticulous decomposition was essential for maintaining momentum. The high-level "AI Integration" task was broken into dozens of specific implementation tasks in `AI_IMPLEMENTATION_CHECKLIST.md`, each with clear completion criteria.
+**Granular Task Breakdown:** High-level tasks were systematically decomposed into granular, actionable sub-tasks within tracking files. The high-level "AI Integration" task was broken into dozens of specific implementation tasks in `AI_IMPLEMENTATION_CHECKLIST.md`, each with clear completion criteria.
 
 **Real-Time Progress Tracking:** The `PROJECT_PROGRESS.md` file provided immediate project health snapshots through precise status indicators:
 
@@ -57,11 +55,11 @@ The management system was built around two critical documents serving as the "si
       - [🟡] Context-Aware Project Queries
     ```
 
-**Objective Quality Metrics:** Progress was quantified through concrete, measurable metrics rather than subjective assessments. The critical metric was the automated test count, growing from zero to **217 passing tests** across unit, integration, E2E, security, and accessibility categories. This represents definitive evidence of code quality and system reliability, documented in the structured `src/tests` directory.
+**Objective Quality Metrics:** Progress was quantified through concrete, measurable metrics rather than subjective assessments. The critical metric was the automated test count, growing from zero to **217 passing tests** across unit, integration, E2E, security, and accessibility categories, representing definitive evidence of code quality and system reliability documented in the structured `src/tests` directory.
 
 **Requirements Traceability:** The tracking system created a clear audit trail from initial MoSCoW requirements to implemented features and corresponding tests, ensuring every development effort remained aligned with core project objectives while preventing scope creep.
 
-This systematic monitoring approach was fundamental to project success, enabling informed decisions about scope adjustments while maintaining quality and timeline commitments.
+This systematic monitoring was fundamental to project success, enabling informed decisions about scope adjustments while maintaining quality and timeline commitments.
 
 ### 1.4 Schedule Performance Analysis
 
@@ -99,21 +97,12 @@ Effective project management requires proactive risk mitigation and strategic sc
 
 ### 1.6 Justified De-Scoping: Strategic Prioritization Decisions
 
-Because TaskPulse was already an exceptionally feature-heavy application, strategic decisions were made to de-scope two 'Could-Have' non-functional requirements to ensure sufficient time could be dedicated to perfecting the innovative, high-value core features. This was not a compromise on quality—it was a professional prioritization decision that maximized the project's value and impact.
+Strategic decisions were made to de-scope two 'Could-Have' non-functional requirements (NFR-7: Cross-Platform Support and NFR-10: Multi-Language Support, detailed in Table 2) to ensure sufficient time could be dedicated to perfecting the innovative, high-value core features. This professional prioritization decision maximized the project's value and impact rather than compromising on quality.
 
-**Strategic De-Scoping Decisions:**
+These de-scoping decisions enabled substantial additional development time to be dedicated to enhancing the AI Assistant's prompt engineering sophistication and the Timer system's cross-page state persistence—two features that represent genuine technical innovation and provide core user value. The AI Assistant became capable of understanding complex natural language commands and maintaining conversation context, while the Timer system achieved seamless state persistence across page navigation, features that would not have been possible without this focused prioritization.
 
-**Cross-Platform Mobile Optimization (NFR-7):** The decision was made to only partially complete full cross-platform mobile optimization. While TaskPulse is fully responsive and functional on mobile devices through progressive web app principles, native mobile app features like offline-first capability or platform-specific gestures were not implemented. This decision allowed additional time investment in perfecting the AI Assistant's natural language processing capabilities and the sophisticated timer state management system.
+The de-scoped items were viewed as excellent candidates for future product releases, representing clear paths for continued development and feature expansion in a commercial context.
 
-**Multi-Language Support (NFR-10):** Comprehensive multi-language internationalization support was deferred. While the application architecture supports future i18n implementation through consistent string management patterns, full localization was determined to be more appropriate for a future product release after establishing product-market fit in the English-speaking market.
-
-**Justification for Strategic Focus:** These de-scoping decisions enabled substantial additional development time to be dedicated to enhancing the AI Assistant's prompt engineering sophistication and the Timer system's cross-page state persistence—two features that represent genuine technical innovation and provide core user value. The AI Assistant became capable of understanding complex natural language commands and maintaining conversation context, while the Timer system achieved seamless state persistence across page navigation, features that would not have been possible without this focused prioritization.
-
-These de-scoped items were viewed as excellent candidates for future product releases, representing clear paths for continued development and feature expansion in a commercial context.
-
-
-
-The project's management evolved strategically from the AT2 foundation, with a pivotal shift to a full-stack TypeScript ecosystem enabling a more sophisticated final product. Systematic monitoring provided the granular control required to manage scope effectively and deliver all core requirements to a professional standard, demonstrating an adaptive and robust approach to modern software engineering.
 
 ---
 
@@ -123,7 +112,7 @@ This section details the formal architecture, design decisions, and implementati
 
 ### 2.1 Software Architecture & Design Justification
 
-The decision to build TaskPulse without a traditional, custom-written backend API was a deliberate architectural choice. Supabase, a comprehensive Backend-as-a-Service (BaaS) platform, was leveraged to provide all necessary backend functionalities. This strategic decision reallocated development time away from building standard backend infrastructure and towards the project's high-value, innovative features, particularly the AI Assistant. Supabase provided enterprise-grade solutions for the database (PostgreSQL), authentication (GoTrue), and file storage, which were more secure and scalable than could have been built within the project's timeframe.
+The decision to build TaskPulse without a traditional, custom-written backend API was an architectural choice. Supabase, a comprehensive Backend-as-a-Service (BaaS) platform, was leveraged for all backend functionalities. This strategic decision reallocated development time away from building standard backend infrastructure and towards the project's high-value, innovative features, particularly the AI Assistant (Supabase, 2025). Supabase provided enterprise-grade solutions for the database (PostgreSQL), authentication (GoTrue), and file storage, which were more secure and scalable than could have been built within the project's timeframe.
 
 To articulate the architecture, the C4 model was adopted, which visualizes the system at cascading levels of detail.
 
@@ -131,9 +120,13 @@ To articulate the architecture, the C4 model was adopted, which visualizes the s
 
 As illustrated in the System Context Diagram (Figure 1), TaskPulse operates as the central hub in an ecosystem of powerful services. The User interacts with the TaskPulse SPA, which communicates with three critical external systems: the Google Gemini API for AI processing, the Google Calendar API for event synchronization, and the Supabase platform for all backend services.
 
+*[Figure 1: C4 System Context Diagram.]*
+
 #### 2.1.2 Level 2: Containers
 
-The Container Diagram (Figure 2) shows that the TaskPulse system is composed of two primary logical containers: the Web Application (the React SPA) and the Supabase Platform. The diagram illustrates how the SPA handles all user interactions and makes secure calls to the various Supabase services including the PostgreSQL Database, GoTrue Auth, and Edge Functions for server-side logic.
+The Container Diagram (Figure 2) shows that the TaskPulse system is composed of two primary logical containers: the Web Application (the React SPA) and the Supabase Platform. The diagram illustrates the SPA handling user interactions and making secure calls to the various Supabase services including the PostgreSQL Database, GoTrue Auth, and Edge Functions for server-side logic.
+
+*[Figure 2: C4 Container Diagram.]*
 
 #### 2.1.3 Level 3: Components
 
@@ -218,7 +211,9 @@ This section examines the implementation of the project's most technically sophi
 
 #### 2.2.1 AI Assistant Architecture: Advanced Prompt Engineering Implementation
 
-The project's core innovation centered on engineering a creative Large Language Model (Google Gemini) to function as a predictable, deterministic command executor for productivity tasks. The challenge was transforming an inherently generative AI system into a reliable application component that could execute structured commands while maintaining natural language interaction capabilities. This transformation was achieved through sophisticated prompt engineering, context injection systems, and comprehensive response validation, as visualized in the **AI-Driven Task Creation User Flow (Figure 5)**.
+The project's core innovation centered on engineering a creative Large Language Model (Google Gemini) to function as a predictable, deterministic command executor for productivity tasks (Google, 2025). The challenge was transforming an inherently generative AI system into a reliable application component that could execute structured commands while maintaining natural language interaction capabilities. This transformation was achieved through sophisticated prompt engineering, context injection systems, and response validation, as visualized in Figure 3.
+
+*[Figure 3: AI Task Creation User Flow.]*
 
 **Strategic Prompt Engineering Design**
 
@@ -230,7 +225,7 @@ The prompt engineering strategy addresses the fundamental challenge of LLM non-d
 
 A critical engineering challenge emerged during early AI development when the assistant exhibited limited contextual awareness, frequently requesting clarification about project references even when users were clearly working within specific project contexts. The challenge was that generic AI responses lacked understanding of user workflow states, current project assignments, and temporal context.
 
-The solution was implemented through a sophisticated context injection system in `contextService.ts` that queries the user's current operational state and injects this data directly into every AI prompt. This system transforms a generic AI into a personalized assistant with comprehensive workflow awareness:
+The solution was implemented through a context injection system in `contextService.ts` that queries the user's current operational state and injects this data directly into every AI prompt. This system transforms a generic AI into a personalized assistant with comprehensive workflow awareness:
 
 ```typescript
 export const buildContextualPrompt = async (
@@ -266,23 +261,23 @@ The technical implementation addressed performance considerations through intell
 
 **Defensive Programming and Error Resilience**
 
-The challenge of AI API reliability became apparent during integration testing, where Google Gemini exhibited higher failure rates compared to traditional REST APIs. Common failure modes included rate limiting, malformed response structures, and service unavailability. The solution required comprehensive error handling strategies that assume failure and ensure graceful degradation.
+The challenge of AI API reliability became apparent during integration testing, where Google Gemini exhibited higher failure rates compared to traditional REST APIs. Common failure modes included rate limiting, malformed response structures, and service unavailability. The solution required error handling strategies that assume failure and ensure graceful degradation.
 
-The implementation in `geminiService.ts` employs defensive programming principles across multiple layers. Response structure validation occurs before any processing, ensuring malformed outputs are intercepted. Graceful fallback mechanisms activate when APIs are unavailable, providing alternative functionality pathways. User-friendly error messaging replaces technical error details, maintaining interface usability during service disruptions. This defensive architecture ensures the chat interface remains functional even during underlying AI service failures, preventing single points of failure from compromising the entire user experience.
+The implementation in `geminiService.ts` employs defensive programming principles across multiple layers. Response structure validation occurs before any processing, ensuring malformed outputs are intercepted. Graceful fallback mechanisms activate when APIs are unavailable, providing alternative functionality pathways. User-friendly error messaging replaces technical error details, maintaining interface usability during service disruptions. This defensive architecture ensures the chat interface remains functional even during underlying AI service failures, preventing a single point of failure from compromising the user experience.
 
 **Three-Layer Response Validation System**
 
-The challenge of unpredictable AI responses required sophisticated validation architecture. Early testing revealed that LLMs do not consistently adhere to output formatting instructions, sometimes returning partial JSON, explanatory text preceding JSON structures, or complete disregard for formatting requirements. This unpredictability necessitated robust validation systems that handle all response variations while maintaining data integrity.
+The challenge of unpredictable AI responses required validation architecture. Early testing revealed that LLMs do not consistently adhere to output formatting instructions, sometimes returning partial JSON, explanatory text preceding JSON structures, or complete disregard for formatting requirements. This unpredictability necessitated robust validation systems that handle all response variations while maintaining data integrity.
 
-The solution implemented in `messageHandling.ts` employs a three-layer validation approach. The first layer performs JSON parsing and structural validation, ensuring responses conform to expected formats. The second layer implements TypeScript interface validation against predefined command schemas, guaranteeing type safety. The third layer provides database operation validation, ensuring data integrity before any persistence operations. This comprehensive validation strategy ensures that even completely invalid AI responses result in helpful user feedback rather than application errors.
+The solution implemented in `messageHandling.ts` employs a three-layer validation approach. The first layer performs JSON parsing and structural validation, ensuring responses conform to expected formats. The second layer implements TypeScript interface validation against predefined command schemas, guaranteeing type safety. The third layer provides database operation validation, ensuring data integrity before any persistence operations. This validation strategy ensures that even completely invalid AI responses result in helpful user feedback rather than application errors.
 
-The validation system demonstrates that professional AI integration prioritizes graceful error handling over AI perfection. The three-layer approach ensures system reliability through comprehensive response validation rather than relying on unpredictable AI behavior patterns. This architectural decision enables robust production deployment while maintaining natural language interaction capabilities.
+The validation system demonstrates that professional AI integration prioritizes graceful error handling over AI perfection. The three-layer approach ensures system reliability through response validation rather than relying on unpredictable AI behavior patterns. This architectural decision enables robust production deployment while maintaining natural language interaction capabilities.
 
-The implementation showcases professional practices including comprehensive error handling, type safety enforcement, and structured data validation. The mapping of `messages` to `contents` arrays with specific `role` and `parts` properties directly implements the prompt engineering strategy, ensuring Gemini receives properly formatted context for structured response generation. The success of this architecture is documented in `AI_IMPLEMENTATION_CHECKLIST.md`, demonstrating 100% completion of core AI functionality requirements.
+The implementation showcases professional practices including error handling, type safety enforcement, and structured data validation. The mapping of `messages` to `contents` arrays with specific `role` and `parts` properties directly implements the prompt engineering strategy, ensuring Gemini receives properly formatted context for structured response generation. The success of this architecture is documented in `AI_IMPLEMENTATION_CHECKLIST.md`, demonstrating 100% completion of core AI functionality requirements.
 
 #### 2.2.2 Google Calendar Integration: OAuth2 and Bidirectional Synchronization
 
-The Google Calendar integration represented a complex engineering challenge requiring comprehensive understanding of OAuth2 protocols, token lifecycle management, and bidirectional data synchronization. The implementation, detailed in the **Google Calendar Integration User Flow (Figure 6)**, addresses secure token management, automatic refresh mechanisms, and sophisticated conflict resolution to prevent synchronization loops.
+The Google Calendar integration represented a complex engineering challenge requiring understanding of OAuth2 protocols, token lifecycle management, and bidirectional data synchronization (Google, 2025). The implementation, detailed in the **Google Calendar Integration User Flow (Appendix C)**, addresses secure token management, automatic refresh mechanisms, and sophisticated conflict resolution to prevent synchronization loops.
 
 **Automatic Token Refresh Architecture**
 
@@ -294,7 +289,7 @@ The implementation ensures OAuth2 integration operates transparently to users, e
 
 **Bidirectional Synchronization and Conflict Resolution**
 
-The challenge of preventing infinite synchronization loops required sophisticated database schema design and conflict resolution logic. The problem was that naive bidirectional sync implementations create endless loops when events synchronized from TaskPulse to Google Calendar trigger webhook notifications that attempt to sync the same events back to TaskPulse, creating infinite cycling.
+Preventing infinite synchronization loops required database schema design and conflict resolution logic. The problem was that naive bidirectional sync implementations create endless loops when events synchronized from TaskPulse to Google Calendar trigger webhook notifications that attempt to sync the same events back to TaskPulse, creating infinite cycling.
 
 The solution was architected through intelligent database schema design specifically for sync conflict resolution. The breakthrough was implementing source tracking to maintain audit trails of event origins. The schema uses a `source` field and `google_event_id` linking to create intelligent sync management:
 
@@ -379,15 +374,15 @@ This implementation demonstrates several professional-level architectural concep
 
 **Loop Prevention**: The `source` field prevents events from cycling infinitely between systems by tracking origin points and blocking reverse synchronization of externally-sourced events.
 
-**Bidirectional Linking**: The `google_event_id` field maintains referential integrity between local and Google Calendar events, enabling future updates to correctly target corresponding records in both systems.
+**Bidirectional Linking**: The `google_event_id` field maintains referential integrity between local and Google Calendar events, enabling future updates to target corresponding records in both systems.
 
-**State Tracking**: The `source` values ('app', 'google', 'app_synced') provide comprehensive audit trails of event origins, enabling sophisticated conflict resolution and debugging capabilities.
+**State Tracking**: The `source` values ('app', 'google', 'app_synced') provide audit trails of event origins, enabling sophisticated conflict resolution and debugging capabilities.
 
 **Graceful Degradation**: The system continues normal operation when Google Calendar connectivity is unavailable, ensuring core application functionality remains intact regardless of external service availability.
 
-The architecture demonstrates that bidirectional integration complexity exceeds one-way synchronization by orders of magnitude. The critical insight was that successful bidirectional sync requires tracking not only data content but also data provenance and synchronization state. This implementation provides seamless calendar synchronization while preventing the data corruption and infinite loops that commonly plague bidirectional integration attempts.
+The architecture demonstrates that bidirectional integration complexity exceeds one-way synchronization by orders of magnitude. The critical insight was that successful bidirectional sync requires tracking data content, provenance, and synchronization state. This implementation provides seamless calendar synchronization while preventing the data corruption and infinite loops that commonly plague bidirectional integration attempts.
 
-The code showcases professional practices including defensive programming through source validation, secure API communication via Supabase Edge Functions that protect API credentials, and data integrity maintenance through proper linking of local and Google Calendar records.
+The code showcases professional practices including defensive programming through source validation, secure API communication via Supabase Edge Functions that protect API credentials, and data integrity maintenance through linking of local and Google Calendar records.
 
 #### 2.2.3 Integrated Project Management and Timer Persistence Systems
 
@@ -395,9 +390,9 @@ The application's architectural strength emerges from deep feature integration, 
 
 **Advanced Timer State Persistence Architecture**
 
-The challenge was ensuring Pomodoro timer state persistence across page navigation, browser restarts, and system interruptions to guarantee reliability for productivity workflows. The solution required combining React's Context API for application-wide state access with browser localStorage for persistent storage, creating a robust two-layer persistence system.
+The challenge was ensuring Pomodoro timer state persistence across page navigation, browser restarts, and system interruptions to guarantee reliability for productivity workflows. The solution required combining React's Context API for application-wide state access with browser localStorage for persistent storage, creating a two-layer persistence system.
 
-The `loadInitialState` function from `usePomodoroTimer.ts` demonstrates sophisticated state recovery logic that prioritizes accuracy over simple state restoration:
+The `loadInitialState` function from `usePomodoroTimer.ts` demonstrates state recovery logic that prioritizes accuracy over simple state restoration:
 
 ```typescript
 // Load initial state from localStorage with proper time calculation
@@ -449,9 +444,9 @@ useEffect(() => {
 }, [state]);
 ```
 
-This implementation demonstrates sophisticated engineering principles through timestamp-based calculation that reconstructs timer state by calculating elapsed time rather than trusting stored values, ensuring accuracy even after major system interruptions. Intelligent state determination automatically resumes timers if time remains or marks sessions complete if expired. Mode and context preservation maintains focus/break modes, session counts, and work contexts across interruptions. Graceful error handling provides fallback to default settings if localStorage corruption occurs.
+This implementation demonstrates engineering principles through timestamp-based calculation that reconstructs timer state by calculating elapsed time rather than trusting stored values, ensuring accuracy even after major system interruptions. Intelligent state determination automatically resumes timers if time remains or marks sessions complete if expired. Mode and context preservation maintains focus/break modes, session counts, and work contexts across interruptions. Graceful error handling provides fallback to default settings if localStorage corruption occurs.
 
-The architecture creates professional-grade timer reliability through precise state reconstruction, comprehensive context preservation, and robust error recovery. The timer functions as a dependable productivity tool rather than a fragile feature vulnerable to normal usage patterns such as browser navigation or system restarts.
+The architecture creates professional-grade timer reliability through precise state reconstruction, context preservation, and robust error recovery. The timer functions as a dependable productivity tool rather than a fragile feature vulnerable to normal usage patterns such as browser navigation or system restarts.
 
 ### 2.3 Data Design & Security
 
@@ -459,7 +454,7 @@ The data design process was paramount. The database schema was designed first, e
 
 #### 2.3.1 Database Schema
 
-The core relationships of the database are visualized in the **Simplified Data Schema (Figure 4)**. The schema was designed with normalization and relational integrity as primary goals, with the `users` and `projects` tables acting as central hubs.
+The core relationships of the database are detailed in **Appendix B**. The schema was designed with normalization and relational integrity as primary goals, with the `users` and `projects` tables acting as central hubs.
 
 #### 2.3.2 Security Model: Application-Layer Authorization
 
@@ -471,7 +466,7 @@ This manual implementation enforces a zero-trust approach at the application lay
 
 #### 2.3.3 Advanced Security Measures
 
-Comprehensive security measures were implemented to protect against common web application vulnerabilities, recognizing that productivity applications handle sensitive user data requiring robust protection.
+Security measures were implemented to protect against common web application vulnerabilities, recognizing that productivity applications handle sensitive user data requiring robust protection.
 
 **Input Sanitization & XSS Prevention**
 - Multi-layered input sanitization removes dangerous HTML content and encodes entities before database storage
@@ -532,18 +527,24 @@ This architecture functions by securely accessing environment variables through 
 
 ### 2.4 User Experience (UX) Design
 
-The application's design was centered on creating a clean, modern, and intuitive interface inspired by leading SaaS applications like Notion and Linear. This design philosophy aimed to reduce user cognitive load through clear visual hierarchy and seamless navigation, directly fulfilling the high usability requirements (NFR-2). The design process was blueprint-driven, beginning with low-fidelity wireframes that served as essential blueprints for application layout and user flow.
+The application's design was centered on creating a clean, modern, and intuitive interface inspired by leading SaaS applications like Notion and Linear. This design philosophy aimed to reduce user cognitive load through clear visual hierarchy and seamless navigation, directly fulfilling the high usability requirements (NFR-2). The design process was blueprint-driven, beginning with low-fidelity wireframes that served as essential blueprints for application layout and user flow. To implement this design philosophy efficiently, the project utilized the shadcn/ui component library for its set of accessible and reusable components (shadcn, 2025).
 
 #### 2.4.1 Wireframe Designs and Design Justifications
 
 **Dashboard Design**
-The Dashboard's three-column layout was strategically chosen to provide high information density while maintaining accessibility to all critical tools. The left column houses primary navigation, the central panel displays main content areas (task board, calendar), and the right column contains contextual tools (AI Chat, Pomodoro Timer). This structure minimizes context-switching by ensuring all essential functionality remains accessible from a single view.
+The Dashboard's three-column layout was strategically chosen to provide high information density while maintaining accessibility to all critical tools. The left column houses primary navigation, the central panel displays main content areas (task board, calendar), and the right column contains contextual tools (AI Chat, Pomodoro Timer). This structure minimizes context-switching by ensuring all essential functionality remains accessible from a single view (Figure 5).
+
+*[Figure 5: Wireframe of the main Dashboard layout.]*
 
 **Project Page Design**
-The Project Page employs a tabbed interface designed to prevent information overload while organizing all associated entities (Tasks, Events, Notes, Files). Two distinct views were implemented: a comprehensive "everything" view and a focused "tab" view, empowering users with control over information consumption patterns. This design choice supports focused work while maintaining access to all project-related resources.
+The Project Page employs a tabbed interface designed to prevent information overload while organizing all associated entities (Tasks, Events, Notes, Files). Two distinct views were implemented: a comprehensive "everything" view and a focused "tab" view, empowering users with control over information consumption patterns. This design choice supports focused work while maintaining access to all project-related resources (Figure 6).
+
+*[Figure 6: Wireframe of the tabbed Project Page.]*
 
 **AI Chat Interface**
-The AI interface was designed to feel familiar and conversational, encouraging natural language interaction through clear dialogue history, distinct response bubbles, and a simple input field. This approach simplifies complex operations by making them feel as intuitive as sending a message, reducing the learning curve for AI-assisted productivity features.
+The AI interface was designed to feel familiar and conversational, encouraging natural language interaction through clear dialogue history, distinct response bubbles, and a simple input field. This approach simplifies complex operations by making them feel as intuitive as sending a message, reducing the learning curve for AI-assisted productivity features (Figure 7).
+
+*[Figure 7: Wireframe of the AI Chat interface.]*
 
 #### 2.4.2 Accessibility and Inclusive Design
 
@@ -780,14 +781,14 @@ These advanced interactive features demonstrate professional-level UX engineerin
 
 ## 3. Testing, Verification & Validation
 
-The project's quality assurance strategy was systematic and evolved from the initial plan outlined in the AT2 report. A pivot was made after research into best-in-class frameworks for the final TypeScript-based technology stack. This led to adopting a sophisticated, multi-layered strategy centered on Vitest for high-speed unit and integration testing, and Playwright for powerful end-to-end, security, and accessibility testing. This decision ensured the testing methodology aligned with modern industry best practices. The result of this strategy was a comprehensive suite of 217 fully passing automated tests, implemented to ensure the final product was robust, secure, and reliable.
+The project's quality assurance strategy was systematic and evolved from the initial plan outlined in the AT2 report. A pivot was made after research into best-in-class frameworks for the final TypeScript-based technology stack. This led to adopting a multi-layered strategy centered on Vitest for high-speed unit and integration testing, and Playwright for powerful end-to-end, security, and accessibility testing. This decision ensured the testing methodology aligned with modern industry best practices. This strategy resulted in a comprehensive suite of 217 fully passing automated tests, ensuring the final product was robust, secure, and reliable.
 
 ### 3.1 Overall Testing Strategy: The Testing Pyramid
 
-The testing approach was formally structured using the "Testing Pyramid" model. The rationale for this model is to ensure efficient and comprehensive coverage by building a large foundation of fast, isolated unit tests and tapering to fewer, more complex E2E tests. This approach allocates the greatest number of tests to the fastest and most isolated units of code, with progressively fewer tests at higher, more integrated levels.
+The testing approach was formally structured using the "Testing Pyramid" model. This model ensures efficient and comprehensive coverage by building a large foundation of fast, isolated unit tests and tapering to fewer, more complex E2E tests. This approach allocates the greatest number of tests to the fastest and most isolated units of code, with progressively fewer tests at higher, more integrated levels.
 
-*   **Vitest:** Selected for **Unit and Integration Testing**. Vitest's speed, modern ESM support, and seamless integration with the Vite ecosystem made it the ideal choice for the foundational layers of the pyramid. The tool was used to test individual functions, React components, and backend service modules in isolation.
-*   **Playwright:** Chosen for **End-to-End (E2E), Security, and Accessibility Testing**. Playwright's powerful cross-browser capabilities, auto-waits, and rich tooling for simulating real user interactions were indispensable. The framework enabled creation of robust tests that validate entire user journeys, check for security vulnerabilities, and audit the application against accessibility standards.
+*   **Vitest:** Selected for **Unit and Integration Testing**. Vitest's speed, modern ESM support, and seamless integration with the Vite ecosystem made it the ideal choice for the foundational layers of the pyramid. The tool was used to test individual functions, React components, and backend service modules in isolation (Vitest, 2025).
+*   **Playwright:** Chosen for **End-to-End (E2E), Security, and Accessibility Testing**. Playwright's powerful cross-browser capabilities, auto-waits, and rich tooling for simulating real user interactions were indispensable. The framework enabled creation of robust tests that validate entire user journeys, check for security vulnerabilities, and audit the application against accessibility standards (Microsoft, 2025).
 
 ### 3.2 Test Suite Composition & Coverage
 
@@ -801,6 +802,10 @@ The breadth and depth of the testing are documented in a detailed table that vis
 | **Accessibility Tests**| Playwright  | 35         | ✅ **PASSING** | Ensure WCAG 2.1 AA compliance.                  |
 | **E2E Tests**         | Playwright  | 19         | ✅ **PASSING** | Validate complete user journeys and workflows.  |
 | **Total**             | -           | **217**    | ✅ **100%**    | **Comprehensive Quality Assurance**             |
+
+The successful execution of the entire test suite is confirmed in Figure 4.
+
+*[Figure 8: Test Suite Execution visual confirmation.]*
 
 ### 3.3 Deep Dive into Testing Categories with Code Examples
 
@@ -824,7 +829,7 @@ The test from `src/tests/e2e/ai-workflow.spec.ts` validates the application's mo
 
 #### 3.3.3 Security Testing (36 Tests)
 
-A dedicated suite of 36 tests uses Playwright to actively probe for common, high-risk vulnerabilities. Security was treated as a primary requirement, with tests specifically designed to validate protection mechanisms:
+A dedicated suite of 36 tests uses Playwright to actively probe for common, high-risk vulnerabilities. Security was treated as a primary requirement, with tests validating specific protection mechanisms:
 
 *   **Authorization Bypass:** Tests attempt to directly navigate to URLs of resources belonging to other test users, asserting that the application correctly denies access due to the database's Row-Level Security policies.
 *   **Cross-Site Scripting (XSS):** Tests involve creating tasks and projects with names containing `<script>alert('xss')</script>` and asserting that the script is never executed, proving that input is correctly sanitized.
@@ -893,13 +898,13 @@ This matrix creates a clear, auditable trail demonstrating that the final produc
 
 
 
-The project's quality assurance was a core pillar built on a multi-layered strategy that successfully de-risked development. This approach combined a comprehensive suite of 217 automated tests with rigorous manual validation of the AI, ensuring the final product was robust, secure, and accessible, consistent with professional software engineering standards.
+
 
 ---
 
 ## 4. Evaluation
 
-This chapter provides a critical evaluation of the project's overall achievements against its initial objectives. It analyzes the effectiveness of the planning and methodology, discusses the innovative aspects of the work, and reflects on the successes, challenges, and learnings from the development process.
+This chapter critically evaluates the project's achievements against its initial objectives. It analyzes the effectiveness of the planning and methodology, discusses the innovative aspects of the work, and reflects on the successes, challenges, and learnings from the development process.
 
 ### 4.1 Overall Achievement: Successes & Failures
 
@@ -911,11 +916,11 @@ The primary success was the delivery of a production-ready application that met 
 
 **Exceeding AI Goals:** The AI Assistant was implemented far beyond its initial specification, featuring advanced context awareness and a deterministic command execution system. Advanced capabilities include context-aware project assignment, smart date parsing (interpreting phrases like "next Tuesday"), natural language task creation, and transformation of the Google Gemini API into a reliable command executor. The system incorporates conversation persistence, suggestion feedback mechanisms, and robust error handling.
 
-**Production-Ready GDPR Compliance:** A comprehensive compliance suite was implemented, including legal pages (`PrivacyPolicy.tsx`, `TermsOfService.tsx`), a consent banner (`CookieConsentBanner.tsx`), and a one-click data export feature (`gdprService.ts`). Users can export all data in JSON format, ensuring data portability rights, with complete account deletion functionality.
+**Production-Ready GDPR Compliance:** A compliance suite was implemented, including legal pages (`PrivacyPolicy.tsx`, `TermsOfService.tsx`), a consent banner (`CookieConsentBanner.tsx`), and a one-click data export feature (`gdprService.ts`). Users can export all data in JSON format, ensuring data portability rights, with complete account deletion functionality.
 
 **Professional-Grade Testing:** An extensive suite of 217 automated tests across five categories was established: 92 unit tests, 35 integration tests, 19 E2E tests, 36 security tests, and 35 accessibility tests ensuring WCAG 2.1 AA compliance. This approach, documented in `TESTING_SUMMARY.md`, demonstrates commitment to quality beyond typical academic projects and alignment with industry best practices.
 
-**Advanced Google Calendar Integration:** A sophisticated two-way synchronization system was successfully built, featuring OAuth2 authentication, conflict resolution (preventing duplicate events through source tracking), and both manual and automatic sync capabilities. The system handles event creation, updates, and deletions bidirectionally while maintaining data integrity.
+**Advanced Google Calendar Integration:** A two-way synchronization system was successfully built, featuring OAuth2 authentication, conflict resolution (preventing duplicate events through source tracking), and both manual and automatic sync capabilities. The system handles event creation, updates, and deletions bidirectionally while maintaining data integrity.
 
 #### Challenges and Learning Experiences
 
@@ -964,7 +969,7 @@ Technology choices were fundamental to project success, with each selection driv
 
 #### Tool Value Assessment
 
-The single most valuable technical decision was the full-stack TypeScript approach due to its comprehensive benefits:
+The adoption of a full-stack TypeScript approach was the most valuable technical decision, providing comprehensive benefits:
 - **End-to-end type safety** from database schema to UI components
 - **Shared interfaces** between frontend and backend (stored in `src/frontend/types/`)
 - **Reduced integration errors** through compile-time checking
@@ -983,7 +988,7 @@ The project's core innovation is its context-aware AI Assistant, which transform
 
 #### Market Context and User-Centric Model
 
-The project is positioned as a free-to-use application where users provide their own Google Gemini API key. The rationale for this model is that it provides enhanced security/privacy, is cost-effective for users, and creates a sustainable competitive advantage through three key benefits:
+The project is positioned as a free-to-use application requiring users to provide their own Google Gemini API key. The rationale for this model is that it provides enhanced security/privacy, is cost-effective for users, and creates a sustainable competitive advantage through three key benefits:
 
 **Enhanced Security and Privacy:** User-provided API keys ensure all AI processing occurs through personal Google accounts, with the application acting solely as an interface. User conversational data and prompts are not stored or processed on central third-party servers, providing superior data privacy compared to commercial offerings.
 
@@ -1025,9 +1030,9 @@ The integration of multiple complex systems (AI, calendar APIs, real-time databa
 
 ## 5. Conclusion
 
-This project culminated in the successful delivery of TaskPulse, a feature-complete and production-ready application that directly addresses the problem of workflow fragmentation. The journey from the initial concept documented in the AT2 report to the final AI-powered productivity tool was navigated using an adaptive hybrid methodology, resulting in a high-quality product that is robust, secure, and backed by a comprehensive suite of 217 automated tests.
+This project culminated in delivering TaskPulse, a feature-complete and production-ready application that directly addresses the problem of workflow fragmentation. The journey from the initial concept documented in the AT2 report to the final AI-powered productivity tool was navigated using an adaptive hybrid methodology, resulting in a high-quality product that is robust, secure, and backed by a comprehensive suite of 217 automated tests.
 
-The project's success is defined by several key achievements. The strategic pivot to a full-stack TypeScript ecosystem proved fundamental, enabling a level of type safety and development velocity that allowed for the creation of highly complex features. The project's crown jewel, the AI Assistant, demonstrates true innovation through the implementation of advanced prompt engineering, which successfully transformed the creative Google Gemini LLM into a deterministic and reliable command executor. Furthermore, the professional approach to project management—using detailed tracking documents to make informed, data-driven decisions like the strategic de-scoping of non-essential features—ensured that 100% of the core requirements were delivered on schedule and to a high standard.
+The project's success is defined by several key achievements. The strategic pivot to a full-stack TypeScript ecosystem proved fundamental, enabling a level of type safety and development velocity that allowed for the creation of highly complex features. The project's crown jewel, the AI Assistant, demonstrates true innovation through the implementation of advanced prompt engineering, which transformed the Google Gemini LLM into a deterministic and reliable command executor. Furthermore, the professional approach to project management—using detailed tracking documents to make informed, data-driven decisions like the strategic de-scoping of non-essential features—ensured that 100% of the core requirements were delivered on schedule and to a high standard.
 
 The personal learning journey during this project was immense. A key lesson learned was that modern software development requires a holistic approach that balances ambitious feature implementation with rigorous testing, security, and accessibility. The project required and deepened technical skills in full-stack TypeScript development, advanced state management in React, and the practical application of AI APIs. Most importantly, the process revealed the value of adaptive project management; the ability to recognize when a technical approach isn't working and pivot to a better one is a critical professional skill.
 
@@ -1037,6 +1042,22 @@ In conclusion, TaskPulse is a successful project that not only meets all its aca
 
 ## 6. Appendices
 
-### 6.1 Code Manifest
+### Appendix A: C4 Component Diagram
+
+*[Figure A1: C4 Component Diagram of the React application.]*
+
+### Appendix B: Database Schema
+
+*[Figure B1: Database Entity-Relationship Diagram.]*
+
+### Appendix C: Google Calendar Integration User Flow
+
+*[Figure C1: Google Calendar Integration User Flow.]*
+
+### Appendix D: Additional Wireframe Designs
+
+*[Figure D1: Additional detailed wireframe designs.]*
+
+### Appendix E: Code Manifest
 
 A detailed code manifest, which outlines the purpose and contribution nature for each significant source file, is provided as a supplementary document: `Code_Manifest.md`.
