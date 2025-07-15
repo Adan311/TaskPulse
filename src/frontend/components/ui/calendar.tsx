@@ -31,7 +31,7 @@ function Calendar({
         table: "w-full border-collapse space-y-1",
         head_row: "flex",
         head_cell:
-          "text-muted-foreground rounded-md w-9 font-medium text-xs tracking-wide",
+          "text-muted-foreground rounded-md w-10 font-medium text-xs tracking-wide text-center",
         row: "flex w-full mt-2",
         cell: "h-10 w-10 text-center text-base p-0 relative focus-within:relative focus-within:z-20 transition-all",
         day: cn(
@@ -40,8 +40,8 @@ function Calendar({
         ),
         day_range_end: "day-range-end",
         day_selected:
-          "bg-[#a18aff] text-white font-bold border-none shadow-md scale-105 z-20",
-        day_today: "bg-[#f3eaff] text-[#a18aff] font-bold border border-[#a18aff] scale-105 z-10",
+          "bg-primary/15 text-primary font-semibold shadow-sm z-20 hover:bg-primary/25",
+        day_today: "bg-accent text-accent-foreground font-bold border border-primary scale-105 z-10",
         day_outside:
           "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
         day_disabled: "text-muted-foreground opacity-50",

@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import App from "./App";
-import Index from "./frontend/pages/Index";
+import Home from "./frontend/pages/Home";
 import NotFound from "./frontend/pages/NotFound";
 import SignIn from "./frontend/pages/auth/SignIn";
 import SignUp from "./frontend/pages/auth/SignUp";
@@ -19,11 +19,11 @@ const Calendar = React.lazy(() => import("./frontend/pages/Calendar"));
 const Tasks = React.lazy(() => import("./frontend/pages/Tasks"));
 const Projects = React.lazy(() => import("./frontend/pages/Projects"));
 const Files = React.lazy(() => import("./frontend/pages/Files"));
-const Components = React.lazy(() => import("./frontend/pages/Components"));
+
 const Timer = React.lazy(() => import("./frontend/pages/Timer"));
 const NotesPage = React.lazy(() => import("./frontend/pages/Notes"));
 const Settings = React.lazy(() => import("./frontend/pages/Settings"));
-const ProjectDetailPage = React.lazy(() => import("./frontend/pages/ProjectDetailPage"));
+const ProjectDetail = React.lazy(() => import("./frontend/pages/ProjectDetail"));
 const Chat = React.lazy(() => import("./frontend/pages/Chat"));
 const Suggestions = React.lazy(() => import("./frontend/pages/Suggestions"));
 
@@ -45,7 +45,7 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Index />,
+        element: <Home />,
       },
       {
         path: "calendar",
@@ -75,7 +75,7 @@ const router = createBrowserRouter([
             path: ":id",
             element: (
               <LazyWrapper>
-                <ProjectDetailPage />
+                <ProjectDetail />
               </LazyWrapper>
             ),
           },
@@ -89,14 +89,7 @@ const router = createBrowserRouter([
           </LazyWrapper>
         ),
       },
-      {
-        path: "components",
-        element: (
-          <LazyWrapper>
-            <Components />
-          </LazyWrapper>
-        ),
-      },
+
       {
         path: "timer",
         element: (
@@ -195,31 +188,4 @@ ReactDOM.createRoot(rootElement).render(
   </React.StrictMode>
 );
 
-// Initialize stagewise toolbar separately (development only) ////////////
-if (process.env.NODE_ENV === 'development') {
-  import('@stagewise/toolbar-react').then(({ StagewiseToolbar }) => {
-    const toolbarConfig = {
-      plugins: [], // Add your custom plugins here
-    };
 
-    const initToolbar = () => {
-      const toolbarRoot = document.createElement('div');
-      toolbarRoot.id = 'stagewise-toolbar-root';
-      document.body.appendChild(toolbarRoot);
-      
-      ReactDOM.createRoot(toolbarRoot).render(
-        <React.StrictMode>
-          <StagewiseToolbar config={toolbarConfig} />
-        </React.StrictMode>
-      );
-    };
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initToolbar);
-    } else {
-      initToolbar();
-    }
-  }).catch(() => {
-    // Silently fail if stagewise is not available
-  });
-}

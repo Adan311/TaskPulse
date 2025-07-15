@@ -20,9 +20,9 @@ export function TimePickerField({ form, name, label }: TimePickerFieldProps) {
         <FormItem className="flex-1">
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            <div className="flex items-center">
-              <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
-              <Input type="time" {...field} />
+            <div className="flex items-center space-x-2">
+              <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <Input type="time" {...field} className="flex-1 min-w-0" />
             </div>
           </FormControl>
           <FormMessage />

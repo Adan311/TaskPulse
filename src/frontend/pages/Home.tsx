@@ -4,7 +4,7 @@ import LandingPage from './LandingPage';
 import { useAuthCheck } from '@/frontend/hooks/useAuthCheck';
 import { PageLoading } from '@/frontend/components/ui/loading';
 
-const Index = () => {
+const Home = () => {
   const { isAuthenticated, loading } = useAuthCheck();
 
   if (loading) {
@@ -20,4 +20,4 @@ const Index = () => {
   return <DashboardLayout />;
 };
 
-export default Index;
+export default Home;

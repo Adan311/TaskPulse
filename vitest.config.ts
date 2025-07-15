@@ -21,7 +21,7 @@ export default defineConfig({
         '**/dist/**',
         '**/build/**',
         'src/main.tsx',
-        'src/App.css',
+
         'src/index.css',
       ],
       thresholds: {

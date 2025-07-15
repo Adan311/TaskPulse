@@ -47,6 +47,12 @@ export function DatePickerField({ form }: DatePickerFieldProps) {
                 onSelect={field.onChange}
                 initialFocus
                 className="p-3 pointer-events-auto"
+                classNames={{
+                  head_cell: "text-muted-foreground rounded-md w-8 h-8 font-medium text-xs tracking-wide text-center",
+                  cell: "h-8 w-8 text-center text-sm p-0 relative focus-within:relative focus-within:z-20 transition-all",
+                  day: "h-8 w-8 p-0 font-normal rounded-full transition-all aria-selected:opacity-100 focus:ring-2 focus:ring-primary flex items-center justify-center mx-auto text-sm",
+                  row: "flex w-full mt-1"
+                }}
               />
             </PopoverContent>
           </Popover>

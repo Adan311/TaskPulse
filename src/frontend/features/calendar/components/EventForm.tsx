@@ -367,7 +367,7 @@ export function EventForm({ onSuccess, onCancel, event, initialProjectId, onDele
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DatePickerField form={form} />
 
-          <div className="flex space-x-2">
+          <div className="grid grid-cols-2 gap-4">
             <TimePickerField form={form} name="startTime" label="Start Time" />
             <TimePickerField form={form} name="endTime" label="End Time" />
           </div>

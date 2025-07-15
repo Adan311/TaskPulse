@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 
 // Conditionally import visualizer only in production
 let visualizer: any = null;
@@ -21,7 +20,6 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === 'development' && componentTagger(),
     // Bundle analyzer for production builds (only if available)
     mode === 'production' && visualizer && visualizer({
       filename: 'dist/bundle-analysis.html',

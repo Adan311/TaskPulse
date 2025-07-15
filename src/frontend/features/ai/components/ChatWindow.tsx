@@ -463,8 +463,8 @@ export function ChatWindow({ conversationId, onNewConversation, onCollapse }: Ch
         {/* Avatar */}
         <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
           message.role === "user" 
-            ? "bg-gradient-to-br from-primary to-primary/80 text-white dark:text-white" 
-            : "bg-gradient-to-br from-violet-500 to-purple-600 text-white"
+            ? "bg-muted border border-border text-foreground" 
+            : "bg-gradient-to-br from-violet-500 to-purple-600 text-white dark:from-violet-400 dark:to-purple-500"
         }`}>
           {message.role === "user" ? (
             <User className="h-4 w-4" />
@@ -478,7 +478,7 @@ export function ChatWindow({ conversationId, onNewConversation, onCollapse }: Ch
           <div
             className={`rounded-2xl px-4 py-3 shadow-sm ${
               message.role === "user"
-                ? "bg-gradient-to-br from-primary to-primary/90 text-white dark:text-white"
+                ? "bg-muted/50 border border-border text-foreground"
                 : "bg-card border border-border text-foreground"
             }`}
           >
@@ -504,12 +504,12 @@ export function ChatWindow({ conversationId, onNewConversation, onCollapse }: Ch
   const totalSuggestions = suggestionCounts.tasks + suggestionCounts.events;
   
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-full bg-background">
       {/* Modern Header */}
       <div className="bg-card border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 dark:from-violet-400 dark:to-purple-500 flex items-center justify-center">
               <Bot className="h-5 w-5 text-white" />
             </div>
             <div>
@@ -641,7 +641,7 @@ export function ChatWindow({ conversationId, onNewConversation, onCollapse }: Ch
             </div>
           </div>
         ) : messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-8">
+          <div className="h-full flex flex-col items-center justify-center text-center p-4">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center mx-auto mb-6">
               <Bot className="h-10 w-10 text-violet-600" />
             </div>

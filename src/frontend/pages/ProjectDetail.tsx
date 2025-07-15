@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { AppLayout } from '@/frontend/components/layout/AppLayout';
-import { ProjectDetail } from '@/frontend/features/project/components/ProjectDetail';
+import { ProjectDetail as ProjectDetailComponent } from '@/frontend/features/project/components/ProjectDetail';
 import { useProjects } from '@/frontend/features/project/hooks/useProjects';
 import { Box, CircularProgress, Typography, useTheme } from '@mui/material';
 import { useToast } from '@/frontend/hooks/use-toast';
@@ -17,7 +17,7 @@ import {
 import { Button } from '@/frontend/components/ui/button';
 import { ProjectFormFields } from '@/frontend/features/project/components/ProjectFormFields';
 
-export default function ProjectDetailPage() {
+export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const { projects, loading, error, deleteProject, updateProject } = useProjects();
   const navigate = useNavigate();
@@ -154,7 +154,7 @@ export default function ProjectDetailPage() {
 
   return (
     <AppLayout>
-      <ProjectDetail 
+      <ProjectDetailComponent 
         project={projectForDetail} 
         onEdit={handleEdit} 
         onDelete={handleDelete}

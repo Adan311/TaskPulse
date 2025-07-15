@@ -24,7 +24,7 @@ const LandingPage = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-br from-primary via-primary to-primary/90 rounded-lg flex items-center justify-center shadow-lg">
-                <Zap className="w-5 h-5 text-white drop-shadow-sm" fill="currentColor" />
+                <Zap className="w-5 h-5 text-primary-foreground drop-shadow-sm" fill="currentColor" />
               </div>
               <span className="text-xl font-bold">TaskPulse</span>
             </div>
@@ -42,7 +42,7 @@ const LandingPage = () => {
             <div className="md:hidden flex items-center space-x-2">
               <ModeToggle />
               <Button variant="ghost" size="sm" onClick={handleGetStarted}>
-                <Zap className="w-5 h-5" fill="currentColor" />
+                <Zap className="w-5 h-5 text-foreground" fill="currentColor" />
               </Button>
             </div>
           </div>
@@ -73,6 +73,9 @@ const LandingPage = () => {
                 <Button size="lg" className="group" onClick={handleGetStarted}>
                   Start Free Today
                   <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+                <Button size="lg" variant="outline" onClick={handleSignIn}>
+                  Sign In
                 </Button>
               </div>
               <div className="flex items-center space-x-8 text-sm text-muted-foreground">
@@ -146,7 +149,7 @@ const LandingPage = () => {
             <Card className="group hover:shadow-xl hover:scale-105 transition-all duration-300 border-0 bg-gradient-to-br from-card to-muted/20 cursor-pointer">
               <CardContent className="p-8">
                 <div className="w-12 h-12 bg-gradient-to-br from-primary via-primary to-primary/90 rounded-xl flex items-center justify-center mb-6 shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
-                  <Zap className="w-6 h-6 text-white drop-shadow-sm" fill="currentColor" />
+                  <Zap className="w-6 h-6 text-primary-foreground drop-shadow-sm" fill="currentColor" />
                 </div>
                 <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors">Your AI productivity partner</h3>
                 <p className="text-muted-foreground mb-4">
@@ -293,7 +296,7 @@ const LandingPage = () => {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
               <div className="w-8 h-8 bg-gradient-to-br from-primary via-primary to-primary/90 rounded-lg flex items-center justify-center shadow-lg">
-                <Zap className="w-5 h-5 text-white drop-shadow-sm" fill="currentColor" />
+                <Zap className="w-5 h-5 text-primary-foreground drop-shadow-sm" fill="currentColor" />
               </div>
               <span className="text-xl font-bold">TaskPulse</span>
             </div>
