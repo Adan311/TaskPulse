@@ -78,7 +78,7 @@
 - Show professional UI with clear value proposition
 
 ### 🎙️ EXACT NARRATION:
-> "Hello, I'm Adan Naveed, student B00905612. This is my final year project demonstration: TaskPulse, an AI-enhanced productivity dashboard."
+> "Hello, I'm Adan Naveed, Studting computer systems com 668 computing project. This is my final year project demonstration: TaskPulse, an AI-enhanced productivity dashboard."
 
 > "The problem TaskPulse solves is workflow fragmentation. Research shows modern professionals use 8-12 different productivity tools daily - separate apps for tasks, calendars, notes, files, and time tracking. This creates cognitive overhead, context-switching costs, and reduces productivity by up to 40%."
 
