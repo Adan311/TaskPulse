@@ -1,6 +1,6 @@
-<testsuites id="" name="" tests="19" failures="0" skipped="0" errors="0" time="65.324702">
-<testsuite name="workflows/ai-workflow.spec.ts" timestamp="2025-07-15T10:28:23.207Z" hostname="chromium" tests="5" failures="0" skipped="0" time="5.498" errors="0">
-<testcase name="AI Workflow E2E Tests › 🤖 Complete AI Chat Workflow - Natural Language to Actions" classname="workflows/ai-workflow.spec.ts" time="1.782">
+<testsuites id="" name="" tests="19" failures="0" skipped="0" errors="0" time="64.916414">
+<testsuite name="workflows/ai-workflow.spec.ts" timestamp="2025-07-15T16:53:48.407Z" hostname="chromium" tests="5" failures="0" skipped="0" time="5.633" errors="0">
+<testcase name="AI Workflow E2E Tests › 🤖 Complete AI Chat Workflow - Natural Language to Actions" classname="workflows/ai-workflow.spec.ts" time="1.65">
 <system-out>
 <![CDATA[🔐 Using existing test user: e2e-test@taskpulse.com
 🔐 Login attempt 1...
@@ -52,7 +52,7 @@ Call log:
       _stepId: [32m'pw:api@62'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575305884[39m,
+    endWallTime: [33m1752598431015[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/chat\n'[39m +
         [32m'Call log:\n'[39m +
@@ -96,7 +96,7 @@ Call log:
       _stepId: [32m'pw:api@63'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575305921[39m,
+    endWallTime: [33m1752598431056[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/chat\n'[39m +
         [32m'Call log:\n'[39m +
@@ -140,7 +140,7 @@ Call log:
       _stepId: [32m'pw:api@64'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575305958[39m,
+    endWallTime: [33m1752598431097[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/chat\n'[39m +
         [32m'Call log:\n'[39m +
@@ -183,7 +183,7 @@ Call log:
       _stepId: [32m'pw:api@65'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575306007[39m,
+    endWallTime: [33m1752598431149[39m,
     error: {
       message: [32m'Error: page.goto: Test ended.\n'[39m +
         [32m'Call log:\n'[39m +
@@ -223,7 +223,7 @@ Call log:
 ]]>
 </system-out>
 </testcase>
-<testcase name="AI Workflow E2E Tests › 🎯 AI Smart Suggestions and Automation" classname="workflows/ai-workflow.spec.ts" time="0.953">
+<testcase name="AI Workflow E2E Tests › 🎯 AI Smart Suggestions and Automation" classname="workflows/ai-workflow.spec.ts" time="1.08">
 <system-out>
 <![CDATA[🔐 Using existing test user: e2e-test@taskpulse.com
 🔐 Login attempt 1...
@@ -237,16 +237,14 @@ Final URL after login: http://localhost:8080/
 🤖 Sending AI message: Estimate how long each of my tasks will take
 🤖 Sending AI message: Schedule my tasks in my calendar based on priority and time estimates
 🔄 Navigating to chat page...
-✅ Tasks page loaded
-📋 Creating task: Urgent Bug Fix
-⚠️ Page context closed during navigation
-✅ Smart calendar scheduling requested
-⚠️ Navigation to chat failed: page.goto: Test ended.
+🔄 Navigating to chat page...
+⚠️ Navigation to chat failed: page.goto: net::ERR_ABORTED at http://localhost:8080/chat
 Call log:
 [2m  - navigating to "http://localhost:8080/chat", waiting until "domcontentloaded"[22m
 
     at AIHelpers.sendMessage [90m(/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/utils/test-helpers.ts:1166:27[90m)[39m
     at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/workflows/ai-workflow.spec.ts:119:9 {
+  name: [32m'Error'[39m,
   [[32mSymbol(step)[39m]: {
     stepId: [32m'pw:api@43'[39m,
     location: {
@@ -268,12 +266,12 @@ Call log:
       _stepId: [32m'pw:api@43'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575306946[39m,
+    endWallTime: [33m1752598432212[39m,
     error: {
-      message: [32m'Error: page.goto: Test ended.\n'[39m +
+      message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/chat\n'[39m +
         [32m'Call log:\n'[39m +
         [32m'\x1B[2m  - navigating to "http://localhost:8080/chat", waiting until "domcontentloaded"\x1B[22m\n'[39m,
-      stack: [32m'Error: page.goto: Test ended.\n'[39m +
+      stack: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/chat\n'[39m +
         [32m'Call log:\n'[39m +
         [32m'\x1B[2m  - navigating to "http://localhost:8080/chat", waiting until "domcontentloaded"\x1B[22m\n'[39m +
         [32m'\n'[39m +
@@ -284,18 +282,131 @@ Call log:
   }
 }
 ⚠️ Trying to continue without navigation...
-⚠️ Page context closed during navigation
-✅ Intelligent time estimation requested
-⚠️ Could not find create task button
+⚠️ Navigation to chat failed: page.goto: net::ERR_ABORTED; maybe frame was detached?
+Call log:
+[2m  - navigating to "http://localhost:8080/chat", waiting until "domcontentloaded"[22m
+
+    at AIHelpers.sendMessage [90m(/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/utils/test-helpers.ts:1166:27[90m)[39m
+    at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/workflows/ai-workflow.spec.ts:128:9 {
+  name: [32m'Error'[39m,
+  [[32mSymbol(step)[39m]: {
+    stepId: [32m'pw:api@44'[39m,
+    location: {
+      file: [32m'/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts'[39m,
+      line: [33m1166[39m,
+      column: [33m27[39m,
+      function: [32m'AIHelpers.sendMessage'[39m
+    },
+    category: [32m'pw:api'[39m,
+    title: [32m'page.goto(/chat)'[39m,
+    apiName: [32m'page.goto'[39m,
+    params: { url: [32m'/chat'[39m, timeout: [33m10000[39m, waitUntil: [32m'domcontentloaded'[39m },
+    boxedStack: [90mundefined[39m,
+    steps: [],
+    attachmentIndices: [],
+    info: TestStepInfoImpl {
+      annotations: [],
+      _testInfo: [36m[TestInfoImpl][39m,
+      _stepId: [32m'pw:api@44'[39m
+    },
+    complete: [36m[Function: complete][39m,
+    endWallTime: [33m1752598432219[39m,
+    error: {
+      message: [32m'Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://localhost:8080/chat", waiting until "domcontentloaded"\x1B[22m\n'[39m,
+      stack: [32m'Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://localhost:8080/chat", waiting until "domcontentloaded"\x1B[22m\n'[39m +
+        [32m'\n'[39m +
+        [32m'    at AIHelpers.sendMessage (/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts:1166:27)\n'[39m +
+        [32m'    at /Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/workflows/ai-workflow.spec.ts:128:9'[39m,
+      cause: [90mundefined[39m
+    }
+  }
+}
+⚠️ Trying to continue without navigation...
+⚠️ Tasks navigation attempt 1 failed: page.waitForSelector: Test ended.
+Call log:
+[2m  - waiting for locator('main, [role="main"], .container') to be visible[22m
+[2m    - locator resolved to 2 elements. Proceeding with the first one: <div role="main" class="flex-1">…</div>[22m
+
+    at NavigationHelpers.goToTasks [90m(/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/utils/test-helpers.ts:357:27[90m)[39m
+    at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/workflows/ai-workflow.spec.ts:101:7 {
+  [[32mSymbol(step)[39m]: {
+    stepId: [32m'pw:api@38'[39m,
+    location: {
+      file: [32m'/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts'[39m,
+      line: [33m357[39m,
+      column: [33m27[39m,
+      function: [32m'NavigationHelpers.goToTasks'[39m
+    },
+    category: [32m'pw:api'[39m,
+    title: [32m'page.waitForSelector(main, [role="main"], .container)'[39m,
+    apiName: [32m'page.waitForSelector'[39m,
+    params: { selector: [32m'main, [role="main"], .container'[39m, timeout: [33m5000[39m },
+    boxedStack: [90mundefined[39m,
+    steps: [],
+    attachmentIndices: [],
+    info: TestStepInfoImpl {
+      annotations: [],
+      _testInfo: [36m[TestInfoImpl][39m,
+      _stepId: [32m'pw:api@38'[39m
+    },
+    complete: [36m[Function: complete][39m,
+    endWallTime: [33m1752598432222[39m,
+    error: {
+      message: [32m'Error: page.waitForSelector: Test ended.\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m`\x1B[2m  - waiting for locator('main, [role="main"], .container') to be visible\x1B[22m\n`[39m +
+        [32m'\x1B[2m    - locator resolved to 2 elements. Proceeding with the first one: <div role="main" class="flex-1">…</div>\x1B[22m\n'[39m,
+      stack: [32m'Error: page.waitForSelector: Test ended.\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m`\x1B[2m  - waiting for locator('main, [role="main"], .container') to be visible\x1B[22m\n`[39m +
+        [32m'\x1B[2m    - locator resolved to 2 elements. Proceeding with the first one: <div role="main" class="flex-1">…</div>\x1B[22m\n'[39m +
+        [32m'\n'[39m +
+        [32m'    at NavigationHelpers.goToTasks (/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts:357:27)\n'[39m +
+        [32m'    at /Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/workflows/ai-workflow.spec.ts:101:7'[39m,
+      cause: [90mundefined[39m
+    }
+  }
+}
+⚠️ Tasks navigation attempt 2 failed: Error: Page context has been closed
+    at NavigationHelpers.goToTasks [90m(file:///Users/adannaveed/Desktop/FYP%20CODE/motionmingle/[39msrc/tests/e2e/utils/test-helpers.ts:350:19[90m)[39m
+[90m    at runNextTicks (node:internal/process/task_queues:65:5)[39m
+[90m    at processImmediate (node:internal/timers:459:9)[39m
+[90m    at process.callbackTrampoline (node:internal/async_hooks:130:17)[39m
+    at [90mfile:///Users/adannaveed/Desktop/FYP%20CODE/motionmingle/[39msrc/tests/e2e/workflows/ai-workflow.spec.ts:101:7
+    at TestStepInfoImpl._runStepBody [90m(/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39mnode_modules/[4mplaywright[24m/lib/worker/testInfo.js:390:14[90m)[39m
+    at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39mnode_modules/[4mplaywright[24m/lib/common/testType.js:244:20
+    at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39mnode_modules/[4mplaywright[24m/lib/common/testType.js:242:18
+    at TestTypeImpl._step [90m(/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39mnode_modules/[4mplaywright[24m/lib/common/testType.js:239:12[90m)[39m
+⚠️ Tasks navigation attempt 3 failed: Error: Page context has been closed
+    at NavigationHelpers.goToTasks [90m(file:///Users/adannaveed/Desktop/FYP%20CODE/motionmingle/[39msrc/tests/e2e/utils/test-helpers.ts:350:19[90m)[39m
+[90m    at runNextTicks (node:internal/process/task_queues:65:5)[39m
+[90m    at processImmediate (node:internal/timers:459:9)[39m
+[90m    at process.callbackTrampoline (node:internal/async_hooks:130:17)[39m
+    at [90mfile:///Users/adannaveed/Desktop/FYP%20CODE/motionmingle/[39msrc/tests/e2e/workflows/ai-workflow.spec.ts:101:7
+    at TestStepInfoImpl._runStepBody [90m(/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39mnode_modules/[4mplaywright[24m/lib/worker/testInfo.js:390:14[90m)[39m
+    at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39mnode_modules/[4mplaywright[24m/lib/common/testType.js:244:20
+    at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39mnode_modules/[4mplaywright[24m/lib/common/testType.js:242:18
+    at TestTypeImpl._step [90m(/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39mnode_modules/[4mplaywright[24m/lib/common/testType.js:239:12[90m)[39m
+⚠️ Tasks navigation failed, continuing test
+📋 Creating task: Urgent Bug Fix
+⚠️ Page context closed, cannot create task
 📋 Creating task: Code Review
 ⚠️ Page context closed, cannot create task
 🤖 Sending AI message: How should I prioritize my tasks today?
 ⚠️ Page context closed, cannot send AI message
 ✅ Smart task prioritization requested
+⚠️ Chat input not found or page closed - chat interface may not be available
+✅ Intelligent time estimation requested
+⚠️ Chat input not found or page closed - chat interface may not be available
+✅ Smart calendar scheduling requested
 ]]>
 </system-out>
 </testcase>
-<testcase name="AI Workflow E2E Tests › 🔄 AI Workflow Automation" classname="workflows/ai-workflow.spec.ts" time="0.983">
+<testcase name="AI Workflow E2E Tests › 🔄 AI Workflow Automation" classname="workflows/ai-workflow.spec.ts" time="0.981">
 <system-out>
 <![CDATA[🔐 Using existing test user: e2e-test@taskpulse.com
 🔐 Login attempt 1...
@@ -308,13 +419,14 @@ Final URL after login: http://localhost:8080/
 📁 Navigating to Projects...
 🤖 Sending AI message: Analyze my project deadlines and suggest adjustments
 🔄 Navigating to chat page...
-⚠️ Navigation to chat failed: page.goto: net::ERR_ABORTED; maybe frame was detached?
+✅ Projects page loaded
+🤖 Sending AI message: Set up a new web development project with standard tasks and milestones
+⚠️ Navigation to chat failed: page.goto: Test ended.
 Call log:
 [2m  - navigating to "http://localhost:8080/chat", waiting until "domcontentloaded"[22m
 
     at AIHelpers.sendMessage [90m(/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/utils/test-helpers.ts:1166:27[90m)[39m
     at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/workflows/ai-workflow.spec.ts:152:9 {
-  name: [32m'Error'[39m,
   [[32mSymbol(step)[39m]: {
     stepId: [32m'pw:api@34'[39m,
     location: {
@@ -336,12 +448,12 @@ Call log:
       _stepId: [32m'pw:api@34'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575307943[39m,
+    endWallTime: [33m1752598433216[39m,
     error: {
-      message: [32m'Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\n'[39m +
+      message: [32m'Error: page.goto: Test ended.\n'[39m +
         [32m'Call log:\n'[39m +
         [32m'\x1B[2m  - navigating to "http://localhost:8080/chat", waiting until "domcontentloaded"\x1B[22m\n'[39m,
-      stack: [32m'Error: page.goto: net::ERR_ABORTED; maybe frame was detached?\n'[39m +
+      stack: [32m'Error: page.goto: Test ended.\n'[39m +
         [32m'Call log:\n'[39m +
         [32m'\x1B[2m  - navigating to "http://localhost:8080/chat", waiting until "domcontentloaded"\x1B[22m\n'[39m +
         [32m'\n'[39m +
@@ -352,136 +464,16 @@ Call log:
   }
 }
 ⚠️ Trying to continue without navigation...
-⚠️ Projects navigation attempt 1 failed: page.waitForSelector: Test ended.
-Call log:
-[2m  - waiting for locator('main, [role="main"], .container, h1, h2') to be visible[22m
-[2m    - locator resolved to 2 elements. Proceeding with the first one: <div role="main" class="flex-1">…</div>[22m
-
-    at NavigationHelpers.goToProjects [90m(/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/utils/test-helpers.ts:440:27[90m)[39m
-    at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/workflows/ai-workflow.spec.ts:140:7 {
-  [[32mSymbol(step)[39m]: {
-    stepId: [32m'pw:api@31'[39m,
-    location: {
-      file: [32m'/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts'[39m,
-      line: [33m440[39m,
-      column: [33m27[39m,
-      function: [32m'NavigationHelpers.goToProjects'[39m
-    },
-    category: [32m'pw:api'[39m,
-    title: [32m'page.waitForSelector(main, [role="main"], .container, h1, h2)'[39m,
-    apiName: [32m'page.waitForSelector'[39m,
-    params: {
-      selector: [32m'main, [role="main"], .container, h1, h2'[39m,
-      timeout: [33m10000[39m
-    },
-    boxedStack: [90mundefined[39m,
-    steps: [],
-    attachmentIndices: [],
-    info: TestStepInfoImpl {
-      annotations: [],
-      _testInfo: [36m[TestInfoImpl][39m,
-      _stepId: [32m'pw:api@31'[39m
-    },
-    complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575307946[39m,
-    error: {
-      message: [32m'Error: page.waitForSelector: Test ended.\n'[39m +
-        [32m'Call log:\n'[39m +
-        [32m`\x1B[2m  - waiting for locator('main, [role="main"], .container, h1, h2') to be visible\x1B[22m\n`[39m +
-        [32m'\x1B[2m    - locator resolved to 2 elements. Proceeding with the first one: <div role="main" class="flex-1">…</div>\x1B[22m\n'[39m,
-      stack: [32m'Error: page.waitForSelector: Test ended.\n'[39m +
-        [32m'Call log:\n'[39m +
-        [32m`\x1B[2m  - waiting for locator('main, [role="main"], .container, h1, h2') to be visible\x1B[22m\n`[39m +
-        [32m'\x1B[2m    - locator resolved to 2 elements. Proceeding with the first one: <div role="main" class="flex-1">…</div>\x1B[22m\n'[39m +
-        [32m'\n'[39m +
-        [32m'    at NavigationHelpers.goToProjects (/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts:440:27)\n'[39m +
-        [32m'    at /Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/workflows/ai-workflow.spec.ts:140:7'[39m,
-      cause: [90mundefined[39m
-    }
-  }
-}
-⚠️ Page context closed, cannot wait for timeout
-⚠️ Chat input not found or page closed - chat interface may not be available
+⚠️ Page context closed during navigation
 🤖 Sending AI message: Generate a progress report for my current projects
 ⚠️ Page context closed, cannot send AI message
 ✅ Automated progress tracking requested
-⚠️ Projects navigation attempt 2 failed: page.goto: Target page, context or browser has been closed
-    at NavigationHelpers.goToProjects [90m(/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/utils/test-helpers.ts:436:27[90m)[39m
-    at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/workflows/ai-workflow.spec.ts:140:7 {
-  [[32mSymbol(step)[39m]: {
-    stepId: [32m'pw:api@37'[39m,
-    location: {
-      file: [32m'/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts'[39m,
-      line: [33m436[39m,
-      column: [33m27[39m,
-      function: [32m'NavigationHelpers.goToProjects'[39m
-    },
-    category: [32m'pw:api'[39m,
-    title: [32m'page.goto(/projects)'[39m,
-    apiName: [32m'page.goto'[39m,
-    params: { url: [32m'/projects'[39m, timeout: [33m15000[39m, waitUntil: [32m'load'[39m },
-    boxedStack: [90mundefined[39m,
-    steps: [],
-    attachmentIndices: [],
-    info: TestStepInfoImpl {
-      annotations: [],
-      _testInfo: [36m[TestInfoImpl][39m,
-      _stepId: [32m'pw:api@37'[39m
-    },
-    complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575307947[39m,
-    error: {
-      message: [32m'Error: page.goto: Target page, context or browser has been closed'[39m,
-      stack: [32m'Error: page.goto: Target page, context or browser has been closed\n'[39m +
-        [32m'    at NavigationHelpers.goToProjects (/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts:436:27)\n'[39m +
-        [32m'    at /Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/workflows/ai-workflow.spec.ts:140:7'[39m,
-      cause: [90mundefined[39m
-    }
-  }
-}
-⚠️ Page context closed, cannot wait for timeout
-⚠️ Projects navigation attempt 3 failed: page.goto: Target page, context or browser has been closed
-    at NavigationHelpers.goToProjects [90m(/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/utils/test-helpers.ts:436:27[90m)[39m
-    at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/workflows/ai-workflow.spec.ts:140:7 {
-  [[32mSymbol(step)[39m]: {
-    stepId: [32m'pw:api@38'[39m,
-    location: {
-      file: [32m'/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts'[39m,
-      line: [33m436[39m,
-      column: [33m27[39m,
-      function: [32m'NavigationHelpers.goToProjects'[39m
-    },
-    category: [32m'pw:api'[39m,
-    title: [32m'page.goto(/projects)'[39m,
-    apiName: [32m'page.goto'[39m,
-    params: { url: [32m'/projects'[39m, timeout: [33m15000[39m, waitUntil: [32m'load'[39m },
-    boxedStack: [90mundefined[39m,
-    steps: [],
-    attachmentIndices: [],
-    info: TestStepInfoImpl {
-      annotations: [],
-      _testInfo: [36m[TestInfoImpl][39m,
-      _stepId: [32m'pw:api@38'[39m
-    },
-    complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575307948[39m,
-    error: {
-      message: [32m'Error: page.goto: Target page, context or browser has been closed'[39m,
-      stack: [32m'Error: page.goto: Target page, context or browser has been closed\n'[39m +
-        [32m'    at NavigationHelpers.goToProjects (/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts:436:27)\n'[39m +
-        [32m'    at /Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/workflows/ai-workflow.spec.ts:140:7'[39m,
-      cause: [90mundefined[39m
-    }
-  }
-}
-⚠️ Projects navigation failed, continuing test
-🤖 Sending AI message: Set up a new web development project with standard tasks and milestones
-⚠️ Page context closed, cannot send AI message
+⚠️ Page context closed during navigation
 ✅ Automated project setup requested
 ]]>
 </system-out>
 </testcase>
-<testcase name="AI Workflow E2E Tests › 🎨 AI Personalization and Learning" classname="workflows/ai-workflow.spec.ts" time="0.872">
+<testcase name="AI Workflow E2E Tests › 🎨 AI Personalization and Learning" classname="workflows/ai-workflow.spec.ts" time="0.953">
 <system-out>
 <![CDATA[🔐 Using existing test user: e2e-test@taskpulse.com
 🔐 Login attempt 1...
@@ -523,7 +515,7 @@ Call log:
       _stepId: [32m'pw:api@39'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575308782[39m,
+    endWallTime: [33m1752598434132[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/chat\n'[39m +
         [32m'Call log:\n'[39m +
@@ -566,7 +558,7 @@ Call log:
       _stepId: [32m'pw:api@40'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575308823[39m,
+    endWallTime: [33m1752598434171[39m,
     error: {
       message: [32m'Error: page.goto: Test ended.\n'[39m +
         [32m'Call log:\n'[39m +
@@ -591,7 +583,7 @@ Call log:
 ]]>
 </system-out>
 </testcase>
-<testcase name="AI Workflow E2E Tests › ⚡ AI Performance and Reliability" classname="workflows/ai-workflow.spec.ts" time="0.908">
+<testcase name="AI Workflow E2E Tests › ⚡ AI Performance and Reliability" classname="workflows/ai-workflow.spec.ts" time="0.969">
 <system-out>
 <![CDATA[🔐 Using existing test user: e2e-test@taskpulse.com
 🔐 Login attempt 1...
@@ -635,7 +627,7 @@ Call log:
       _stepId: [32m'pw:api@48'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575309670[39m,
+    endWallTime: [33m1752598435068[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/chat\n'[39m +
         [32m'Call log:\n'[39m +
@@ -679,7 +671,7 @@ Call log:
       _stepId: [32m'pw:api@49'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575309706[39m,
+    endWallTime: [33m1752598435103[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/chat\n'[39m +
         [32m'Call log:\n'[39m +
@@ -722,7 +714,7 @@ Call log:
       _stepId: [32m'pw:api@50'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575309733[39m,
+    endWallTime: [33m1752598435142[39m,
     error: {
       message: [32m'Error: page.goto: Test ended.\n'[39m +
         [32m'Call log:\n'[39m +
@@ -740,7 +732,7 @@ Call log:
 ⚠️ Trying to continue without navigation...
 ⚠️ Page context closed during navigation
 ⚠️ Chat input not found or page closed - chat interface may not be available
-⏱️ AI response time: 154ms
+⏱️ AI response time: 174ms
 ✅ Response time verified
 ⚠️ Chat input not found or page closed - chat interface may not be available
 ⚠️ Page context closed, cannot wait for load state
@@ -753,7 +745,7 @@ Call log:
 🤖 Sending AI message: Task 3: Generate report
 ⚠️ Page context closed, cannot send AI message
 ⚠️ Page context closed, cannot wait for load state
-⏱️ Concurrent requests completed in: 154ms
+⏱️ Concurrent requests completed in: 174ms
 ⚠️ Error handling test failed: expect.toBeVisible: Target page, context or browser has been closed
     at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/workflows/ai-workflow.spec.ts:245:44 {
   [[32mSymbol(step)[39m]: {
@@ -776,7 +768,7 @@ Call log:
       _stepId: [32m'expect@57'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575309737[39m,
+    endWallTime: [33m1752598435146[39m,
     error: {
       message: [32m'Error: expect.toBeVisible: Target page, context or browser has been closed'[39m,
       stack: [32m'Error: expect.toBeVisible: Target page, context or browser has been closed\n'[39m +
@@ -807,7 +799,7 @@ Call log:
       _stepId: [32m'expect@59'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575309737[39m,
+    endWallTime: [33m1752598435147[39m,
     error: {
       message: [32m'Error: expect.toBeVisible: Target page, context or browser has been closed'[39m,
       stack: [32m'Error: expect.toBeVisible: Target page, context or browser has been closed\n'[39m +
@@ -820,12 +812,12 @@ Call log:
 </system-out>
 </testcase>
 </testsuite>
-<testsuite name="workflows/complete-user-journey.spec.ts" timestamp="2025-07-15T10:28:23.207Z" hostname="chromium" tests="4" failures="0" skipped="0" time="41.87" errors="0">
-<testcase name="Complete User Journey - TaskPulse E2E › 🚀 Complete Productivity Workflow - New User to Power User" classname="workflows/complete-user-journey.spec.ts" time="38.49">
+<testsuite name="workflows/complete-user-journey.spec.ts" timestamp="2025-07-15T16:53:48.407Z" hostname="chromium" tests="4" failures="0" skipped="0" time="42.151" errors="0">
+<testcase name="Complete User Journey - TaskPulse E2E › 🚀 Complete Productivity Workflow - New User to Power User" classname="workflows/complete-user-journey.spec.ts" time="38.537">
 <system-out>
 <![CDATA[🎯 Starting Complete User Journey Test...
 📝 Testing user registration...
-📝 Registering new user: test-1752575310008@example.com
+📝 Registering new user: test-1752598435411@example.com
 📝 Registration attempt 1...
 ⚠️ Registration attempt 1 failed: page.waitForSelector: Timeout 10000ms exceeded.
 Call log:
@@ -856,7 +848,7 @@ Call log:
       _stepId: [32m'pw:api@16'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575320302[39m,
+    endWallTime: [33m1752598445709[39m,
     error: {
       message: [32m'TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\n'[39m +
         [32m'Call log:\n'[39m +
@@ -902,7 +894,7 @@ Call log:
       _stepId: [32m'pw:api@25'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575332492[39m,
+    endWallTime: [33m1752598457929[39m,
     error: {
       message: [32m'TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\n'[39m +
         [32m'Call log:\n'[39m +
@@ -948,7 +940,7 @@ Call log:
       _stepId: [32m'pw:api@34'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575344644[39m,
+    endWallTime: [33m1752598470117[39m,
     error: {
       message: [32m'TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.\n'[39m +
         [32m'Call log:\n'[39m +
@@ -973,7 +965,7 @@ Current URL: http://localhost:8080/auth/signup
 ✅ Login successful (detected via: fallback3)
 Final URL after login: http://localhost:8080/
 ⚠️ User registration failed: expect.toContainText: Error: strict mode violation: locator('h1') resolved to 2 elements:
-    1) <h1 class="text-2xl font-bold tracking-tight">Good morning, e2e-test! 👋</h1> aka getByRole('heading', { name: 'Good morning, e2e-test! 👋' })
+    1) <h1 class="text-2xl font-bold tracking-tight">Good afternoon, e2e-test! 👋</h1> aka getByRole('heading', { name: 'Good afternoon, e2e-test! 👋' })
     2) <h1 class="text-lg font-semibold text-foreground">AI Assistant</h1> aka getByRole('heading', { name: 'AI Assistant' })
 
 Call log:
@@ -1002,17 +994,17 @@ Call log:
       _stepId: [32m'expect@47'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575346937[39m,
+    endWallTime: [33m1752598472404[39m,
     error: {
       message: [32m"Error: expect.toContainText: Error: strict mode violation: locator('h1') resolved to 2 elements:\n"[39m +
-        [32m`    1) <h1 class="text-2xl font-bold tracking-tight">Good morning, e2e-test! 👋</h1> aka getByRole('heading', { name: 'Good morning, e2e-test! 👋' })\n`[39m +
+        [32m`    1) <h1 class="text-2xl font-bold tracking-tight">Good afternoon, e2e-test! 👋</h1> aka getByRole('heading', { name: 'Good afternoon, e2e-test! 👋' })\n`[39m +
         [32m`    2) <h1 class="text-lg font-semibold text-foreground">AI Assistant</h1> aka getByRole('heading', { name: 'AI Assistant' })\n`[39m +
         [32m'\n'[39m +
         [32m'Call log:\n'[39m +
         [32m'\x1B[2m  - expect.toContainText with timeout 10000ms\x1B[22m\n'[39m +
         [32m"\x1B[2m  - waiting for locator('h1')\x1B[22m\n"[39m,
       stack: [32m"Error: expect.toContainText: Error: strict mode violation: locator('h1') resolved to 2 elements:\n"[39m +
-        [32m`    1) <h1 class="text-2xl font-bold tracking-tight">Good morning, e2e-test! 👋</h1> aka getByRole('heading', { name: 'Good morning, e2e-test! 👋' })\n`[39m +
+        [32m`    1) <h1 class="text-2xl font-bold tracking-tight">Good afternoon, e2e-test! 👋</h1> aka getByRole('heading', { name: 'Good afternoon, e2e-test! 👋' })\n`[39m +
         [32m`    2) <h1 class="text-lg font-semibold text-foreground">AI Assistant</h1> aka getByRole('heading', { name: 'AI Assistant' })\n`[39m +
         [32m'\n'[39m +
         [32m'Call log:\n'[39m +
@@ -1080,7 +1072,7 @@ Call log:
       _stepId: [32m'pw:api@60'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575347403[39m,
+    endWallTime: [33m1752598472846[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/projects\n'[39m +
         [32m'Call log:\n'[39m +
@@ -1125,7 +1117,7 @@ Call log:
       _stepId: [32m'pw:api@62'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575347439[39m,
+    endWallTime: [33m1752598472881[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/tasks\n'[39m +
         [32m'Call log:\n'[39m +
@@ -1170,7 +1162,7 @@ Call log:
       _stepId: [32m'pw:api@64'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575347475[39m,
+    endWallTime: [33m1752598472916[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/calendar\n'[39m +
         [32m'Call log:\n'[39m +
@@ -1215,7 +1207,7 @@ Call log:
       _stepId: [32m'pw:api@68'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575347510[39m,
+    endWallTime: [33m1752598472952[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/files\n'[39m +
         [32m'Call log:\n'[39m +
@@ -1260,7 +1252,7 @@ Call log:
       _stepId: [32m'pw:api@70'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575347545[39m,
+    endWallTime: [33m1752598472987[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/timer\n'[39m +
         [32m'Call log:\n'[39m +
@@ -1307,7 +1299,7 @@ Call log:
       _stepId: [32m'pw:api@72'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575347580[39m,
+    endWallTime: [33m1752598473024[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/notes\n'[39m +
         [32m'Call log:\n'[39m +
@@ -1351,7 +1343,7 @@ Call log:
       _stepId: [32m'pw:api@74'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575347616[39m,
+    endWallTime: [33m1752598473061[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/\n'[39m +
         [32m'Call log:\n'[39m +
@@ -1366,7 +1358,7 @@ Call log:
     }
   }
 }
-⚠️ Page load timeout for /: 326ms
+⚠️ Page load timeout for /: 329ms
 ⚠️ Could not navigate to dashboard for logout test
 🚪 Logging out...
 ⚠️ Tasks navigation attempt 2 failed: page.goto: net::ERR_ABORTED at http://localhost:8080/tasks
@@ -1397,7 +1389,7 @@ Call log:
       _stepId: [32m'pw:api@85'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575347724[39m,
+    endWallTime: [33m1752598473168[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/tasks\n'[39m +
         [32m'Call log:\n'[39m +
@@ -1440,7 +1432,7 @@ Call log:
       _stepId: [32m'pw:api@87'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575347760[39m,
+    endWallTime: [33m1752598473204[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/calendar\n'[39m +
         [32m'Call log:\n'[39m +
@@ -1482,7 +1474,7 @@ Call log:
       _stepId: [32m'pw:api@92'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575347833[39m,
+    endWallTime: [33m1752598473275[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/\n'[39m +
         [32m'Call log:\n'[39m +
@@ -1496,7 +1488,7 @@ Call log:
     }
   }
 }
-⚠️ Page load timeout for /tasks: 217ms
+⚠️ Page load timeout for /tasks: 216ms
 ⚠️ Logout test failed, continuing: page.goto: net::ERR_ABORTED at http://localhost:8080/
 Call log:
 [2m  - navigating to "http://localhost:8080/", waiting until "load"[22m
@@ -1525,7 +1517,7 @@ Call log:
       _stepId: [32m'pw:api@94'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575347905[39m,
+    endWallTime: [33m1752598473347[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/\n'[39m +
         [32m'Call log:\n'[39m +
@@ -1568,7 +1560,7 @@ Call log:
       _stepId: [32m'pw:api@96'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575347941[39m,
+    endWallTime: [33m1752598473384[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/tasks\n'[39m +
         [32m'Call log:\n'[39m +
@@ -1614,7 +1606,7 @@ Call log:
       _stepId: [32m'pw:api@98'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575347978[39m,
+    endWallTime: [33m1752598473418[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/calendar\n'[39m +
         [32m'Call log:\n'[39m +
@@ -1657,7 +1649,7 @@ Call log:
       _stepId: [32m'pw:api@101'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575348014[39m,
+    endWallTime: [33m1752598473455[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/\n'[39m +
         [32m'Call log:\n'[39m +
@@ -1676,13 +1668,15 @@ Call log:
 ✅ File management completed
 ✅ Timer started
 ⏸️ Pausing timer...
-📊 Page load time for /calendar: 219ms
-Dashboard load time: 326ms
-Tasks load time: 217ms
-Calendar load time: 219ms
+📊 Page load time for /calendar: 220ms
+Dashboard load time: 329ms
+Tasks load time: 216ms
+Calendar load time: 220ms
 🔄 Navigating to chat page...
+✅ Timer paused
+⏹️ Stopping timer...
 ⚠️ Could not find create event button, trying calendar click
-⚠️ Navigation to chat failed: page.goto: net::ERR_ABORTED at http://localhost:8080/chat
+⚠️ Navigation to chat failed: page.goto: Navigation to "http://localhost:8080/chat" is interrupted by another navigation to "http://localhost:8080/"
 Call log:
 [2m  - navigating to "http://localhost:8080/chat", waiting until "domcontentloaded"[22m
 
@@ -1690,7 +1684,7 @@ Call log:
     at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/workflows/complete-user-journey.spec.ts:158:9 {
   name: [32m'Error'[39m,
   [[32mSymbol(step)[39m]: {
-    stepId: [32m'pw:api@131'[39m,
+    stepId: [32m'pw:api@133'[39m,
     location: {
       file: [32m'/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts'[39m,
       line: [33m1166[39m,
@@ -1707,15 +1701,15 @@ Call log:
     info: TestStepInfoImpl {
       annotations: [],
       _testInfo: [36m[TestInfoImpl][39m,
-      _stepId: [32m'pw:api@131'[39m
+      _stepId: [32m'pw:api@133'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575348181[39m,
+    endWallTime: [33m1752598473688[39m,
     error: {
-      message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/chat\n'[39m +
+      message: [32m'Error: page.goto: Navigation to "http://localhost:8080/chat" is interrupted by another navigation to "http://localhost:8080/"\n'[39m +
         [32m'Call log:\n'[39m +
         [32m'\x1B[2m  - navigating to "http://localhost:8080/chat", waiting until "domcontentloaded"\x1B[22m\n'[39m,
-      stack: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/chat\n'[39m +
+      stack: [32m'Error: page.goto: Navigation to "http://localhost:8080/chat" is interrupted by another navigation to "http://localhost:8080/"\n'[39m +
         [32m'Call log:\n'[39m +
         [32m'\x1B[2m  - navigating to "http://localhost:8080/chat", waiting until "domcontentloaded"\x1B[22m\n'[39m +
         [32m'\n'[39m +
@@ -1726,8 +1720,45 @@ Call log:
   }
 }
 ⚠️ Trying to continue without navigation...
-✅ Timer paused
-⏹️ Stopping timer...
+⚠️ Could not send AI message: page.waitForLoadState: Test ended.
+    at AIHelpers.sendMessage [90m(/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/utils/test-helpers.ts:1182:23[90m)[39m
+    at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/workflows/complete-user-journey.spec.ts:158:9 {
+  [[32mSymbol(step)[39m]: {
+    stepId: [32m'pw:api@138'[39m,
+    location: {
+      file: [32m'/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts'[39m,
+      line: [33m1182[39m,
+      column: [33m23[39m,
+      function: [32m'AIHelpers.sendMessage'[39m
+    },
+    category: [32m'pw:api'[39m,
+    title: [32m'page.waitForLoadState'[39m,
+    apiName: [32m'page.waitForLoadState'[39m,
+    params: { info: [36m[Object][39m },
+    boxedStack: [90mundefined[39m,
+    steps: [],
+    attachmentIndices: [],
+    info: TestStepInfoImpl {
+      annotations: [],
+      _testInfo: [36m[TestInfoImpl][39m,
+      _stepId: [32m'pw:api@138'[39m
+    },
+    complete: [36m[Function: complete][39m,
+    endWallTime: [33m1752598473692[39m,
+    error: {
+      message: [32m'Error: page.waitForLoadState: Test ended.'[39m,
+      stack: [32m'Error: page.waitForLoadState: Test ended.\n'[39m +
+        [32m'    at AIHelpers.sendMessage (/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts:1182:23)\n'[39m +
+        [32m'    at /Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/workflows/complete-user-journey.spec.ts:158:9'[39m,
+      cause: [90mundefined[39m
+    }
+  }
+}
+⚠️ Page context closed, cannot wait for load state
+🤖 Sending AI message: Schedule a meeting with the team for tomorrow at 2 PM
+⚠️ Page context closed, cannot send AI message
+⚠️ Page context closed, cannot wait for load state
+✅ AI functionality completed
 ⚠️ Wait for timeout 2000ms failed: page.waitForTimeout: Test ended.
     at WaitHelpers.safeWaitForTimeout [90m(/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/utils/test-helpers.ts:1458:23[90m)[39m
     at NavigationHelpers.goToProjects [90m(/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/utils/test-helpers.ts:447:24[90m)[39m
@@ -1753,7 +1784,7 @@ Call log:
       _stepId: [32m'pw:api@83'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575348234[39m,
+    endWallTime: [33m1752598473692[39m,
     error: {
       message: [32m'Error: page.waitForTimeout: Test ended.'[39m,
       stack: [32m'Error: page.waitForTimeout: Test ended.\n'[39m +
@@ -1770,7 +1801,7 @@ Call log:
 
     at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/workflows/complete-user-journey.spec.ts:288:22 {
   [[32mSymbol(step)[39m]: {
-    stepId: [32m'pw:api@132'[39m,
+    stepId: [32m'pw:api@130'[39m,
     location: {
       file: [32m'/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/workflows/complete-user-journey.spec.ts'[39m,
       line: [33m288[39m,
@@ -1786,10 +1817,10 @@ Call log:
     info: TestStepInfoImpl {
       annotations: [],
       _testInfo: [36m[TestInfoImpl][39m,
-      _stepId: [32m'pw:api@132'[39m
+      _stepId: [32m'pw:api@130'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575348235[39m,
+    endWallTime: [33m1752598473693[39m,
     error: {
       message: [32m'Error: page.goto: Test ended.\n'[39m +
         [32m'Call log:\n'[39m +
@@ -1816,12 +1847,6 @@ Call log:
 ✅ Completing task: Setup project structure
 ⚠️ Page context closed, cannot complete task
 ✅ Task management completed
-⚠️ Chat input not found or page closed - chat interface may not be available
-⚠️ Page context closed, cannot wait for load state
-🤖 Sending AI message: Schedule a meeting with the team for tomorrow at 2 PM
-⚠️ Page context closed, cannot send AI message
-⚠️ Page context closed, cannot wait for load state
-✅ AI functionality completed
 ⚠️ Could not click on calendar: page.click: Test ended.
 Call log:
 [2m  - waiting for locator('.calendar, [data-testid="calendar"]')[22m
@@ -1829,7 +1854,7 @@ Call log:
     at CalendarHelpers.createEvent [90m(/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/utils/test-helpers.ts:1043:27[90m)[39m
     at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/workflows/complete-user-journey.spec.ts:137:11 {
   [[32mSymbol(step)[39m]: {
-    stepId: [32m'pw:api@135'[39m,
+    stepId: [32m'pw:api@136'[39m,
     location: {
       file: [32m'/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts'[39m,
       line: [33m1043[39m,
@@ -1846,10 +1871,10 @@ Call log:
     info: TestStepInfoImpl {
       annotations: [],
       _testInfo: [36m[TestInfoImpl][39m,
-      _stepId: [32m'pw:api@135'[39m
+      _stepId: [32m'pw:api@136'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575348235[39m,
+    endWallTime: [33m1752598473693[39m,
     error: {
       message: [32m'Error: page.click: Test ended.\n'[39m +
         [32m'Call log:\n'[39m +
@@ -1873,6 +1898,72 @@ Call log:
     at NavigationHelpers.goToProjects [90m(/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/utils/test-helpers.ts:436:27[90m)[39m
     at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/workflows/complete-user-journey.spec.ts:89:9 {
   [[32mSymbol(step)[39m]: {
+    stepId: [32m'pw:api@139'[39m,
+    location: {
+      file: [32m'/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts'[39m,
+      line: [33m436[39m,
+      column: [33m27[39m,
+      function: [32m'NavigationHelpers.goToProjects'[39m
+    },
+    category: [32m'pw:api'[39m,
+    title: [32m'page.goto(/projects)'[39m,
+    apiName: [32m'page.goto'[39m,
+    params: { url: [32m'/projects'[39m, timeout: [33m15000[39m, waitUntil: [32m'load'[39m },
+    boxedStack: [90mundefined[39m,
+    steps: [],
+    attachmentIndices: [],
+    info: TestStepInfoImpl {
+      annotations: [],
+      _testInfo: [36m[TestInfoImpl][39m,
+      _stepId: [32m'pw:api@139'[39m
+    },
+    complete: [36m[Function: complete][39m,
+    endWallTime: [33m1752598473694[39m,
+    error: {
+      message: [32m'Error: page.goto: Target page, context or browser has been closed'[39m,
+      stack: [32m'Error: page.goto: Target page, context or browser has been closed\n'[39m +
+        [32m'    at NavigationHelpers.goToProjects (/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts:436:27)\n'[39m +
+        [32m'    at /Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/workflows/complete-user-journey.spec.ts:89:9'[39m,
+      cause: [90mundefined[39m
+    }
+  }
+}
+⚠️ Page context closed, cannot wait for timeout
+⚠️ Performance testing failed, continuing: page.setViewportSize: Target page, context or browser has been closed
+    at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/workflows/complete-user-journey.spec.ts:298:20 {
+  [[32mSymbol(step)[39m]: {
+    stepId: [32m'pw:api@140'[39m,
+    location: {
+      file: [32m'/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/workflows/complete-user-journey.spec.ts'[39m,
+      line: [33m298[39m,
+      column: [33m20[39m
+    },
+    category: [32m'pw:api'[39m,
+    title: [32m'page.setViewportSize'[39m,
+    apiName: [32m'page.setViewportSize'[39m,
+    params: { viewportSize: [36m[Object][39m },
+    boxedStack: [90mundefined[39m,
+    steps: [],
+    attachmentIndices: [],
+    info: TestStepInfoImpl {
+      annotations: [],
+      _testInfo: [36m[TestInfoImpl][39m,
+      _stepId: [32m'pw:api@140'[39m
+    },
+    complete: [36m[Function: complete][39m,
+    endWallTime: [33m1752598473694[39m,
+    error: {
+      message: [32m'Error: page.setViewportSize: Target page, context or browser has been closed'[39m,
+      stack: [32m'Error: page.setViewportSize: Target page, context or browser has been closed\n'[39m +
+        [32m'    at /Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/workflows/complete-user-journey.spec.ts:298:20'[39m,
+      cause: [90mundefined[39m
+    }
+  }
+}
+⚠️ Projects navigation attempt 3 failed: page.goto: Target page, context or browser has been closed
+    at NavigationHelpers.goToProjects [90m(/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/utils/test-helpers.ts:436:27[90m)[39m
+    at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/workflows/complete-user-journey.spec.ts:89:9 {
+  [[32mSymbol(step)[39m]: {
     stepId: [32m'pw:api@141'[39m,
     location: {
       file: [32m'/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts'[39m,
@@ -1893,73 +1984,7 @@ Call log:
       _stepId: [32m'pw:api@141'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575348235[39m,
-    error: {
-      message: [32m'Error: page.goto: Target page, context or browser has been closed'[39m,
-      stack: [32m'Error: page.goto: Target page, context or browser has been closed\n'[39m +
-        [32m'    at NavigationHelpers.goToProjects (/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts:436:27)\n'[39m +
-        [32m'    at /Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/workflows/complete-user-journey.spec.ts:89:9'[39m,
-      cause: [90mundefined[39m
-    }
-  }
-}
-⚠️ Page context closed, cannot wait for timeout
-⚠️ Performance testing failed, continuing: page.setViewportSize: Target page, context or browser has been closed
-    at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/workflows/complete-user-journey.spec.ts:298:20 {
-  [[32mSymbol(step)[39m]: {
-    stepId: [32m'pw:api@142'[39m,
-    location: {
-      file: [32m'/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/workflows/complete-user-journey.spec.ts'[39m,
-      line: [33m298[39m,
-      column: [33m20[39m
-    },
-    category: [32m'pw:api'[39m,
-    title: [32m'page.setViewportSize'[39m,
-    apiName: [32m'page.setViewportSize'[39m,
-    params: { viewportSize: [36m[Object][39m },
-    boxedStack: [90mundefined[39m,
-    steps: [],
-    attachmentIndices: [],
-    info: TestStepInfoImpl {
-      annotations: [],
-      _testInfo: [36m[TestInfoImpl][39m,
-      _stepId: [32m'pw:api@142'[39m
-    },
-    complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575348236[39m,
-    error: {
-      message: [32m'Error: page.setViewportSize: Target page, context or browser has been closed'[39m,
-      stack: [32m'Error: page.setViewportSize: Target page, context or browser has been closed\n'[39m +
-        [32m'    at /Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/workflows/complete-user-journey.spec.ts:298:20'[39m,
-      cause: [90mundefined[39m
-    }
-  }
-}
-⚠️ Projects navigation attempt 3 failed: page.goto: Target page, context or browser has been closed
-    at NavigationHelpers.goToProjects [90m(/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/utils/test-helpers.ts:436:27[90m)[39m
-    at [90m/Users/adannaveed/Desktop/FYP CODE/motionmingle/[39msrc/tests/e2e/workflows/complete-user-journey.spec.ts:89:9 {
-  [[32mSymbol(step)[39m]: {
-    stepId: [32m'pw:api@143'[39m,
-    location: {
-      file: [32m'/Users/adannaveed/Desktop/FYP CODE/motionmingle/src/tests/e2e/utils/test-helpers.ts'[39m,
-      line: [33m436[39m,
-      column: [33m27[39m,
-      function: [32m'NavigationHelpers.goToProjects'[39m
-    },
-    category: [32m'pw:api'[39m,
-    title: [32m'page.goto(/projects)'[39m,
-    apiName: [32m'page.goto'[39m,
-    params: { url: [32m'/projects'[39m, timeout: [33m15000[39m, waitUntil: [32m'load'[39m },
-    boxedStack: [90mundefined[39m,
-    steps: [],
-    attachmentIndices: [],
-    info: TestStepInfoImpl {
-      annotations: [],
-      _testInfo: [36m[TestInfoImpl][39m,
-      _stepId: [32m'pw:api@143'[39m
-    },
-    complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575348236[39m,
+    endWallTime: [33m1752598473694[39m,
     error: {
       message: [32m'Error: page.goto: Target page, context or browser has been closed'[39m,
       stack: [32m'Error: page.goto: Target page, context or browser has been closed\n'[39m +
@@ -1981,7 +2006,7 @@ Call log:
 ]]>
 </system-out>
 </testcase>
-<testcase name="Complete User Journey - TaskPulse E2E › 🎯 Power User Advanced Workflow" classname="workflows/complete-user-journey.spec.ts" time="1.077">
+<testcase name="Complete User Journey - TaskPulse E2E › 🎯 Power User Advanced Workflow" classname="workflows/complete-user-journey.spec.ts" time="1.128">
 <system-out>
 <![CDATA[🚀 Starting Power User Advanced Workflow...
 🔐 Using existing test user: e2e-test@taskpulse.com
@@ -2024,7 +2049,7 @@ Call log:
       _stepId: [32m'pw:api@20'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575349116[39m,
+    endWallTime: [33m1752598474627[39m,
     error: {
       message: [32m'Error: page.goto: net::ERR_ABORTED at http://localhost:8080/tasks\n'[39m +
         [32m'Call log:\n'[39m +
@@ -2068,7 +2093,7 @@ Call log:
       _stepId: [32m'pw:api@30'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575349160[39m,
+    endWallTime: [33m1752598474672[39m,
     error: {
       message: [32m'Error: page.goto: Navigation to "http://localhost:8080/tasks" is interrupted by another navigation to "http://localhost:8080/calendar"\n'[39m +
         [32m'Call log:\n'[39m +
@@ -2111,7 +2136,7 @@ Call log:
       _stepId: [32m'pw:api@37'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575349318[39m,
+    endWallTime: [33m1752598474832[39m,
     error: {
       message: [32m'Error: page.goto: Test ended.\n'[39m +
         [32m'Call log:\n'[39m +
@@ -2157,7 +2182,7 @@ Call log:
       _stepId: [32m'pw:api@39'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575349318[39m,
+    endWallTime: [33m1752598474832[39m,
     error: {
       message: [32m'Error: page.waitForSelector: Test ended.\n'[39m +
         [32m'Call log:\n'[39m +
@@ -2225,7 +2250,7 @@ Call log:
       _stepId: [32m'pw:api@41'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575349319[39m,
+    endWallTime: [33m1752598474833[39m,
     error: {
       message: [32m'Error: page.goto: Test ended.\n'[39m +
         [32m'Call log:\n'[39m +
@@ -2247,7 +2272,7 @@ Call log:
 ]]>
 </system-out>
 </testcase>
-<testcase name="Complete User Journey - TaskPulse E2E › 📱 Mobile User Experience" classname="workflows/complete-user-journey.spec.ts" time="0.738">
+<testcase name="Complete User Journey - TaskPulse E2E › 📱 Mobile User Experience" classname="workflows/complete-user-journey.spec.ts" time="0.87">
 <system-out>
 <![CDATA[📱 Starting Mobile User Experience Test...
 🔐 Using existing test user: e2e-test@taskpulse.com
@@ -2265,7 +2290,7 @@ Final URL after login: http://localhost:8080/
 ]]>
 </system-out>
 </testcase>
-<testcase name="Performance Benchmarks › 📊 Application Performance Metrics" classname="workflows/complete-user-journey.spec.ts" time="1.565">
+<testcase name="Performance Benchmarks › 📊 Application Performance Metrics" classname="workflows/complete-user-journey.spec.ts" time="1.616">
 <system-out>
 <![CDATA[🔐 Using existing test user: e2e-test@taskpulse.com
 🔐 Login attempt 1...
@@ -2274,28 +2299,28 @@ Current URL: about:blank
 🔄 Redirected to dashboard, waiting for content...
 ✅ Login successful (detected via: fallback3)
 Final URL after login: http://localhost:8080/
-📊 Page load time for /: 72ms
-📊 Page load time for /tasks: 111ms
-📊 Page load time for /calendar: 111ms
-📊 Page load time for /projects: 110ms
-📊 Page load time for /files: 107ms
+📊 Page load time for /: 83ms
+📊 Page load time for /tasks: 114ms
+📊 Page load time for /calendar: 115ms
+📊 Page load time for /projects: 111ms
+📊 Page load time for /files: 112ms
 📊 Page load time for /timer: 110ms
-📊 Page load time for /notes: 108ms
+📊 Page load time for /notes: 111ms
 📊 Performance Metrics:
-  dashboard: 72ms
-  tasks: 111ms
-  calendar: 111ms
-  projects: 110ms
-  files: 107ms
+  dashboard: 83ms
+  tasks: 114ms
+  calendar: 115ms
+  projects: 111ms
+  files: 112ms
   timer: 110ms
-  notes: 108ms
-📈 Average page load time: 104.14ms
+  notes: 111ms
+📈 Average page load time: 108.00ms
 ]]>
 </system-out>
 </testcase>
 </testsuite>
-<testsuite name="workflows/debug-login.spec.ts" timestamp="2025-07-15T10:28:23.207Z" hostname="chromium" tests="1" failures="0" skipped="0" time="3.61" errors="0">
-<testcase name="Debug Login Process › 🔍 Debug Login Step by Step" classname="workflows/debug-login.spec.ts" time="3.61">
+<testsuite name="workflows/debug-login.spec.ts" timestamp="2025-07-15T16:53:48.407Z" hostname="chromium" tests="1" failures="0" skipped="0" time="3.582" errors="0">
+<testcase name="Debug Login Process › 🔍 Debug Login Step by Step" classname="workflows/debug-login.spec.ts" time="3.582">
 <system-out>
 <![CDATA[🔍 Starting detailed login debug...
 Step 1: Navigating to signin page...
@@ -2353,22 +2378,22 @@ Step 5: Submitting form...
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&reminder_sent=eq.false&reminder_at=lte.2025-07-15T10%3A29%3A12.620Z&archived=is.false
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&reminder_sent=eq.false&reminder_at=lte.2025-07-15T10%3A29%3A12.620Z&archived=is.false
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&reminder_sent=eq.false&reminder_at=lte.2025-07-15T10%3A29%3A12.620Z
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&reminder_sent=eq.false&reminder_at=lte.2025-07-15T16%3A54%3A38.318Z&archived=is.false
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&reminder_sent=eq.false&reminder_at=lte.2025-07-15T10%3A29%3A12.620Z
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&reminder_sent=eq.false&reminder_at=lte.2025-07-15T16%3A54%3A38.318Z&archived=is.false
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&reminder_sent=eq.false&reminder_at=lte.2025-07-15T16%3A54%3A38.318Z
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_consent?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/time_logs?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.active&order=start_time.desc&limit=1
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/time_logs?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.active&order=start_time.desc&limit=1
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&reminder_sent=eq.false&reminder_at=lte.2025-07-15T16%3A54%3A38.318Z
 📡 Auth response: 406 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_consent?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 🖥️ Browser console: error: Failed to load resource: the server responded with a status of 406 ()
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/time_logs?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.active&order=start_time.desc&limit=1
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
@@ -2394,40 +2419,33 @@ Step 5: Submitting form...
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=id&is_recurring=eq.true&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&parent_id=is.null
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&archived=eq.false&order=created_at.desc
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/notes?select=*%2Cproject_data%3Aprojects%28id%2Cname%2Ccolor%29&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=last_updated.desc
-📡 Auth request: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
-📡 Auth request: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/event_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
-📡 Auth request: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
-📡 Auth request: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/event_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
-📡 Auth request: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
-📡 Auth request: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/event_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&is_recurring=eq.true
-🖥️ Browser console: log: No recurring tasks found
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=id&is_recurring=eq.true&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&parent_id=is.null
 🖥️ Browser console: log: Processed 0 recurring events
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&archived=eq.false&order=created_at.desc
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/notes?select=*%2Cproject_data%3Aprojects%28id%2Cname%2Ccolor%29&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=last_updated.desc
+📡 Auth request: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
+📡 Auth request: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/event_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
+📡 Auth request: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
+📡 Auth request: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/event_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&is_recurring=eq.true
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+🖥️ Browser console: log: No recurring tasks found
 🖥️ Browser console: log: Recurring items processing completed
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/event_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/event_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&archived=eq.false&order=created_at.desc
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/event_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/notes?select=*%2Cproject_data%3Aprojects%28id%2Cname%2Ccolor%29&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=last_updated.desc
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&is_recurring=eq.true
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=id&is_recurring=eq.true&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&parent_id=is.null
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
-🖥️ Browser console: log: No recurring tasks found
 🖥️ Browser console: log: Processed 0 recurring events
-🖥️ Browser console: log: Recurring items processing completed
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/notes?select=*%2Cproject_data%3Aprojects%28id%2Cname%2Ccolor%29&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=last_updated.desc
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/event_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
+📡 Auth request: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
+📡 Auth request: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/event_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&archived=eq.false&order=created_at.desc
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/notes?select=*%2Cproject_data%3Aprojects%28id%2Cname%2Ccolor%29&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=last_updated.desc
 📡 Auth request: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
@@ -2435,26 +2453,41 @@ Step 5: Submitting form...
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&archived=eq.false&order=created_at.desc
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&is_recurring=eq.true
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/notes?select=*%2Cproject_data%3Aprojects%28id%2Cname%2Ccolor%29&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=last_updated.desc
+🖥️ Browser console: log: No recurring tasks found
+🖥️ Browser console: log: Recurring items processing completed
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/time_logs?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.completed&order=start_time.desc
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/time_logs?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.completed&order=start_time.desc
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&archived=eq.false&order=created_at.desc
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/notes?select=*%2Cproject_data%3Aprojects%28id%2Cname%2Ccolor%29&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=last_updated.desc
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/time_logs?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.completed&order=start_time.desc
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/event_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&archived=eq.false&order=created_at.desc
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/notes?select=*%2Cproject_data%3Aprojects%28id%2Cname%2Ccolor%29&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=last_updated.desc
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/event_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/time_logs?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.completed&order=start_time.desc
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&archived=eq.false&order=created_at.desc
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/event_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/notes?select=*%2Cproject_data%3Aprojects%28id%2Cname%2Ccolor%29&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=last_updated.desc
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/time_logs?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.completed&order=start_time.desc
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/notes?select=*%2Cproject_data%3Aprojects%28id%2Cname%2Ccolor%29&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=last_updated.desc
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&archived=eq.false&order=created_at.desc
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
@@ -2465,49 +2498,31 @@ Step 5: Submitting form...
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&archived=eq.false&order=created_at.desc
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/notes?select=*%2Cproject_data%3Aprojects%28id%2Cname%2Ccolor%29&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=last_updated.desc
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&archived=eq.false&order=created_at.desc
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/notes?select=*%2Cproject_data%3Aprojects%28id%2Cname%2Ccolor%29&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=last_updated.desc
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&archived=eq.false&order=created_at.desc
 📡 Auth response: 406 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 🖥️ Browser console: error: Failed to load resource: the server responded with a status of 406 ()
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/notes?select=*%2Cproject_data%3Aprojects%28id%2Cname%2Ccolor%29&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=last_updated.desc
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&archived=eq.false&order=created_at.desc
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 📡 Auth response: 406 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 🖥️ Browser console: error: Failed to load resource: the server responded with a status of 406 ()
 📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/notes?select=*%2Cproject_data%3Aprojects%28id%2Cname%2Ccolor%29&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=last_updated.desc
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth response: 406 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
-🖥️ Browser console: error: Failed to load resource: the server responded with a status of 406 ()
-📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
-📡 Auth request: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
-📡 Auth response: 406 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
-🖥️ Browser console: error: Failed to load resource: the server responded with a status of 406 ()
+📡 Auth response: 200 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
 📡 Auth response: 406 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 🖥️ Browser console: error: Failed to load resource: the server responded with a status of 406 ()
 📡 Auth response: 406 https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
@@ -2519,8 +2534,8 @@ Still on signin page: false
 On dashboard: false
 ❓ Redirected somewhere else...
 Page content preview: Skip to main contentSkip to main content
-    TPTaskPulseDashboardTasksCalendarNotesTimerFilesProjectsAI ChatSuggestionsSettingsToggle themeThemeE2e2e-teste2e-test@taskpulse.comLogoutGood morning, e2e-...
-Total auth requests made: 92
+    TPTaskPulseDashboardTasksCalendarNotesTimerFilesProjectsAI ChatSuggestionsSettingsToggle themeThemeE2e2e-teste2e-test@taskpulse.comLogoutGood afternoon, e2...
+Total auth requests made: 88
 Request 1: POST https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/token?grant_type=password
 Request 2: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 Request 3: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
@@ -2540,10 +2555,10 @@ Request 16: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 Request 17: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 Request 18: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 Request 19: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-Request 20: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&reminder_sent=eq.false&reminder_at=lte.2025-07-15T10%3A29%3A12.620Z&archived=is.false
+Request 20: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&reminder_sent=eq.false&reminder_at=lte.2025-07-15T16%3A54%3A38.318Z&archived=is.false
 Request 21: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-Request 22: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&reminder_sent=eq.false&reminder_at=lte.2025-07-15T10%3A29%3A12.620Z
-Request 23: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+Request 22: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+Request 23: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&reminder_sent=eq.false&reminder_at=lte.2025-07-15T16%3A54%3A38.318Z
 Request 24: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_consent?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 Request 25: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/time_logs?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.active&order=start_time.desc&limit=1
 Request 26: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
@@ -2570,9 +2585,9 @@ Request 46: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestio
 Request 47: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/event_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
 Request 48: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
 Request 49: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/event_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
-Request 50: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
-Request 51: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/event_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
-Request 52: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+Request 50: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+Request 51: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/task_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
+Request 52: HEAD https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/event_suggestions?select=*&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&status=eq.suggested
 Request 53: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 Request 54: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&archived=eq.false&order=created_at.desc
 Request 55: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
@@ -2592,33 +2607,29 @@ Request 68: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 Request 69: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 Request 70: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 Request 71: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-Request 72: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
+Request 72: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 Request 73: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 Request 74: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 Request 75: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-Request 76: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
+Request 76: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 Request 77: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&archived=eq.false&order=created_at.desc
 Request 78: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
 Request 79: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/notes?select=*%2Cproject_data%3Aprojects%28id%2Cname%2Ccolor%29&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=last_updated.desc
-Request 80: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
-Request 81: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
-Request 82: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
-Request 83: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&archived=eq.false&order=created_at.desc
-Request 84: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
-Request 85: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/notes?select=*%2Cproject_data%3Aprojects%28id%2Cname%2Ccolor%29&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=last_updated.desc
+Request 80: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/events?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
+Request 81: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/tasks?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&archived=eq.false&order=created_at.desc
+Request 82: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/projects?select=*&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=created_at.desc
+Request 83: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/notes?select=*%2Cproject_data%3Aprojects%28id%2Cname%2Ccolor%29&user=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1&order=last_updated.desc
+Request 84: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
+Request 85: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 Request 86: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
 Request 87: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 Request 88: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
-Request 89: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-Request 90: GET https://haghjmyeiaeubrfkuqts.supabase.co/auth/v1/user
-Request 91: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
-Request 92: GET https://haghjmyeiaeubrfkuqts.supabase.co/rest/v1/user_settings?select=gemini_use_own_key%2Cgemini_api_key%2Cai_suggestions_enabled%2Cai_setting_tab_enabled&user_id=eq.0fd3e793-3f8b-41d6-b1a0-82dbbe41c8a1
 ]]>
 </system-out>
 </testcase>
 </testsuite>
-<testsuite name="workflows/google-calendar-sync.spec.ts" timestamp="2025-07-15T10:28:23.207Z" hostname="chromium" tests="6" failures="0" skipped="0" time="5.899" errors="0">
-<testcase name="Google Calendar Integration E2E › 🔄 Google Calendar Sync - Create Event and Sync" classname="workflows/google-calendar-sync.spec.ts" time="0.985">
+<testsuite name="workflows/google-calendar-sync.spec.ts" timestamp="2025-07-15T16:53:48.407Z" hostname="chromium" tests="6" failures="0" skipped="0" time="6.075" errors="0">
+<testcase name="Google Calendar Integration E2E › 🔄 Google Calendar Sync - Create Event and Sync" classname="workflows/google-calendar-sync.spec.ts" time="1.058">
 <system-out>
 <![CDATA[🔐 Using existing test user: e2e-test@taskpulse.com
 🔐 Login attempt 1...
@@ -2641,7 +2652,7 @@ Final URL after login: http://localhost:8080/
 ]]>
 </system-out>
 </testcase>
-<testcase name="Google Calendar Integration E2E › 📅 Recurring Events Sync" classname="workflows/google-calendar-sync.spec.ts" time="1.02">
+<testcase name="Google Calendar Integration E2E › 📅 Recurring Events Sync" classname="workflows/google-calendar-sync.spec.ts" time="1.05">
 <system-out>
 <![CDATA[🔐 Using existing test user: e2e-test@taskpulse.com
 🔐 Login attempt 1...
@@ -2660,7 +2671,7 @@ Final URL after login: http://localhost:8080/
 ]]>
 </system-out>
 </testcase>
-<testcase name="Google Calendar Integration E2E › 🔄 Import from Google Calendar" classname="workflows/google-calendar-sync.spec.ts" time="1.001">
+<testcase name="Google Calendar Integration E2E › 🔄 Import from Google Calendar" classname="workflows/google-calendar-sync.spec.ts" time="0.992">
 <system-out>
 <![CDATA[🔐 Using existing test user: e2e-test@taskpulse.com
 🔐 Login attempt 1...
@@ -2722,7 +2733,7 @@ Call log:
       _stepId: [32m'expect@22'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575358261[39m,
+    endWallTime: [33m1752598484031[39m,
     error: {
       message: [32m'Error: \x1B[2mexpect(\x1B[22m\x1B[31mlocator\x1B[39m\x1B[2m).\x1B[22mtoBeVisible\x1B[2m()\x1B[22m\n'[39m +
         [32m'\n'[39m +
@@ -2750,7 +2761,7 @@ Call log:
 ]]>
 </system-out>
 </testcase>
-<testcase name="Google Calendar Integration E2E › ⚠️ Sync Conflict Resolution" classname="workflows/google-calendar-sync.spec.ts" time="1.014">
+<testcase name="Google Calendar Integration E2E › ⚠️ Sync Conflict Resolution" classname="workflows/google-calendar-sync.spec.ts" time="1.056">
 <system-out>
 <![CDATA[🔐 Using existing test user: e2e-test@taskpulse.com
 🔐 Login attempt 1...
@@ -2770,7 +2781,7 @@ Final URL after login: http://localhost:8080/
 ]]>
 </system-out>
 </testcase>
-<testcase name="Google Calendar Integration E2E › 🔐 OAuth Authentication Flow" classname="workflows/google-calendar-sync.spec.ts" time="0.98">
+<testcase name="Google Calendar Integration E2E › 🔐 OAuth Authentication Flow" classname="workflows/google-calendar-sync.spec.ts" time="0.905">
 <system-out>
 <![CDATA[🔐 Using existing test user: e2e-test@taskpulse.com
 🔐 Login attempt 1...
@@ -2832,7 +2843,7 @@ Call log:
       _stepId: [32m'expect@22'[39m
     },
     complete: [36m[Function: complete][39m,
-    endWallTime: [33m1752575360259[39m,
+    endWallTime: [33m1752598485990[39m,
     error: {
       message: [32m'Error: \x1B[2mexpect(\x1B[22m\x1B[31mlocator\x1B[39m\x1B[2m).\x1B[22mtoBeVisible\x1B[2m()\x1B[22m\n'[39m +
         [32m'\n'[39m +
@@ -2860,7 +2871,7 @@ Call log:
 ]]>
 </system-out>
 </testcase>
-<testcase name="Google Calendar Integration E2E › 📊 Sync Performance and Reliability" classname="workflows/google-calendar-sync.spec.ts" time="0.899">
+<testcase name="Google Calendar Integration E2E › 📊 Sync Performance and Reliability" classname="workflows/google-calendar-sync.spec.ts" time="1.014">
 <system-out>
 <![CDATA[🔐 Using existing test user: e2e-test@taskpulse.com
 🔐 Login attempt 1...
@@ -2882,14 +2893,14 @@ Final URL after login: http://localhost:8080/
 ⚠️ Page context closed, cannot create event
 📅 Creating event: Performance Test Event 4
 ⚠️ Page context closed, cannot create event
-Event creation time: 85ms
+Event creation time: 102ms
 ✅ Calendar performance verified
 ]]>
 </system-out>
 </testcase>
 </testsuite>
-<testsuite name="workflows/simple-smoke-test.spec.ts" timestamp="2025-07-15T10:28:23.207Z" hostname="chromium" tests="3" failures="0" skipped="0" time="6.148" errors="0">
-<testcase name="Simple Smoke Tests › 🔥 Basic Application Smoke Test" classname="workflows/simple-smoke-test.spec.ts" time="3.948">
+<testsuite name="workflows/simple-smoke-test.spec.ts" timestamp="2025-07-15T16:53:48.407Z" hostname="chromium" tests="3" failures="0" skipped="0" time="6.111" errors="0">
+<testcase name="Simple Smoke Tests › 🔥 Basic Application Smoke Test" classname="workflows/simple-smoke-test.spec.ts" time="3.945">
 <system-out>
 <![CDATA[🔥 Starting Basic Smoke Test...
 ✅ Home page loaded directly
@@ -2909,7 +2920,7 @@ Final URL after login: http://localhost:8080/
 ]]>
 </system-out>
 </testcase>
-<testcase name="Simple Smoke Tests › 🔐 Authentication Flow Test" classname="workflows/simple-smoke-test.spec.ts" time="0.873">
+<testcase name="Simple Smoke Tests › 🔐 Authentication Flow Test" classname="workflows/simple-smoke-test.spec.ts" time="0.816">
 <system-out>
 <![CDATA[🔐 Starting Authentication Flow Test...
 ✅ Login page loaded successfully
@@ -2926,7 +2937,7 @@ Final URL after login: http://localhost:8080/
 ]]>
 </system-out>
 </testcase>
-<testcase name="Simple Smoke Tests › 📱 Page Responsiveness Test" classname="workflows/simple-smoke-test.spec.ts" time="1.327">
+<testcase name="Simple Smoke Tests › 📱 Page Responsiveness Test" classname="workflows/simple-smoke-test.spec.ts" time="1.35">
 <system-out>
 <![CDATA[📱 Starting Page Responsiveness Test...
 🔐 Using existing test user: e2e-test@taskpulse.com

@@ -14,8 +14,15 @@ export const GoogleCalendarAuth = {
     try {
       const user = await validateUser();
       
-      // Generate a random state parameter for security
-      const state = Math.random().toString(36).substring(2, 15);
+      // Clear any existing state to prevent conflicts
+      localStorage.removeItem("googleCalendarState");
+      localStorage.removeItem("googleCalendarUserId");
+      
+      // Generate a robust random state parameter for security
+      const timestamp = Date.now().toString(36);
+      const random1 = Math.random().toString(36).substring(2, 15);
+      const random2 = Math.random().toString(36).substring(2, 15);
+      const state = `${timestamp}_${random1}_${random2}`;
       
       // Store state and user ID in localStorage for verification during callback
       localStorage.setItem("googleCalendarState", state);
