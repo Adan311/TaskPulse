@@ -399,6 +399,8 @@ const loadInitialState = (): PomodoroState => {
 **[Show lines 35-70: Timestamp-based accuracy calculation]**
 
 > "My solution stores the start timestamp, not remaining time. When loading, it calculates elapsed milliseconds using `Date.now()`, subtracts from the original duration, and reconstructs the exact timer state. Close your browser for 3 hours? It knows exactly how much time remains. This timestamp-based approach guarantees accuracy regardless of browser state."
+<<<<<<< HEAD
+=======
 
 > "Notice the defensive programming - error handling for corrupted localStorage, fallback to default settings, and the conditional logic for running versus paused states. This reliability pattern is fundamental in production applications where user trust and data integrity are paramount."
 
@@ -475,6 +477,124 @@ export const attachFileToEntity = async (
 **[Show test execution results and folder structure]**
 
 > "Every complex feature has comprehensive test coverage - AI prompt engineering accuracy, Google Calendar sync data integrity, timer persistence reliability, recurring task calculations. This multi-layered testing approach catches bugs before users see them and demonstrates the professional development practices required for production software that users depend on daily."
+>>>>>>> 84a01df (more just)
+
+> "Notice the defensive programming - error handling for corrupted localStorage, fallback to default settings, and the conditional logic for running versus paused states. This reliability pattern is fundamental in production applications where user trust and data integrity are paramount."
+
+<<<<<<< HEAD
+### 5E: Other Professional Features (13:45 - 14:15)
+
+### 🎥 ON-SCREEN ACTION:
+**Quick glimpses of multiple files showing breadth of features**
+
+### 🎙️ NARRATION:
+> "TaskPulse demonstrates enterprise-grade feature breadth beyond core functionality. The real-time notification system uses database polling with intelligent filtering:"
+
+**[Show `src/frontend/hooks/useReminders.ts` lines 15-25]**
+```typescript
+const checkReminders = useCallback(async () => {
+  const now = new Date();
+  const { data: dueReminders } = await supabase
+    .from('events')
+    .select('*')
+    .lte('reminder_at', now.toISOString())
+    .eq('reminder_sent', false);
+    
+  dueReminders?.forEach(event => {
+    showNotification(`Reminder: ${event.title}`);
+  });
+}, []);
+```
+
+> "GDPR compliance is legally required for EU users. My implementation provides comprehensive data export using parallel database queries:"
+
+**[Show `src/backend/api/services/gdpr/gdprService.ts` lines 20-35]**
+```typescript
+export const exportUserData = async (): Promise<UserDataExport> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not authenticated");
+  
+  const [tasks, events, notes, projects] = await Promise.all([
+    supabase.from('tasks').select('*').eq('user', user.id),
+    supabase.from('events').select('*').eq('user', user.id),
+    supabase.from('notes').select('*').eq('user', user.id),
+    supabase.from('projects').select('*').eq('user', user.id)
+  ]);
+```
+
+> "The file attachment system demonstrates contextual organization - files belong to specific tasks, events, or projects, not just floating in storage:"
+
+**[Show `src/backend/api/services/file.service.ts` lines 40-55]**
+```typescript
+export const attachFileToEntity = async (
+  fileId: string, 
+  entityType: 'task' | 'event' | 'project',
+  entityId: string
+): Promise<void> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not authenticated");
+  
+  const { error } = await supabase
+    .from('files')
+    .update({ [entityType]: entityId })
+    .eq('id', fileId)
+    .eq('user', user.id);
+```
+
+> "These features showcase professional software development - real-time systems, legal compliance, contextual data organization, and robust error handling. This comprehensive scope demonstrates enterprise-ready engineering, not just basic CRUD operations."
+
+### 5F: Comprehensive Testing (14:15 - 14:30)
+
+### 🎥 ON-SCREEN ACTION:
+**Terminal:** `npm run test:all`  
+**Show:** `src/tests/` folder structure
+
+### 🎙️ NARRATION:
+> "The testing strategy demonstrates production-grade quality assurance - 217 automated tests across five critical categories. Unit tests verify individual functions work correctly, integration tests ensure workflows operate together, end-to-end tests validate complete user journeys, security tests check for vulnerabilities, and accessibility tests ensure compliance with web standards."
+
+**[Show test execution results and folder structure]**
+
+> "Every complex feature has comprehensive test coverage - AI prompt engineering accuracy, Google Calendar sync data integrity, timer persistence reliability, recurring task calculations. This multi-layered testing approach catches bugs before users see them and demonstrates the professional development practices required for production software that users depend on daily."
+=======
+## PART 6: CONCLUSION & PROJECT OVERVIEW (14:30 - 15:00)
+
+### 🎥 ON-SCREEN ACTION:
+- Show README.md file
+- Scroll through project overview and features
+- Return to dashboard showing complete application
+
+### 🎙️ NARRATION:
+> "TaskPulse successfully eliminates workflow fragmentation through intelligent integration. From AI-powered task creation to Google Calendar sync, every feature demonstrates professional engineering."
+
+**[Show README.md with project overview]**
+
+> "This project represents a complete solution: sophisticated AI prompt engineering, comprehensive testing with 217 tests, bidirectional data sync, and production-ready architecture. All goals achieved."
+
+**[Return to dashboard]**
+
+> "TaskPulse: where productivity meets professional software engineering. Thank you for your attention."
+
+---
+
+## 🎯 EXACT FILES TO HAVE OPEN IN ORDER:
+
+1. **`src/backend/api/services/ai/core/contextService.ts`** (Lines 543-580)
+2. **`src/backend/api/services/googleCalendar/googleCalendarSync.ts`** (Lines 20-35)
+3. **`src/backend/api/services/recurrence.service.ts`** (Lines 25-50)
+4. **`src/frontend/hooks/usePomodoroTimer.ts`** (Lines 35-55)
+5. **`src/frontend/hooks/useReminders.ts`** (Lines 15-25)
+6. **`src/backend/api/services/gdpr/gdprService.ts`** (Lines 20-30)
+7. **`src/backend/api/services/file.service.ts`** (Lines 40-50)
+8. **`src/tests/` folder** (For structure overview)
+9. **`README.md`** (For conclusion)
+
+## 🎬 TERMINAL COMMANDS TO RUN:
+```bash
+npm run test:all
+```
+
+**Total Time: Exactly 3.5 minutes of focused, direct code demonstration showcasing your professional engineering skills!**
+>>>>>>> 84a01df (more just)
 
 ---
 
