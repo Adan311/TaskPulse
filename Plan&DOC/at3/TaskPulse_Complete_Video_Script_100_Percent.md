@@ -5,69 +5,7 @@
 **Target:** 100/100 marks through comprehensive technical demonstration  
 **Duration:** 15 minutes exactly
 
----
 
-## 🎬 PRE-RECORDING SETUP - EXACT DATA TO CREATE
-
-### 🗂️ Projects to Create (Create these first):
-1. **"Final Year Project"** 
-   - Description: "Complete TaskPulse development and documentation"
-   - Priority: High, Status: Active, Progress: 75%
-   - Due Date: Next Friday
-
-2. **"Web Development Portfolio"** 
-   - Description: "Build professional portfolio website"
-   - Priority: Medium, Status: Active, Progress: 45%
-   - Due Date: End of month
-
-3. **"Research Project"** 
-   - Description: "AI integration research and implementation"
-   - Priority: Low, Status: Active, Progress: 20%
-   - Due Date: Next month
-
-### ✅ Tasks to Create (Assign to projects):
-1. **"Complete AT4 video demonstration"** 
-   - Final Year Project, High priority, Due: Today
-   - Description: "Record and edit the final video demonstration"
-
-2. **"Review code architecture documentation"** 
-   - Final Year Project, Medium priority, Due: Tomorrow
-   - Description: "Finalize technical documentation"
-
-3. **"Deploy application to production"** 
-   - Web Development Portfolio, High priority, Due: This week
-   - Description: "Set up production deployment pipeline"
-
-4. **"Implement advanced AI features"** 
-   - Research Project, Medium priority, Due: Next week
-   - Description: "Add context-aware suggestions"
-
-5. **"Write user documentation"** 
-   - Final Year Project, Medium priority, Due: Friday
-   - Description: "Create comprehensive user guide"
-
-### 📅 Events to Create:
-1. **"Final Presentation Rehearsal"** 
-   - Tomorrow 2:00 PM - 3:00 PM
-   - Final Year Project
-   - Description: "Practice final presentation"
-
-2. **"Code Review Meeting"** 
-   - Thursday 10:00 AM - 11:00 AM
-   - Web Development Portfolio
-   - Description: "Review portfolio codebase"
-
-3. **"Supervisor Meeting"** 
-   - Friday 3:00 PM - 4:00 PM
-   - Final Year Project
-   - Description: "Weekly progress update"
-
-### 🤖 AI Commands to Test (Test these before recording):
-1. **"Create a task to prepare slides for final presentation, make it high priority, due tomorrow, assign to Final Year Project"**
-2. **"Schedule a 'Project demonstration practice' for Saturday at 11 AM"**
-3. **"What tasks do I have due this week?"**
-4. **"Show me the progress on my Final Year Project"**
-5. **"Create an event called 'Team standup meeting' for Monday at 9 AM"**
 
 ---
 
@@ -78,7 +16,7 @@
 - Show professional UI with clear value proposition
 
 ### 🎙️ EXACT NARRATION:
-> "Hello, I'm Adan Naveed, Studting computer systems com 668 computing project. This is my final year project demonstration: TaskPulse, an AI-enhanced productivity dashboard."
+> "Hello, I'm Adan Naveed, student B00905612. This is my final year project demonstration: TaskPulse, an AI-enhanced productivity dashboard."
 
 > "The problem TaskPulse solves is workflow fragmentation. Research shows modern professionals use 8-12 different productivity tools daily - separate apps for tasks, calendars, notes, files, and time tracking. This creates cognitive overhead, context-switching costs, and reduces productivity by up to 40%."
 
@@ -211,35 +149,53 @@
 
 ---
 
-## PART 3: ARCHITECTURE OVERVIEW (9:30 - 11:00) - 1.5 MINUTES
+## PART 3: SUPABASE BACKEND OVERVIEW (9:30 - 10:30) - 1 MINUTE
 
 ### 🎥 ON-SCREEN ACTION:
-- Open VS Code with project structure
-- Quickly navigate through key folders
+- Quickly show backend folder structure
+- Show database/client.ts file
+- Quick glimpse of Supabase features
 
 ### 🎙️ NARRATION:
-> "The architecture follows enterprise-grade patterns with clear separation of concerns."
+> "TaskPulse runs entirely on Supabase - the open-source Firebase alternative with PostgreSQL at its core. Four key services power everything: PostgreSQL database with 12 tables, built-in authentication, Edge Functions for Google Calendar OAuth, and file storage."
 
-**[Show folder structure]**
+**[Show src/backend/ folder structure]**
 
-> "Backend services handle business logic, database interactions, and external integrations. The AI services demonstrate sophisticated prompt engineering. Frontend features are modular - each domain has its own components, hooks, and types."
+> "The backend architecture leverages Supabase's enterprise features - typed database schemas, Row Level Security, real-time subscriptions, and globally distributed edge functions. This eliminates server management while providing production-grade reliability."
 
-**[Navigate quickly through key folders]**
+**[Show database/client.ts quickly]**
 
-> "The testing strategy includes 217 automated tests across unit, integration, end-to-end, security, and accessibility categories. This multi-layered approach ensures production readiness."
+> "Every service follows consistent patterns: user authentication, error handling, and typed operations. This isn't just a prototype - it's production-ready infrastructure supporting complex AI workflows and real-time collaboration."
 
 ---
 
-## PART 4: CODE DEEP DIVE - PROFESSIONAL ENGINEERING (11:00 - 14:30) - 3.5 MINUTES
+## PART 4: PROJECT ARCHITECTURE (10:30 - 11:00) - 30 SECONDS
 
-### 4A: AI Prompt Engineering (11:00 - 12:15)
+### 🎥 ON-SCREEN ACTION:
+- Show project folder structure in VS Code
+- Quick navigation through Plan&DOC, src/backend, src/frontend, tests
+
+### 🎙️ NARRATION:
+> "The project is well-organized. Plan&DOC folder tracks my progress with markdown files. Source splits into backend services and frontend features - each feature gets its own folder with components and hooks."
+
+**[Show Plan&DOC folder with .md files]**
+
+> "Testing covers everything - 217 tests across unit, integration, security, and end-to-end. This structure makes development fast and maintenance easy."
+
+**[Navigate quickly through src/backend/, src/frontend/features/, tests/]**
+
+---
+
+## PART 5: CODE DEEP DIVE - PROFESSIONAL ENGINEERING (11:00 - 14:30) - 3.5 MINUTES
+
+### 5A: AI Prompt Engineering (11:00 - 12:00)
 
 ### 🎥 ON-SCREEN ACTION:
 **Open:** `src/backend/api/services/ai/core/contextService.ts`  
-**Show lines:** 543-590
+**Lines 543-580**
 
 ### 🎙️ NARRATION:
-> "When integrating an LLM, the *obvious but poor choice* is to just send the raw user input to the API, which results in unpredictable and unreliable responses. The *professional engineering choice*, demonstrated here in the `buildContextualPrompt` function, is to treat the AI as a command executor. This code shows the system injecting contextual data..."
+> "The AI demonstrates sophisticated prompt engineering - the key difference between a basic chatbot and production-ready AI. Most developers just send raw user input to the API, which gives unpredictable, unreliable responses. My approach injects comprehensive contextual data to create deterministic, reliable AI behavior."
 
 ### 📝 EXACT CODE TO SHOW:
 ```typescript
@@ -269,19 +225,30 @@ Current user message: "${userMessage}"`;
         const greetingContext = await buildGreetingContext(userId);
         basePrompt += `\n\nGreeting context: ${greetingContext}`;
       }
+    } else if (aiMode.mode === 'project_focused') {
+      // Full user context for project mode
+      userContextString = userContext ? `
+**User Context:**
+- Working hours: ${userContext.workingHours.start} - ${userContext.workingHours.end}
+- Active projects: ${userContext.currentProjects.map(p => `${p.name} (${p.progress}%)`).join(', ')}
+- Recent tasks: ${userContext.recentActivity.recentTasks.length}` : '';
     }
 ```
 
-### 🎙️ NARRATION:
-> "Instead of sending raw user input to the AI, we inject contextual data: active projects, timezone, recent tasks, and conversation history. The system detects whether the user wants general conversation or project-focused assistance."
+**[Show lines 543-580: Context injection logic]**
 
-> "This structured approach is the difference between a simple chatbot and a reliable, production-ready AI feature. This context injection transforms an unpredictable language model into a deterministic command executor."
+> "This function builds different prompts based on AI mode detection - general conversation versus project-focused assistance. Notice the sophisticated context injection: working hours, active projects with completion percentages, recent tasks, and user preferences. The AI knows if you prefer detailed or concise responses, your timezone, and your current workload."
 
-### 4B: Database Sync Logic (12:15 - 13:15)
+> "This transforms an unpredictable language model into a reliable command executor that understands your personal workflow. When you ask 'What should I work on?', it doesn't just give generic advice - it analyzes your active projects, upcoming deadlines, and work patterns to provide personalized recommendations."
+
+### 5B: Google Calendar Sync (12:00 - 12:45)
 
 ### 🎥 ON-SCREEN ACTION:
 **Open:** `src/backend/api/services/googleCalendar/googleCalendarSync.ts`  
-**Show lines:** 20-30
+**Lines 20-50**
+
+### 🎙️ NARRATION:
+> "Google Calendar sync demonstrates enterprise-grade data integrity patterns. The challenge with bidirectional sync is preventing catastrophic infinite loops - events bouncing back and forth between systems, creating duplicates and corrupting data. Many developers don't handle this properly."
 
 ### 📝 EXACT CODE TO SHOW:
 ```typescript
@@ -306,18 +273,88 @@ const { data, error } = await supabase.functions.invoke('google-calendar-auth', 
     userId: user.id
   },
 });
+
+// If this was a new event and we got a Google event ID back, update our local record
+if (!event.google_event_id && data && data.google_event_id) {
+  const { error: updateError } = await supabase
+    .from("events")
+    .update({ 
+      google_event_id: data.google_event_id,
+      source: 'app_synced'
+    })
+    .eq('id', event.id);
+}
 ```
 
+**[Show lines 20-50: Source tracking and Edge Function integration]**
+
+> "My solution uses source tracking - every event has a 'source' field indicating its origin. Events from Google stay marked as 'google' and never sync back, preventing loops. App-created events become 'app_synced' when sent to Google. This single line of code prevents data corruption that could destroy user trust."
+
+> "Notice the Supabase Edge Function integration for OAuth handling. Instead of managing Google OAuth tokens in the frontend - which would be insecure - I use serverless Edge Functions. This ensures secure token management while maintaining the seamless user experience. The function handles both creating new events and updating existing ones based on the google_event_id presence."
+
+### 5C: Recurring Tasks Logic (12:45 - 13:15)
+
+### 🎥 ON-SCREEN ACTION:
+**Open:** `src/backend/api/services/recurrence.service.ts`  
+**Lines 25-60**
+
 ### 🎙️ NARRATION:
-> "For bidirectional sync, the *bad choice* is to simply push and pull data without tracking its origin, which leads to catastrophic infinite loops. The *correct engineering choice* is a robust data model. This single line of code, `if (event.source === 'google')`, leverages a 'source' field in the database to break the loop."
+> "Recurring tasks showcase sophisticated scheduling algorithms. Most apps have basic daily/weekly repeats, but real-world scheduling is complex. Users say 'every Monday and Wednesday' or 'monthly on the 15th' - this requires intelligent parsing and robust date calculations that handle edge cases like month boundaries and leap years."
 
-> "This pattern is fundamental in professional enterprise systems where data integrity is non-negotiable. This simple check prevents catastrophic sync loops that could corrupt user data."
+### 📝 EXACT CODE TO SHOW:
+```typescript
+export const getNextOccurrenceDate = (
+  fromDate: Date,
+  config: RecurrenceConfig
+): Date | null => {
+  const baseDate = new Date(fromDate);
+  let nextDate: Date;
 
-### 4C: Timer State Persistence (13:15 - 14:30)
+  switch (config.pattern) {
+    case 'daily':
+      nextDate = addDays(baseDate, 1);
+      break;
+    case 'weekly':
+      if (config.days && config.days.length > 0) {
+        const currentDay = baseDate.getDay();
+        
+        // Normalize day names and convert to indices
+        const selectedDayIndices = config.days.map(day => {
+          const normalizedDay = day.toLowerCase();
+          const dayMap: { [key: string]: number } = {
+            'sunday': 0, 'monday': 1, 'tuesday': 2, 'wednesday': 3,
+            'thursday': 4, 'friday': 5, 'saturday': 6
+          };
+          return dayMap[normalizedDay];
+        }).filter(index => index !== undefined).sort((a, b) => a - b);
+
+        // Find the next day in the current week
+        let nextDay = selectedDayIndices.find(day => day > currentDay);
+        
+        if (nextDay !== undefined) {
+          nextDate = addDays(baseDate, nextDay - currentDay);
+        } else {
+          // Move to next week, first selected day
+          nextDate = addWeeks(baseDate, 1);
+          nextDate = addDays(nextDate, selectedDayIndices[0] - nextDate.getDay());
+        }
+      }
+```
+
+**[Show lines 25-60: Intelligent day parsing and scheduling]**
+
+> "This code demonstrates professional date handling using the date-fns library for reliable calculations. Notice the intelligent day parsing - it normalizes both 'Monday' and 'monday' formats, converts to numerical indices, and handles the complex logic of finding the next occurrence. If today is Wednesday and you want 'Monday, Friday', it correctly finds Friday this week, not Monday next week."
+
+> "The algorithm sorts selected days, finds the next day in the current week, or rolls over to the first selected day of next week. This unified service eliminates code duplication between tasks and events while handling edge cases that break simpler implementations."
+
+### 5D: Timer Persistence (13:15 - 13:45)
 
 ### 🎥 ON-SCREEN ACTION:
 **Open:** `src/frontend/hooks/usePomodoroTimer.ts`  
-**Show lines:** 32-55
+**Lines 35-70**
+
+### 🎙️ NARRATION:
+> "Timer persistence showcases professional frontend state management. The naive approach is storing remaining seconds in localStorage - but this fails catastrophically when users close their browser. Imagine starting a 25-minute Pomodoro, closing your laptop, and returning to find the timer reset. User trust destroyed."
 
 ### 📝 EXACT CODE TO SHOW:
 ```typescript
@@ -337,51 +374,154 @@ const loadInitialState = (): PomodoroState => {
         return {
           mode: parsed.mode || 'focus',
           timeLeft: actualTimeLeft,
-          isRunning: true,
+          isRunning: actualTimeLeft > 0 ? true : false,
           sessionCount: parsed.sessionCount || 0,
           timerContext: parsed.timerContext || null,
           settings: { ...DEFAULT_SETTINGS, ...parsed.settings }
         };
       }
+      
+      // Timer was paused or stopped
+      return {
+        mode: parsed.mode || 'focus',
+        timeLeft: parsed.timeLeft || DEFAULT_SETTINGS.focusDuration,
+        isRunning: false,
+        sessionCount: parsed.sessionCount || 0,
+        timerContext: parsed.timerContext || null,
+        settings: { ...DEFAULT_SETTINGS, ...parsed.settings }
+      };
     }
   } catch (error) {
     console.error('Error loading timer state:', error);
   }
-  
-  return {
-    mode: 'focus',
-    timeLeft: DEFAULT_SETTINGS.focusDuration,
-    isRunning: false,
-    sessionCount: 0,
-    timerContext: null,
-    settings: DEFAULT_SETTINGS
-  };
-};
 ```
 
-### 🎙️ NARRATION:
-> "For the timer, the *easy choice* would be to just save the remaining seconds to localStorage. The *bad result* is that the timer becomes inaccurate if the browser is closed. The *professional choice* is to guarantee accuracy. This function, `loadInitialState`, uses timestamp-based calculation..."
+**[Show lines 35-70: Timestamp-based accuracy calculation]**
 
-> "This demonstrates a core principle of professional software: designing for reliability and user trust, not just for the 'happy path'. This timestamp-based reconstruction means the timer remains accurate even if the browser was closed for hours."
+> "My solution stores the start timestamp, not remaining time. When loading, it calculates elapsed milliseconds using `Date.now()`, subtracts from the original duration, and reconstructs the exact timer state. Close your browser for 3 hours? It knows exactly how much time remains. This timestamp-based approach guarantees accuracy regardless of browser state."
 
----
+> "Notice the defensive programming - error handling for corrupted localStorage, fallback to default settings, and the conditional logic for running versus paused states. This reliability pattern is fundamental in production applications where user trust and data integrity are paramount."
 
-## PART 5: CONCLUSION & IMPACT (14:30 - 15:00)
+### 5E: Other Professional Features (13:45 - 14:15)
 
 ### 🎥 ON-SCREEN ACTION:
-- Return to dashboard showing complete project state
-- Quick montage of features working
+**Quick glimpses of multiple files showing breadth of features**
 
 ### 🎙️ NARRATION:
-> "TaskPulse successfully eliminates workflow fragmentation through intelligent integration. The technical implementation demonstrates professional software engineering: robust architecture, comprehensive testing, and production-ready code quality."
+> "TaskPulse demonstrates enterprise-grade feature breadth beyond core functionality. The real-time notification system uses database polling with intelligent filtering:"
 
-> "This project represents a working solution to a real productivity problem, implemented with enterprise-grade practices. The 217 automated tests, sophisticated AI integration, and modular architecture demonstrate mastery of modern full-stack development."
+**[Show `src/frontend/hooks/useReminders.ts` lines 15-25]**
+```typescript
+const checkReminders = useCallback(async () => {
+  const now = new Date();
+  const { data: dueReminders } = await supabase
+    .from('events')
+    .select('*')
+    .lte('reminder_at', now.toISOString())
+    .eq('reminder_sent', false);
+    
+  dueReminders?.forEach(event => {
+    showNotification(`Reminder: ${event.title}`);
+  });
+}, []);
+```
 
-> "Thank you for your attention. TaskPulse: where productivity meets professional engineering."
+> "GDPR compliance is legally required for EU users. My implementation provides comprehensive data export using parallel database queries:"
+
+**[Show `src/backend/api/services/gdpr/gdprService.ts` lines 20-35]**
+```typescript
+export const exportUserData = async (): Promise<UserDataExport> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not authenticated");
+  
+  const [tasks, events, notes, projects] = await Promise.all([
+    supabase.from('tasks').select('*').eq('user', user.id),
+    supabase.from('events').select('*').eq('user', user.id),
+    supabase.from('notes').select('*').eq('user', user.id),
+    supabase.from('projects').select('*').eq('user', user.id)
+  ]);
+```
+
+> "The file attachment system demonstrates contextual organization - files belong to specific tasks, events, or projects, not just floating in storage:"
+
+**[Show `src/backend/api/services/file.service.ts` lines 40-55]**
+```typescript
+export const attachFileToEntity = async (
+  fileId: string, 
+  entityType: 'task' | 'event' | 'project',
+  entityId: string
+): Promise<void> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not authenticated");
+  
+  const { error } = await supabase
+    .from('files')
+    .update({ [entityType]: entityId })
+    .eq('id', fileId)
+    .eq('user', user.id);
+```
+
+> "These features showcase professional software development - real-time systems, legal compliance, contextual data organization, and robust error handling. This comprehensive scope demonstrates enterprise-ready engineering, not just basic CRUD operations."
+
+### 5F: Comprehensive Testing (14:15 - 14:30)
+
+### 🎥 ON-SCREEN ACTION:
+**Terminal:** `npm run test:all`  
+**Show:** `src/tests/` folder structure
+
+### 🎙️ NARRATION:
+> "The testing strategy demonstrates production-grade quality assurance - 217 automated tests across five critical categories. Unit tests verify individual functions work correctly, integration tests ensure workflows operate together, end-to-end tests validate complete user journeys, security tests check for vulnerabilities, and accessibility tests ensure compliance with web standards."
+
+**[Show test execution results and folder structure]**
+
+> "Every complex feature has comprehensive test coverage - AI prompt engineering accuracy, Google Calendar sync data integrity, timer persistence reliability, recurring task calculations. This multi-layered testing approach catches bugs before users see them and demonstrates the professional development practices required for production software that users depend on daily."
 
 ---
 
-## 🎯 TESTING COMMANDS TO RUN LIVE
+## PART 6: CONCLUSION & PROJECT OVERVIEW (14:30 - 15:00)
+
+### 🎥 ON-SCREEN ACTION:
+- Show README.md file
+- Scroll through project overview and features
+- Return to dashboard showing complete application
+
+### 🎙️ NARRATION:
+> "TaskPulse successfully eliminates workflow fragmentation through intelligent integration. From AI-powered task creation to Google Calendar sync, every feature demonstrates professional engineering."
+
+**[Show README.md with project overview]**
+
+> "This project represents a complete solution: sophisticated AI prompt engineering, comprehensive testing with 217 tests, bidirectional data sync, and production-ready architecture. All goals achieved."
+
+**[Return to dashboard]**
+
+> "TaskPulse: where productivity meets professional software engineering. Thank you for your attention."
+
+---
+
+## 🎯 EXACT FILES TO HAVE OPEN IN ORDER:
+
+1. **`src/backend/api/services/ai/core/contextService.ts`** (Lines 543-580)
+2. **`src/backend/api/services/googleCalendar/googleCalendarSync.ts`** (Lines 20-35)
+3. **`src/backend/api/services/recurrence.service.ts`** (Lines 25-50)
+4. **`src/frontend/hooks/usePomodoroTimer.ts`** (Lines 35-55)
+5. **`src/frontend/hooks/useReminders.ts`** (Lines 15-25)
+6. **`src/backend/api/services/gdpr/gdprService.ts`** (Lines 20-30)
+7. **`src/backend/api/services/file.service.ts`** (Lines 40-50)
+8. **`src/tests/` folder** (For structure overview)
+9. **`README.md`** (For conclusion)
+
+## 🎬 TERMINAL COMMANDS TO RUN:
+```bash
+npm run test:all
+```
+
+**Total Time: Exactly 3.5 minutes of focused, direct code demonstration showcasing your professional engineering skills!**
+
+---
+
+## 🎯 TESTING COMMANDS TO RUN LIVE 
+
+
 
 ```bash
 # Show comprehensive test results
