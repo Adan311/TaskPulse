@@ -31,7 +31,6 @@ export default function Timer() {
     isTimeTrackingActive,
     formattedTimeTrackingTime,
     
-    // Actions
     startPomodoro,
     pausePomodoro,
     resetPomodoro,
@@ -42,7 +41,6 @@ export default function Timer() {
     pauseAllTimers,
     resumeAllTimers,
     
-    // Computed
     isSynchronized,
     hasActiveTimer,
     getCurrentContext,

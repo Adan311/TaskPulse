@@ -24,12 +24,6 @@ const supabaseOptions = {
 
 /**
  * Supabase client instance with type safety.
- * Use this for all Supabase operations throughout the application.
- * 
- * Example usage:
- * ```
- * const { data, error } = await supabase.from('tasks').select('*');
- * ```
  */
 export const supabase = createClient<Database>(supabaseUrl, supabaseKey, supabaseOptions);
 

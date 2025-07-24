@@ -1,6 +1,6 @@
 # TaskPulse Testing Guide
 
-Welcome! This README gives you everything you need to know about testing in TaskPulse—how to run the tests, what’s covered, and why it matters. It’s designed for both academic review and for anyone new to the project.
+This README gives you everything you need to know about testing in TaskPulse—how to run the tests, what’s covered, and why it matters. It’s designed for both academic review and for anyone new to the project.
 
 For a full breakdown of testing achievements, see [Plan&DOC/TESTING_SUMMARY.md](../../Plan&DOC/TESTING_SUMMARY.md).
 
@@ -50,8 +50,8 @@ npm run test:accessibility
 # Security tests
 npm run test:security
 
-# AI-specific tests
-npm run test:ai
+# Integration tets
+npm run test:integration
 ```
 
 ### Running Specific Tests

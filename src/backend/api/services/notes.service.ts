@@ -227,8 +227,7 @@ export async function searchNotes(searchTerm: string): Promise<NoteWithProject[]
 }
 
 /**
- * Fetch notes with project information (for AI features)
- * This function maintains compatibility with existing AI integration
+ * Fetch notes with project information and advanced filtering
  */
 export async function fetchNotesWithProjects(
   contentSearch?: string,

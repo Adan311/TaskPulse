@@ -33,7 +33,7 @@ const NotesPage: React.FC = () => {
 
   const selectedNote = notes.find(n => n.id === selectedNoteId) || null;
 
-  // Handler stubs for NoteViewer actions
+  
   const handlePin = (id: string) => {
     const note = notes.find(n => n.id === id);
     if (note?.pinned) {
@@ -49,7 +49,7 @@ const NotesPage: React.FC = () => {
   const handleCopy = (content: string) => navigator.clipboard.writeText(content);
   const handleAddToProject = (id: string) => {
     // This function is not used by NoteViewer as it has its own project selection modal
-    // Kept for interface compatibility
+
   };
 
   // New: handle creating a new note from the main area

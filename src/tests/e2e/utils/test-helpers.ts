@@ -14,7 +14,6 @@ export const ADMIN_USER = {
   name: 'Admin User'
 }
 
-// Authentication helpers
 export class AuthHelpers {
   constructor(private page: Page) {}
 

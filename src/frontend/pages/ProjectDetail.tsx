@@ -35,7 +35,6 @@ export default function ProjectDetail() {
   const [progressValue, setProgressValue] = useState(0);
   const [color, setColor] = useState('#3b82f6');
   
-  // Dialog state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -91,7 +90,7 @@ export default function ProjectDetail() {
         color
       };
 
-      // If the progress is being manually set, update auto_progress flag
+      // If the progress is being manually set, update auto_progress flag      
       if (project.auto_progress !== false) {
         updates.auto_progress = false;
       }
