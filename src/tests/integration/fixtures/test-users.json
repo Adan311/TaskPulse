@@ -1,0 +1,51 @@
+{
+  "testUsers": [
+    {
+      "id": "test-user-001",
+      "email": "integration.test1@taskpulse.com",
+      "name": "Integration Test User 1",
+      "role": "user",
+      "created_at": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "test-user-002", 
+      "email": "integration.test2@taskpulse.com",
+      "name": "Integration Test User 2",
+      "role": "user",
+      "created_at": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "test-admin-001",
+      "email": "admin.test@taskpulse.com", 
+      "name": "Integration Test Admin",
+      "role": "admin",
+      "created_at": "2025-01-01T00:00:00.000Z"
+    }
+  ],
+  "testProjects": [
+    {
+      "id": "test-project-001",
+      "name": "Integration Test Project Alpha",
+      "description": "Primary project for integration testing",
+      "user": "test-user-001",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "test-project-002",
+      "name": "Integration Test Project Beta", 
+      "description": "Secondary project for cross-project testing",
+      "user": "test-user-001",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "test-project-003",
+      "name": "User 2 Project",
+      "description": "Project for user isolation testing",
+      "user": "test-user-002", 
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z"
+    }
+  ]
+} 

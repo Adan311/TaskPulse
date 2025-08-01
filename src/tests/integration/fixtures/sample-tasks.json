@@ -1,0 +1,130 @@
+{
+    "testTasks": [
+      {
+      "id": "test-task-001",
+      "title": "Integration Test Task Alpha",
+      "description": "Primary task for integration testing",
+      "status": "pending",
+      "priority": "high",
+      "user": "test-user-001",
+      "project": "test-project-001",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z",
+      "due_date": "2025-01-15T00:00:00.000Z"
+    },
+    {
+      "id": "test-task-002", 
+      "title": "Integration Test Task Beta",
+      "description": "Secondary task for workflow testing",
+      "status": "in_progress",
+      "priority": "medium",
+      "user": "test-user-001",
+      "project": "test-project-001",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z",
+      "due_date": "2025-01-20T00:00:00.000Z"
+    },
+    {
+      "id": "test-task-003",
+      "title": "Completed Integration Task",
+      "description": "Task for testing completed status",
+      "status": "completed",
+      "priority": "low", 
+      "user": "test-user-001",
+      "project": "test-project-001",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z",
+      "due_date": "2025-01-10T00:00:00.000Z"
+    },
+    {
+      "id": "test-task-004",
+      "title": "Cross-Project Task",
+      "description": "Task for testing project relationships",
+      "status": "pending",
+      "priority": "medium",
+      "user": "test-user-001", 
+      "project": "test-project-002",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z",
+      "due_date": "2025-01-25T00:00:00.000Z"
+    },
+    {
+      "id": "test-task-005",
+      "title": "User Isolation Task",
+      "description": "Task for testing user data isolation",
+      "status": "pending",
+      "priority": "high",
+      "user": "test-user-002",
+      "project": "test-project-003", 
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z",
+      "due_date": "2025-01-18T00:00:00.000Z"
+    }
+  ],
+  "testEvents": [
+    {
+      "id": "test-event-001",
+      "title": "Integration Test Meeting",
+      "description": "Meeting for integration testing",
+      "start_time": "2025-01-15T10:00:00.000Z",
+      "end_time": "2025-01-15T11:00:00.000Z",
+      "user": "test-user-001",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "test-event-002",
+      "title": "Project Review Session",
+      "description": "Review session for project progress",
+      "start_time": "2025-01-20T14:00:00.000Z", 
+      "end_time": "2025-01-20T15:30:00.000Z",
+      "user": "test-user-001",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "test-event-003",
+      "title": "User 2 Calendar Event",
+      "description": "Event for user isolation testing",
+      "start_time": "2025-01-18T09:00:00.000Z",
+      "end_time": "2025-01-18T10:00:00.000Z",
+      "user": "test-user-002",
+      "created_at": "2025-01-01T00:00:00.000Z",
+      "updated_at": "2025-01-01T00:00:00.000Z"
+    }
+  ],
+  "testNotes": [
+    {
+      "id": "test-note-001",
+      "content": "Integration test note for project Alpha",
+      "user": "test-user-001",
+      "project": "test-project-001",
+      "pinned": true,
+      "last_updated": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "test-note-002",
+      "content": "Secondary note for workflow testing",
+      "user": "test-user-001", 
+      "project": "test-project-001",
+      "pinned": false,
+      "last_updated": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "test-note-003",
+      "content": "Cross-project note for testing relationships",
+      "user": "test-user-001",
+      "project": "test-project-002",
+      "pinned": false,
+      "last_updated": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "test-note-004",
+      "content": "User isolation note for testing data separation",
+      "user": "test-user-002",
+      "project": "test-project-003",
+      "pinned": true,
+      "last_updated": "2025-01-01T00:00:00.000Z"
+    }
+  ]
+} 
